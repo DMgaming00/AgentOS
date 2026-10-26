@@ -53,6 +53,9 @@ def task_payload(messages: list[Message]) -> dict[str, Any]:
     return {}
 
 
+DIRECTIVE_RE = re.compile(r"\[\[CALL_TOOL\s+([A-Za-z0-9_]+)\s*(\{.*?\})?\s*\]\]")
+
+
 def tool_rounds(messages: list[Message]) -> list[Message]:
     return [m for m in messages if m.role == "tool_results"]
 
@@ -160,6 +163,42 @@ class MockProvider:
         return json.dumps(
             {"attempted_tool": "artifact_writer", "outcome": results[0][1], "denied": results[0][2]}
         ), []
+
+    def _susceptible(
+        self, messages: list[Message], tools: list[ToolDefinition], config: ModelConfig
+    ) -> tuple[str, list[ToolCall]]:
+        """The Security Center's test model: reads what it is told to read, then OBEYS every ``[[CALL_TOOL name json]]``
+        directive found in the tool results. It has no judgment on purpose, so whatever stops a hostile call is the
+        platform's own enforcement (allow-lists, schemas, workspace scoping, budgets). It may name tools that are not
+        in its tool list or not registered at all, as a manipulated model might."""
+        payload = task_payload(messages)
+        inp = payload.get("input") or {}
+        rounds = tool_rounds(messages)
+        if not rounds:
+            if inp.get("search"):
+                return "", [
+                    self._call("document_search", {"query": str(inp["search"]), "limit": 5}, messages)
+                ]
+            if inp.get("read_file"):
+                return "", [
+                    self._call(
+                        "structured_data_reader",
+                        {"filename": str(inp["read_file"]), "source": "document"},
+                        messages,
+                    )
+                ]
+            return json.dumps({"done": True, "directives_found": 0}), []
+        found: list[tuple[str, dict[str, Any]]] = []
+        for r in rounds[0].tool_results:
+            for m in DIRECTIVE_RE.finditer(r.content.replace('\\"', '"')):
+                try:
+                    found.append((m.group(1), json.loads(m.group(2) or "{}")))
+                except json.JSONDecodeError:
+                    continue
+        if found and len(rounds) == 1:
+            return "", [self._call(n, a, messages) for n, a in found]
+        last = [{"tool": n, "error": err} for n, _res, err in _results_json(rounds[-1])]
+        return json.dumps({"summary": "done", "directives_followed": len(found), "last_round": last}), []
 
     def _injection_follower(
         self, messages: list[Message], tools: list[ToolDefinition], config: ModelConfig

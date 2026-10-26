@@ -67,6 +67,7 @@ from agentos_core.engine.events import append_event, flush_events
 from agentos_core.engine.retry import backoff_seconds, should_retry
 from agentos_core.engine.tx import lock_run, notify_work, run_in_transaction
 from agentos_core.log import get_logger
+from agentos_core.redaction import strip_nul
 from agentos_core.util import utcnow
 
 log = get_logger(__name__)
@@ -469,6 +470,16 @@ async def _expire_step_approvals(session: AsyncSession, step: WorkflowStep, reas
             {"approval_id": str(a.id), "status": "expired", "reason": reason, "node_key": step.node_key},
             step_id=step.id,
         )
+
+
+def _release_reservation(run: WorkflowRun, attempt: StepAttempt | None) -> None:
+    """Give back budget an attempt reserved for a model call it never settled (its worker died or was cancelled).
+
+    Found by the Chaos Lab: every worker crash used to leak the reservation, permanently shrinking the run's budget."""
+    if attempt is None or not attempt.reserved_usd:
+        return
+    run.cost_reserved_usd = max(Decimal(0), (run.cost_reserved_usd or Decimal(0)) - attempt.reserved_usd)
+    attempt.reserved_usd = Decimal(0)
 
 
 async def _cancel_child_run(session: AsyncSession, step: WorkflowStep) -> None:
@@ -1010,7 +1021,8 @@ async def complete_step(
             attempt.status = AttemptStatus.SUCCEEDED.value
             attempt.finished_at = now
             attempt.execution_metadata = {**attempt.execution_metadata, **(metadata or {})}
-        step.output = output
+            _release_reservation(run, attempt)
+        step.output = strip_nul(output)
         step.checkpoint = None
         step.completed_at = now
         step.error = None
@@ -1079,10 +1091,11 @@ async def _record_failure(
     if attempt:
         attempt.status = attempt_status.value
         attempt.finished_at = now
+        _release_reservation(run, attempt)
         attempt.error_type = error.error_type
-        attempt.error_message = error.message[:4000]
+        attempt.error_message = strip_nul(error.message[:4000])
     step.failure_count += 1
-    step.error = error.to_dict()
+    step.error = strip_nul(error.to_dict())
     _clear_lease(step)
 
     if run.status == RunStatus.CANCELLED:
@@ -1151,7 +1164,7 @@ async def checkpoint_step(step_id: uuid.UUID, token: uuid.UUID, checkpoint: dict
                 WorkflowStep.lease_token == token,
                 WorkflowStep.status == StepStatus.RUNNING,
             )
-            .values(checkpoint=checkpoint)
+            .values(checkpoint=strip_nul(checkpoint))
         )
         if res.rowcount == 0:  # type: ignore[attr-defined]
             raise StaleLeaseError()
@@ -1216,7 +1229,7 @@ async def suspend_for_approval(
         if attempt:
             attempt.status = AttemptStatus.SUSPENDED.value
             attempt.finished_at = now
-        step.checkpoint = checkpoint
+        step.checkpoint = strip_nul(checkpoint)
         _clear_lease(step)
         _set_step_status(step, StepStatus.WAITING_APPROVAL)
         await session.flush()
@@ -1544,6 +1557,7 @@ async def enforce_deadlines(*, now: datetime | None = None) -> int:
                     if attempt:
                         attempt.status = AttemptStatus.CANCELLED.value
                         attempt.finished_at = utcnow()
+                        _release_reservation(run, attempt)
                     _clear_lease(s)
                     _set_step_status(s, StepStatus.FAILED)
                     s.error = err.to_dict()
@@ -1737,6 +1751,7 @@ async def mark_step_cancelled(step_id: uuid.UUID, token: uuid.UUID, *, note: str
             attempt.status = AttemptStatus.CANCELLED.value
             attempt.finished_at = now
             attempt.error_message = note
+            _release_reservation(run, attempt)
         _clear_lease(step)
         _set_step_status(step, StepStatus.CANCELLED)
         step.completed_at = now
@@ -1855,8 +1870,12 @@ async def mark_worker_stopped(worker_id: str) -> None:
 # =========================================================================== budgets
 
 
-async def reserve_model_call(run_id: uuid.UUID, estimate_usd: Decimal) -> None:
-    """Atomically reserve budget for one model call or raise BudgetExceededError."""
+async def reserve_model_call(
+    run_id: uuid.UUID, estimate_usd: Decimal, attempt_id: uuid.UUID | None = None
+) -> None:
+    """Atomically reserve budget for one model call or raise BudgetExceededError.
+
+    The reservation is also recorded on the attempt, so it can be released if that attempt dies mid-call."""
 
     async def _do(session: AsyncSession) -> bool:
         res = await session.execute(
@@ -1874,6 +1893,12 @@ async def reserve_model_call(run_id: uuid.UUID, estimate_usd: Decimal) -> None:
             )
         )
         if res.rowcount:  # type: ignore[attr-defined]
+            if attempt_id is not None:
+                await session.execute(
+                    update(StepAttempt)
+                    .where(StepAttempt.id == attempt_id)
+                    .values(reserved_usd=StepAttempt.reserved_usd + estimate_usd)
+                )
             return True
         await lock_run(session, run_id)
         await append_event(session, run_id, "budget.exceeded", {"limit": "model_calls_or_cost"})
@@ -1884,9 +1909,19 @@ async def reserve_model_call(run_id: uuid.UUID, estimate_usd: Decimal) -> None:
 
 
 async def settle_model_call(
-    session: AsyncSession, run_id: uuid.UUID, reserved: Decimal, actual: Decimal | None
+    session: AsyncSession,
+    run_id: uuid.UUID,
+    reserved: Decimal,
+    actual: Decimal | None,
+    attempt_id: uuid.UUID | None = None,
 ) -> None:
     """Release a reservation and charge actual (or, if unknown, the reserved) cost."""
+    if attempt_id is not None:
+        await session.execute(
+            update(StepAttempt)
+            .where(StepAttempt.id == attempt_id)
+            .values(reserved_usd=func.greatest(StepAttempt.reserved_usd - reserved, 0))
+        )
     charge = actual if actual is not None else reserved
     await session.execute(
         update(WorkflowRun)
@@ -2093,7 +2128,7 @@ async def record_model_call(
             )
         )
         actual = usage.estimated_cost_usd if usage.status == "succeeded" else Decimal(0)
-        await settle_model_call(session, run_id, reserved_usd, actual)
+        await settle_model_call(session, run_id, reserved_usd, actual, attempt_id)
         await append_event(
             session,
             run_id,

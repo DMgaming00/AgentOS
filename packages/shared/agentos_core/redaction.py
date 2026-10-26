@@ -20,7 +20,22 @@ SECRET_PATTERNS = [
 REDACTED = "[REDACTED]"
 
 
+def strip_nul(value: Any) -> Any:
+    """Remove NUL characters (U+0000) from every string, including dict keys.
+
+    PostgreSQL text and JSONB cannot store them, and a provider (or a corrupted fixture) can return them: found by
+    the Chaos Lab, where one such response failed the step permanently with an unclassified storage error."""
+    if isinstance(value, str):
+        return value.replace("\x00", "")
+    if isinstance(value, dict):
+        return {strip_nul(k): strip_nul(v) for k, v in value.items()}
+    if isinstance(value, list | tuple):
+        return [strip_nul(v) for v in value]
+    return value
+
+
 def redact_text(value: str) -> str:
+    value = value.replace("\x00", "")
     for pattern in SECRET_PATTERNS:
         value = pattern.sub(REDACTED, value)
     return value

@@ -202,10 +202,19 @@ class WorkflowRun(Base):
             "status in ('pending','planning','running','waiting_approval','succeeded','failed','cancelled')",
             name="status_valid",
         ),
-        CheckConstraint("purpose in ('workflow','evaluation','replay','chaos')", name="purpose_valid"),
+        CheckConstraint(
+            "purpose in ('workflow','evaluation','replay','chaos','security')", name="purpose_valid"
+        ),
         CheckConstraint("priority between 0 and 9", name="priority_range"),
         CheckConstraint("depth between 0 and 5", name="depth_range"),
         Index("ix_workflow_runs_parent", "parent_run_id", postgresql_where=text("parent_run_id is not null")),
+        Index(
+            "uq_workflow_runs_chaos_case",
+            "chaos_experiment_id",
+            "chaos_case_index",
+            unique=True,
+            postgresql_where=text("chaos_experiment_id is not null"),
+        ),
         Index("ix_workflow_runs_ws_created", "workspace_id", "created_at"),
         Index("ix_workflow_runs_status", "status"),
         Index("ix_workflow_runs_definition", "workflow_definition_id"),
@@ -290,6 +299,11 @@ class StepAttempt(Base):
     error_message: Mapped[str | None] = mapped_column(Text)
     execution_metadata: Mapped[dict[str, Any]] = mapped_column(
         JSONB, server_default=EMPTY_OBJECT, nullable=False
+    )
+    # Budget this attempt has reserved for in-flight model calls and not yet settled. Released when the attempt
+    # ends in any way, so a worker that dies mid-call cannot leave the run's budget permanently reduced.
+    reserved_usd: Mapped[Decimal] = mapped_column(
+        Numeric(14, 8), nullable=False, default=Decimal(0), server_default="0"
     )
     __table_args__ = (
         UniqueConstraint("step_id", "attempt_number", name="uq_step_attempts_step_number"),
@@ -550,6 +564,74 @@ class ChaosInjection(Base):
     __table_args__ = (
         Index("ix_chaos_injections_experiment", "experiment_id", "injected_at"),
         Index("ix_chaos_injections_run", "run_id"),
+    )
+
+
+class SecurityTestCase(Base):
+    """One case of a versioned security suite. Immutable: a changed case is a new suite version."""
+
+    __tablename__ = "security_test_cases"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    suite_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    case_key: Mapped[str] = mapped_column(String(200), nullable=False)
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)  # policy|injection|benign|exposure
+    category: Mapped[str] = mapped_column(String(64), nullable=False)
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    expected: Mapped[str] = mapped_column(Text, nullable=False)
+    definition: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=EMPTY_OBJECT)
+    content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = created_at_col()
+    __table_args__ = (
+        UniqueConstraint("suite_version", "case_key", name="uq_security_test_cases_version_key"),
+    )
+
+
+class SecurityEvaluationRun(Base):
+    """One execution of the suite in a workspace. Sealed once it completes."""
+
+    __tablename__ = "security_evaluation_runs"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
+    )
+    suite_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="running")
+    phase: Mapped[str] = mapped_column(String(24), nullable=False, default="policy")
+    conditions: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=EMPTY_OBJECT)
+    results: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    error: Mapped[str | None] = mapped_column(Text)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = created_at_col()
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    __table_args__ = (
+        CheckConstraint("status in ('running','completed','failed','cancelled')", name="status_valid"),
+        Index("ix_security_evaluation_runs_ws", "workspace_id", "created_at"),
+    )
+
+
+class SecurityEvaluationResult(Base):
+    """The verdict and evidence for one case in one evaluation run. Append-only."""
+
+    __tablename__ = "security_evaluation_results"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    evaluation_run_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("security_evaluation_runs.id", ondelete="CASCADE"), nullable=False
+    )
+    case_key: Mapped[str] = mapped_column(String(200), nullable=False)
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    category: Mapped[str] = mapped_column(String(64), nullable=False)
+    verdict: Mapped[str] = mapped_column(String(8), nullable=False)  # pass|fail|error
+    observed: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=EMPTY_OBJECT)
+    evidence: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=EMPTY_OBJECT)
+    workflow_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("workflow_runs.id", ondelete="SET NULL")
+    )
+    recorded_at: Mapped[datetime] = created_at_col()
+    __table_args__ = (
+        CheckConstraint("verdict in ('pass','fail','error')", name="verdict_valid"),
+        UniqueConstraint("evaluation_run_id", "case_key", name="uq_security_results_run_case"),
+        Index("ix_security_results_run", "evaluation_run_id"),
     )
 
 

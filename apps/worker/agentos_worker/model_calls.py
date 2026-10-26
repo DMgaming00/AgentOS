@@ -47,7 +47,7 @@ async def call_model(
     reserve = reservation_usd or Decimal(str(get_settings().default_model_call_reservation_usd))
     record_id = uuid.uuid4()  # the Flight Recorder row for this call; the events below reference it
     meta = {**(meta or {}), "provider": provider_name, "node_key": node_key}
-    await reserve_model_call(run_id, reserve)
+    await reserve_model_call(run_id, reserve, attempt_id)
     await emit_event(
         run_id,
         "model.call.started",

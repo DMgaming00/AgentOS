@@ -122,3 +122,11 @@ def test_registry_catalog_has_no_shell_and_declares_policy():
     )
     assert not meta["calculator"]["requires_approval"] and meta["calculator"]["side_effect"] == "none"
     assert meta["calculator"]["input_schema"]["properties"]["operation"]
+
+
+def test_nul_characters_are_stripped_everywhere_persisted_text_is_sanitized():
+    from agentos_core.redaction import redact, redact_text, strip_nul
+
+    assert redact_text("ab\x00cd") == "abcd"
+    assert strip_nul({"k\x00": ["a\x00b", {"x": "\x00"}], "n": 3}) == {"k": ["ab", {"x": ""}], "n": 3}
+    assert redact({"text": "bad\x00text", "api_key": "x"}) == {"text": "badtext", "api_key": "[REDACTED]"}

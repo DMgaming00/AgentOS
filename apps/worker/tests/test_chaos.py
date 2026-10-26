@@ -264,6 +264,26 @@ async def test_malformed_model_output_is_caught_by_the_contract_and_repaired(see
     assert calls == 8  # every run needed the repair turn: 2 model calls instead of 1
 
 
+async def test_corrupted_responses_containing_nul_characters_do_not_crash_persistence(seeded):
+    """Found by the chaos benchmark: a response containing U+0000 failed the INSERT ("unsupported Unicode escape
+    sequence") and the step died as an unclassified internal_error. Persisted text is now sanitized."""
+    p = plan([{"type": "corrupted_fixture_response", "probability": 1.0}], trials=4)
+    exp = await execute(seeded, research_workflow(), p)
+    assert exp.status == "completed" and exp.results["injections_by_type"]["corrupted_fixture_response"] >= 4
+    errors = {c["error"] for c in exp.results["per_case"]}
+    assert "internal_error" not in errors, (
+        errors
+    )  # corrupted output is rejected or repaired, never an unhandled crash
+    assert metric(exp, "state_consistency")["value"] == 1.0
+    async with unit_of_work() as s:
+        stored = (
+            await s.execute(
+                select(func.count()).select_from(Event).where(Event.event_type == "model.call.completed")
+            )
+        ).scalar_one()
+    assert stored > 0
+
+
 async def test_invalid_tool_arguments_and_tool_failures_are_recorded_and_returned_to_the_model(seeded):
     p = plan(
         [
