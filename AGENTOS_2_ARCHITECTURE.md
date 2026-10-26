@@ -68,7 +68,7 @@ none of which weakens those guarantees. Migration `0004`.
 | **Skip propagation / joins** | `trigger: all_succeeded` (default) or `any_succeeded` | A step with a skipped dependency is skipped (`upstream_skipped`) unless `any_succeeded` and at least one dependency succeeded. Skipped steps are never claimed and have no output. A step whose dependents were all skipped is reported as a run output |
 | **Bounded fan-out / fan-in** | `type: fan_out`, `over` (ref to a list), `template` (an `agent_task` or `tool_task`), `max_items` ≤ 20, `on_overflow: fail\|truncate` | Never claimed by a worker. When ready, the engine creates `key[0..n-1]` child steps (each depends on the fan_out node's own dependencies, so they run in parallel) and moves the node to `waiting_child`. When every child has succeeded the node succeeds with `{"results": [...in input order], "count": n}`, so downstream nodes depend on it as a normal fan-in. More than `max_items` fails the node (default) or truncates (explicit). Expansion beyond `max_dag_nodes` fails. List items are data: they are exposed as `item`/`index` and never template-resolved |
 | **Nested workflow** | `type: sub_workflow`, `workflow` (name), `input` | The engine starts the *latest version* of that workflow as a **child run** (`parent_run_id`, `parent_step_id`, `depth`) and moves the step to `waiting_child`. The child inherits the parent's priority, a deadline no later than the parent's, and a cost cap equal to the parent's remaining budget. When the child finishes, the coordinator's `subflow_tick` completes the parent step with `{"child_run_id", "output"}` (or fails it with `reason: child_failed`) and adds the child's spend to the parent. Depth limit `AGENTOS_MAX_NESTED_DEPTH` (default 3) |
-| **Priority** | run `priority` 0–9 (`POST /workflows/{id}/runs {"priority": n}`) | Runs are claimed in order of *effective priority* = priority + (seconds the oldest ready step has waited ÷ `AGENTOS_PRIORITY_AGING_SECONDS`, default 30). A priority-0 step that has waited 9 intervals outranks a fresh priority-9 step, so low-priority work cannot starve |
+| **Priority** | run `priority` 0–9 (`POST /workflows/{id}/runs {"priority": n}`) | Runs are claimed in order of *effective priority* = priority + (run age ÷ `AGENTOS_PRIORITY_AGING_SECONDS`, default 30). A priority-0 run that is 9 intervals older than a newly created priority-9 run outranks it, so low-priority work cannot be starved by later arrivals. (Runs created together age together and keep their gap.) Age is measured from run creation: a first version aged the *next ready step*, which restarts every time a multi-step run advances, and a benchmark showed it starving low-priority runs once per step |
 | **Pause / resume** | `POST /runs/{id}/pause`, `/resume` (developer+) | A paused run (and its child runs) claims no new step; running steps finish; state, retries and approvals are untouched; the run deadline keeps ticking. Idempotent |
 | **Cancellation** | existing | Now also cancels `waiting_child` steps and, parent→child, the child runs |
 
@@ -169,3 +169,84 @@ anything credential-like remains (`409 export_refused`). The package carries SHA
 **Determinism finding.** The first re-execution revealed that the task prompt for a step with several upstream
 dependencies depended on database row order (`dependency_outputs` came from an unordered query), so the *same* workflow
 could send a differently ordered prompt on each run. Dependencies are now assembled in declared order.
+
+## 4. Agent Chaos Lab (Phase 4)
+
+Migration `0006`. The Chaos Lab tests reliability, not error-message rendering: each fault is injected at the boundary where
+production code meets the outside world, so the platform's own retry, policy, fencing, budget and recovery logic is
+what answers it.
+
+```mermaid
+flowchart LR
+  P[ChaosPlan<br/>seed · faults · trials · caps] --> X[create_experiment<br/>seeded runs purpose=chaos]
+  X --> R[(workflow_runs<br/>chaos_experiment_id, case_index)]
+  R --> W[Worker step]
+  W -->|ClaimedStep.chaos| C[ChaosContext.fire<br/>pure hash decision]
+  C -->|claim_injection<br/>advisory-locked ledger| L[(chaos_injections<br/>append-only)]
+  C --> F1[provider adapter boundary<br/>timeout · 429 · overflow · malformed]
+  C --> F2[tool boundary<br/>bad args · timeout · failure · hostile result · duplicate]
+  C --> F3[process boundary<br/>worker crash · Redis · PostgreSQL · notifications]
+  T[chaos_tick] --> V[simulated reviewer<br/>delay · reject]
+  T --> S[safety budget · window · finalize]
+  S --> K[compute_scorecard<br/>sealed in chaos_experiments.results]
+```
+
+**Faults (17) and where they are injected**
+
+| Boundary | Faults | How the platform sees it |
+|---|---|---|
+| Provider call (`call_model`, inside the failure-recording `try`) | `provider_timeout`, `provider_rate_limit`, `context_overflow` | The real typed provider errors (`ProviderTimeoutError`, `ProviderRateLimitError`, `ProviderRequestError`), so classification, retry/backoff, budget settlement and the failed-call record all run for real |
+| Model response | `malformed_model_response`, `corrupted_fixture_response` | The response text is truncated / replaced and tool arguments mangled after the call; the output contract and the repair turn must catch it |
+| Tool execution (`tools/runner`) | `invalid_tool_arguments` (before validation), `tool_timeout` (outlives `wait_for`), `tool_failure`, `malicious_tool_result` (injected instruction in the result), `duplicate_delivery` (the call is delivered again; the repeat has faults off) | Real schema validation, real timeout path, real policy denial, real idempotency replay |
+| Step completion | `duplicate_delivery` (`after_complete`) | `complete_step` is called a second time with the same lease token; the fence must reject it |
+| Worker process | `worker_crash` (`os._exit(137)` at step start / before a model call / after a tool) | Lease expiry and resumption from the checkpoint (needs real worker processes) |
+| Redis | `redis_interruption` (all connections dropped, new ones refused for a window), `delayed_notifications` (publishes delayed randomly, so out of order) | Wake-ups degrade to polling; PostgreSQL stays authoritative |
+| PostgreSQL | `postgres_interruption` (terminates *this process's* other connections, identified by `application_name=agentos-<pid>`, so other processes are untouched) | Open transactions fail; the pool reconnects |
+| Run budget | `budget_exhaustion` (budget cut to $0 at run creation) | `BudgetExceeded` stops the run before spending |
+| Approvals | `approval_delay`, `approval_rejection` (by the simulated reviewer in `chaos_tick`) | Durable wait; a rejected action never executes |
+
+**Reproducibility.** A decision is `sha256(seed | case | step | fault | point | attempt | call key)` mapped to [0, 1) and compared with
+the fault's probability: a pure function of coordinates that do not depend on run ids or timing. Which runs may be affected is fixed
+up front from the seed alone (`ChaosPlan.affected_cases()`: the `max_affected_runs` lowest hash ranks), and the per-fault cap is
+**per step** (`max_per_step`), because a per-run cap made concurrent steps race for the budget and the schedule depend on timing
+(a test caught this). The same plan therefore produces the same schedule in every experiment, which is what makes a before/after
+comparison "under the same fault schedule" meaningful.
+
+**Safety (enforced in code).** Plans are bounded (≤ 40 runs, ≤ 600 s window, ≤ 8 faults, per-step caps, safety budget ≤ $25);
+at most two experiments run per workspace; faults only fire for runs of a *running* experiment and only inside its window
+(`ChaosContext` returns no fault otherwise); `AGENTOS_ALLOW_FAULT_INJECTION` disables the whole feature; experiments are cancelled
+when estimated spend exceeds the safety budget; runs still unfinished when the window closes are cancelled. Injections are
+recorded **before** they are applied (so a crash cannot lose the evidence), the table is append-only (the response `outcome` may be
+set exactly once), and a finished experiment is sealed by a trigger. Offline mode means no paid provider is touched.
+
+**Resilience scorecard.** Computed from persisted records only, with the metric definitions and denominators stored in the
+result and shown in the UI. There is **no combined score**: the metrics are on different scales and any weighting would be arbitrary.
+
+| Metric | Denominator | Kind |
+|---|---|---|
+| task completion rate | planned runs | outcome |
+| fault exposure | planned runs | descriptive |
+| recovery rate | affected runs | outcome |
+| retry amplification (attempts / steps; extra attempts per injection) | steps | descriptive |
+| time to detection (injection → first platform reaction) | injections with a reaction (silent ones counted separately) | latency |
+| time to recovery (injection → step completion) | injections on steps that later succeeded | latency |
+| duplicate side-effect prevention (+ duplicate successful executions found, must be 0) | duplicates injected with evidence | safety |
+| state consistency (5 invariants per run) | invariant checks | safety |
+| budget compliance | runs | safety |
+| policy held under hostile output | runs with a malicious tool result | safety |
+
+**Before / after.** `POST /chaos/compare` takes two completed experiments with the same plan hash (same seed, faults and
+caps), pairs their per-case outcomes and runs OpenEval's paired bootstrap and exact McNemar test. The configuration under test
+is an agent version (`version_overrides`, or an Autopilot `candidate_id`), so a candidate can be evaluated for resilience with the
+same machinery as for quality. A difference is called supported only when the interval excludes 0 with enough cases.
+
+**What the Chaos Lab found in the platform itself** (each fixed, with a regression test):
+
+1. *Duplicate delivery of a read-only tool call failed the step permanently.* Idempotent replay applied only to side-effecting
+   tools, so the repeat executed again and violated the one-success-per-idempotency-key constraint (`internal_error`).
+   Replay now applies to every tool.
+2. *A dropped PostgreSQL connection failed work permanently.* Connection errors were classified as permanent `internal_error`;
+   the first run of the experiment completed **0 of 6** runs (state stayed consistent, the work was just never retried). They are now
+   `DatabaseUnavailableError` (transient), and the same experiment recovers.
+3. *A per-run fault cap made the schedule timing-dependent* (found by the reproducibility test) → per-step caps and a
+   seed-derived affected set.

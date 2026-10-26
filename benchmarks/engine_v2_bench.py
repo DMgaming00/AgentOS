@@ -201,8 +201,7 @@ async def suite_priority(quick: bool) -> list[dict[str, Any]]:
                 total = time.perf_counter() - t0
             async with get_sessionmaker()() as s:
                 got = await select_runs(s, low + high)
-            lat = lambda ids: sorted((got[i].completed_at - got[i].created_at).total_seconds() for i in ids)  # noqa: E731
-            lo, hi = lat(low), lat(high)
+            lo, hi = latencies(got, low), latencies(got, high)
             stream_end = max(got[i].created_at for i in high)
             row = {
                 "config": label,
@@ -221,6 +220,10 @@ async def suite_priority(quick: bool) -> list[dict[str, Any]]:
             print("priority", row, flush=True)
             rows.append(row)
     return rows
+
+
+def latencies(got: dict[uuid.UUID, WorkflowRun], ids: list[uuid.UUID]) -> list[float]:
+    return sorted((got[i].completed_at - got[i].created_at).total_seconds() for i in ids)  # type: ignore[operator]
 
 
 async def select_runs(s: Any, ids: list[uuid.UUID]) -> dict[uuid.UUID, WorkflowRun]:

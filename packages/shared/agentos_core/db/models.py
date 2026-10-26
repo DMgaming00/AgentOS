@@ -183,6 +183,16 @@ class WorkflowRun(Base):
     replay_of_run_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("workflow_runs.id", ondelete="SET NULL")
     )
+    # Chaos Lab: the experiment this run belongs to and its case ordinal (the stable key of the fault schedule).
+    chaos_experiment_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey(
+            "chaos_experiments.id",
+            ondelete="RESTRICT",
+            use_alter=True,
+            name="fk_workflow_runs_chaos_experiment",
+        )
+    )
+    chaos_case_index: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = created_at_col()
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -192,7 +202,7 @@ class WorkflowRun(Base):
             "status in ('pending','planning','running','waiting_approval','succeeded','failed','cancelled')",
             name="status_valid",
         ),
-        CheckConstraint("purpose in ('workflow','evaluation','replay')", name="purpose_valid"),
+        CheckConstraint("purpose in ('workflow','evaluation','replay','chaos')", name="purpose_valid"),
         CheckConstraint("priority between 0 and 9", name="priority_range"),
         CheckConstraint("depth between 0 and 5", name="depth_range"),
         Index("ix_workflow_runs_parent", "parent_run_id", postgresql_where=text("parent_run_id is not null")),
@@ -466,6 +476,80 @@ class ModelCallRecord(Base):
         CheckConstraint("status in ('succeeded','failed')", name="status_valid"),
         Index("ix_model_call_records_run", "run_id", "created_at"),
         Index("ix_model_call_records_step", "step_id"),
+    )
+
+
+class FaultScenario(Base):
+    """A named, reusable chaos plan (built-in presets are seeded per workspace)."""
+
+    __tablename__ = "fault_scenarios"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    builtin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    plan: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = created_at_col()
+    __table_args__ = (UniqueConstraint("workspace_id", "name", name="uq_fault_scenarios_ws_name"),)
+
+
+class ChaosExperiment(Base):
+    """One seeded fault-injection experiment against a workflow. Sealed once completed."""
+
+    __tablename__ = "chaos_experiments"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    workflow_definition_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workflow_definitions.id", ondelete="RESTRICT"), nullable=False
+    )
+    plan: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    plan_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    # agent definition id -> agent config version id: the configuration under test (before/after comparisons).
+    version_overrides: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, server_default=EMPTY_OBJECT
+    )
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="running")
+    conditions: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=EMPTY_OBJECT)
+    results: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    abort_reason: Mapped[str | None] = mapped_column(Text)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = created_at_col()
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    __table_args__ = (
+        CheckConstraint("status in ('running','completed','failed','cancelled')", name="status_valid"),
+        Index("ix_chaos_experiments_ws", "workspace_id", "created_at"),
+    )
+
+
+class ChaosInjection(Base):
+    """One injected fault. Append-only; ``outcome`` (the evidence of how the platform responded) may be set once."""
+
+    __tablename__ = "chaos_injections"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    experiment_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("chaos_experiments.id", ondelete="CASCADE"), nullable=False
+    )
+    run_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("workflow_runs.id", ondelete="CASCADE"))
+    case_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    fault_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    fault_type: Mapped[str] = mapped_column(String(48), nullable=False)
+    point: Mapped[str] = mapped_column(String(24), nullable=False)
+    step_key: Mapped[str | None] = mapped_column(String(100))
+    attempt_number: Mapped[int | None] = mapped_column(Integer)
+    call_key: Mapped[str] = mapped_column(String(200), nullable=False, default="", server_default="")
+    detail: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=EMPTY_OBJECT)
+    outcome: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    injected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    __table_args__ = (
+        Index("ix_chaos_injections_experiment", "experiment_id", "injected_at"),
+        Index("ix_chaos_injections_run", "run_id"),
     )
 
 

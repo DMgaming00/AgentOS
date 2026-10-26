@@ -123,3 +123,27 @@ def test_empty_provider_settings_are_unset(monkeypatch):
     monkeypatch.setenv("AGENTOS_OPENAI_MODEL", " ")
     s = Settings()
     assert s.anthropic_api_key is None and s.openai_model is None
+
+
+def test_database_connection_errors_are_transient_but_query_errors_are_not():
+    import asyncpg
+    from sqlalchemy.exc import DBAPIError, IntegrityError
+
+    from agentos_core.domain.errors import DatabaseUnavailableError, classify
+
+    lost = DBAPIError(
+        "SELECT 1",
+        {},
+        asyncpg.exceptions.ConnectionDoesNotExistError("connection was closed"),
+        connection_invalidated=True,
+    )
+    assert isinstance(classify(lost), DatabaseUnavailableError) and classify(lost).retryable
+    assert classify(ConnectionResetError("reset")).retryable
+    wrapped = RuntimeError("boom")
+    wrapped.__cause__ = asyncpg.exceptions.AdminShutdownError(
+        "terminating connection due to administrator command"
+    )
+    assert classify(wrapped).error_type == "database_unavailable"
+    constraint = IntegrityError("INSERT", {}, asyncpg.exceptions.UniqueViolationError("duplicate key"))
+    assert not classify(constraint).retryable  # a constraint violation is a bug, not an outage
+    assert not classify(ValueError("x")).retryable

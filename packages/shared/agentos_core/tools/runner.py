@@ -56,6 +56,8 @@ class StepScope:
     agent_name: str | None
     allowed_tools: frozenset[str]
     storage: Storage
+    # Chaos Lab context (None for every normal step): faults are applied where the tool is validated and run.
+    chaos: Any = None
 
 
 @dataclass
@@ -141,6 +143,36 @@ async def execute_tool_call(call: ToolCallRequest, scope: StepScope, registry: T
 
 
 async def _execute(call: ToolCallRequest, scope: StepScope, registry: ToolRegistry) -> ToolOutcome:
+    chaos = scope.chaos
+    if chaos is None:
+        return await _execute_once(call, scope, registry)
+    from dataclasses import replace
+
+    from agentos_core.chaos.faults import FaultType, Point
+
+    call = replace(call, arguments=await chaos.tool_arguments(call.name, call.arguments, call.call_id))
+    outcome = await _execute_once(call, scope, registry)
+    if outcome.kind == "result":
+        inj = await chaos.fire(
+            FaultType.DUPLICATE_DELIVERY, Point.AFTER_TOOL, key=call.call_id, tool=call.name
+        )
+        if inj:
+            # The same call is delivered again (as after a lost acknowledgement). Faults are off for the repeat.
+            second = await _execute_once(call, replace(scope, chaos=None), registry)
+            tool = registry.get(call.name)
+            await chaos.outcome(
+                inj,
+                {
+                    "duplicate": "tool_call",
+                    "tool": call.name,
+                    "side_effecting": bool(tool and tool.side_effect != SideEffect.NONE),
+                    "second": "idempotent_replay" if second.content.get("idempotent_replay") else second.kind,
+                },
+            )
+    return outcome
+
+
+async def _execute_once(call: ToolCallRequest, scope: StepScope, registry: ToolRegistry) -> ToolOutcome:
     args_hash = arguments_hash(call.name, call.arguments)
     idem = idempotency_key(scope, call.name, args_hash)
     tool = registry.get(call.name)
@@ -180,11 +212,13 @@ async def _execute(call: ToolCallRequest, scope: StepScope, registry: ToolRegist
         )
         return ToolOutcome("error", {"error": f"invalid arguments: {msg}"}, te)
 
-    # 5 (early). previously succeeded side effect with identical arguments -> return cached result
-    if tool.side_effect != SideEffect.NONE:
-        cached = await _succeeded_execution(idem)
-        if cached is not None:
-            return ToolOutcome("result", {**(cached.result or {}), "idempotent_replay": True}, cached.id)
+    # 5 (early). a previously succeeded execution with identical arguments in this step is replayed, never repeated.
+    # (Found by the Chaos Lab: this used to apply only to side-effecting tools, so a duplicate delivery of a
+    # read-only call executed again and then violated the one-success-per-idempotency-key constraint, failing
+    # the step permanently with an internal error.)
+    cached = await _succeeded_execution(idem)
+    if cached is not None:
+        return ToolOutcome("result", {**(cached.result or {}), "idempotent_replay": True}, cached.id)
 
     # 4. approval gate
     approved_te: ToolExecution | None = None
@@ -315,8 +349,17 @@ async def _execute(call: ToolCallRequest, scope: StepScope, registry: ToolRegist
         idempotency_key=idem,
         storage=scope.storage,
     )
+
+    async def _run_tool() -> dict[str, Any]:
+        return await tool.run(args, ctx)
+
+    runner = (
+        scope.chaos.wrap_tool(call.name, call.call_id, tool.timeout_seconds, _run_tool)
+        if scope.chaos is not None
+        else _run_tool
+    )
     try:
-        result = await asyncio.wait_for(tool.run(args, ctx), timeout=tool.timeout_seconds)
+        result = await asyncio.wait_for(runner(), timeout=tool.timeout_seconds)
     except LeaseLostError:
         await _finish(
             scope,

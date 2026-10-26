@@ -18,6 +18,7 @@ from typing import Any
 import jsonschema
 
 from agentos_core.autopilot.versions import AgentSpec
+from agentos_core.chaos.faults import Point
 from agentos_core.config import get_settings
 from agentos_core.domain.errors import (
     BudgetExceededError,
@@ -208,6 +209,8 @@ class AgentRuntime:
                     if outcome.kind == "needs_approval":
                         assert outcome.approval is not None
                         return Suspended(approval=outcome.approval, checkpoint=snapshot())
+                    if scope.chaos is not None:
+                        await scope.chaos.crash_if(Point.AFTER_TOOL, key=call.id)
                     if after_tool is not None:
                         await after_tool(call.name, outcome)
                     if outcome.kind == "denied":
@@ -250,6 +253,7 @@ class AgentRuntime:
                 agent_version_id=agent.version_id,
                 attempt_number=claim.attempt_number,
                 meta=recording_meta,
+                chaos=getattr(scope, "chaos", None),
             )
             iterations += 1
             messages.append(resp.as_message())

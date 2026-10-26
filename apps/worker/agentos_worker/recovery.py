@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from agentos_core.autopilot.deployment import monitoring_tick
 from agentos_core.autopilot.evaluation import evaluation_tick
 from agentos_core.autopilot.experiments import experiments_tick
+from agentos_core.chaos.experiments import chaos_tick
 from agentos_core.engine.core import (
     enforce_deadlines,
     expire_approvals,
@@ -30,6 +31,7 @@ class TickResult:
     evaluations: dict[str, int] | None = None
     experiments_completed: int = 0
     regressions_flagged: int = 0
+    chaos_finalized: int = 0
 
 
 async def coordinator_tick() -> TickResult:
@@ -43,6 +45,7 @@ async def coordinator_tick() -> TickResult:
     r.evaluations = await evaluation_tick()
     r.experiments_completed = await experiments_tick()
     r.regressions_flagged = await monitoring_tick()
+    r.chaos_finalized = await chaos_tick()
     if r.leases_expired or r.runs_timed_out or r.subflows_propagated:
         log.info("coordinator_tick", **r.__dict__)
     return r

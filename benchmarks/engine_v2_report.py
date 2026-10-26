@@ -117,8 +117,8 @@ def priority_chart(rows: list[dict[str, str]]) -> None:
     labels = {"aging_off": "aging off", "aging_0_5s": "aging 0.5 s per point"}
     w = 0.36
     for off, key, color, label in (
-        (-w / 2 - 0.01, "low_completion_p50_s", S1, "low priority (0), median"),
-        (w / 2 + 0.01, "high_completion_p50_s", S2, "high priority (9), median"),
+        (-w / 2 - 0.01, "low_latency_p50_s", S1, "low priority (0), median"),
+        (w / 2 + 0.01, "high_latency_p50_s", S2, "high priority (9), median"),
     ):
         vals = [st.fmean(f(r, key) for r in rows if r["config"] == c) for c in configs]
         bars = ax.bar([i + off for i in range(2)], vals, w, color=color, label=label)
@@ -133,10 +133,10 @@ def priority_chart(rows: list[dict[str, str]]) -> None:
                 color=INK,
             )
     ax.set_xticks(range(2), [labels[c] for c in configs])
-    ax.set_ylabel("completion time from submission, seconds")
+    ax.set_ylabel("run latency (submission to completion), seconds")
     ax.set_ylim(0, ax.get_ylim()[1] * 1.2)
-    ax.legend(loc="upper right", fontsize=8)
-    ax.set_title("Starvation protection under a high-priority backlog", fontsize=10, color=INK, loc="left")
+    ax.legend(loc="upper left", fontsize=8)
+    ax.set_title("Starvation protection under a high-priority stream", fontsize=10, color=INK, loc="left")
     save(fig, "engine_v2_priority")
 
 
@@ -192,22 +192,37 @@ def scaling_rows(rows: list[dict[str, str]]) -> list[list[object]]:
 
 
 def baseline_table() -> str:
-    base = Path(__file__).parent / "results" / "cmp_base_v1" / "scaling.csv"
-    cur = Path(__file__).parent / "results" / "cmp_current" / "scaling.csv"
-    if not (base.exists() and cur.exists()):
+    root = Path(__file__).parent / "results"
+    base, new = defaultdict(list), defaultdict(list)
+    for tag, store in (("cmp_base_r", base), ("cmp_new_r", new)):
+        for d in sorted(root.glob(f"{tag}*")):
+            for r in csv.DictReader((d / "scaling.csv").open()):
+                store[(int(r["workers"]), int(r["dag_size"]))].append(f(r, "executions_per_s"))
+    if not base or not new:
         return "_comparison data not present_"
-    b = {
-        (int(r["workers"]), int(r["dag_size"])): f(r, "executions_per_s") for r in csv.DictReader(base.open())
-    }
-    c = {
-        (int(r["workers"]), int(r["dag_size"])): f(r, "executions_per_s") for r in csv.DictReader(cur.open())
-    }
+    rows = []
+    for key in sorted(base):
+        b, c = base[key], new[key]
+        rows.append(
+            [
+                key[0],
+                key[1],
+                len(b),
+                f"{st.median(b):.0f} ({min(b):.0f}-{max(b):.0f})",
+                f"{st.median(c):.0f} ({min(c):.0f}-{max(c):.0f})",
+                f"{st.median(c) / st.median(b):.2f}",
+            ]
+        )
     return table(
-        ["workers", "DAG nodes", "pre-v2 engine exec/s", "v2 engine exec/s", "ratio v2 / pre-v2"],
         [
-            [w, n, f"{b[(w, n)]:.0f}", f"{c[(w, n)]:.0f}", f"{c[(w, n)] / b[(w, n)]:.2f}"]
-            for (w, n) in sorted(b)
+            "workers",
+            "DAG nodes",
+            "reps",
+            "pre-v2 engine exec/s: median (min-max)",
+            "v2 engine exec/s: median (min-max)",
+            "median ratio v2 / pre-v2",
         ],
+        rows,
     )
 
 
@@ -254,8 +269,9 @@ def main() -> None:
         "### Did engine v2 slow the scheduler down? (old vs new engine, same harness)\n\n"
         + baseline_table()
         + "\n\nControl experiment: the benchmark harness and database schema are identical; only the engine code "
-        "differs (`git worktree` of the pre-v2 commit via `PYTHONPATH`). One repetition per cell, so only large "
-        "differences would mean anything; the cells vary by more than the old/new gap in both directions.",
+        "differs (the pre-v2 commit and the v2 commit are separate frozen `git worktree` checkouts; the old code is "
+        "selected with `PYTHONPATH`). Three repetitions per cell, alternating old and new within each repetition so "
+        "slow drift in the machine affects both equally.",
         "### Static DAG vs `fan_out` node\n\n![fanout](engine_v2_fanout.png)\n\n"
         + table(
             ["kind", "parallel tasks", "reps", "processing s (mean)", "min", "max"],
@@ -274,11 +290,11 @@ def main() -> None:
                 "rep",
                 "high runs",
                 "low runs",
-                "low completion p50 s",
+                "low latency p50 s",
                 "low max s",
-                "high completion p50 s",
-                "high max s",
-                "low finished before backlog drained %",
+                "high latency p50 s",
+                "high p95 s",
+                "low finished before the stream ended %",
             ],
             [
                 [
@@ -286,19 +302,23 @@ def main() -> None:
                     r["rep"],
                     r["high_runs"],
                     r["low_runs"],
-                    r["low_completion_p50_s"],
-                    r["low_completion_max_s"],
-                    r["high_completion_p50_s"],
-                    r["high_completion_max_s"],
-                    r["low_finished_before_high_backlog_drained_pct"],
+                    r["low_latency_p50_s"],
+                    r["low_latency_max_s"],
+                    r["high_latency_p50_s"],
+                    r["high_latency_p95_s"],
+                    r["low_done_before_stream_ended_pct"],
                 ]
                 for r in prio
             ],
         )
-        + "\n\nA backlog of priority-9 four-step chains is submitted with a few priority-0 chains. **Aging is "
-        "accelerated to 0.5 s per priority point** (default 30 s) so the effect shows in a short benchmark; with "
-        "aging off the low-priority runs wait for the entire backlog. The cost is the high-priority median "
-        "completion shown above.",
+        + "\n\n6 priority-0 four-step chains are submitted at t=0, then priority-9 chains arrive for 10 s at 8 per "
+        "second, faster than one worker serves them. Latency is each run's own submission to completion. **Aging "
+        "is accelerated to 0.5 s per priority point** (default 30 s). Without aging the low-priority runs wait "
+        "behind every later high-priority arrival; with aging they overtake once their wait exceeds the "
+        "priority gap, at the price of slightly higher high-priority latency. **A design lesson:** an earlier "
+        "version of this benchmark submitted everything at once and showed no effect, correctly: runs in a "
+        "pre-filled backlog age together, so aging cannot close the gap between them. It only protects against "
+        "later arrivals, which is exactly the starvation case.",
         "### Crash inside a nested workflow\n\n![nested](engine_v2_nested_recovery.png)\n\n"
         + table(
             [

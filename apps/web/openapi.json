@@ -1374,6 +1374,100 @@
         "title": "ChangeIn",
         "type": "object"
       },
+      "ChaosPlan": {
+        "additionalProperties": false,
+        "description": "A reproducible fault schedule: the same plan + seed produces the same decisions for the same cases.",
+        "properties": {
+          "approver": {
+            "default": "auto_approve",
+            "pattern": "^(auto_approve|none)$",
+            "title": "Approver",
+            "type": "string"
+          },
+          "duration_seconds": {
+            "default": 120,
+            "maximum": 600.0,
+            "minimum": 10.0,
+            "title": "Duration Seconds",
+            "type": "integer"
+          },
+          "faults": {
+            "items": {
+              "$ref": "#/components/schemas/FaultSpec"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Faults",
+            "type": "array"
+          },
+          "max_affected_runs": {
+            "default": 10,
+            "maximum": 40.0,
+            "minimum": 1.0,
+            "title": "Max Affected Runs",
+            "type": "integer"
+          },
+          "recovery_policy": {
+            "default": "as_configured",
+            "pattern": "^(as_configured|no_retry|extra_retries)$",
+            "title": "Recovery Policy",
+            "type": "string"
+          },
+          "run_input": {
+            "additionalProperties": true,
+            "title": "Run Input",
+            "type": "object"
+          },
+          "safety_budget_usd": {
+            "default": 1.0,
+            "maximum": 25.0,
+            "minimum": 0.0,
+            "title": "Safety Budget Usd",
+            "type": "number"
+          },
+          "seed": {
+            "default": 1,
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "type": "integer"
+          },
+          "trials": {
+            "default": 10,
+            "description": "runs (cases) in the experiment",
+            "maximum": 40.0,
+            "minimum": 1.0,
+            "title": "Trials",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "faults"
+        ],
+        "title": "ChaosPlan",
+        "type": "object"
+      },
+      "CompareRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline_id": {
+            "format": "uuid",
+            "title": "Baseline Id",
+            "type": "string"
+          },
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "baseline_id",
+          "candidate_id"
+        ],
+        "title": "CompareRequest",
+        "type": "object"
+      },
       "Dataset": {
         "additionalProperties": false,
         "properties": {
@@ -2514,6 +2608,81 @@
         "title": "EventOut",
         "type": "object"
       },
+      "ExperimentCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Autopilot candidate whose agent version is tested",
+            "title": "Candidate Id"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Name",
+            "type": "string"
+          },
+          "overrides": {
+            "additionalProperties": true,
+            "description": "fields of the scenario's plan to change",
+            "title": "Overrides",
+            "type": "object"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChaosPlan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "name of a built-in or saved scenario",
+            "title": "Scenario"
+          },
+          "version_overrides": {
+            "additionalProperties": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "description": "agent id -> version id",
+            "propertyNames": {
+              "format": "uuid"
+            },
+            "title": "Version Overrides",
+            "type": "object"
+          },
+          "workflow_id": {
+            "format": "uuid",
+            "title": "Workflow Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "workflow_id"
+        ],
+        "title": "ExperimentCreate",
+        "type": "object"
+      },
       "ExperimentOut": {
         "properties": {
           "agent_id": {
@@ -2819,6 +2988,108 @@
         ],
         "title": "FailuresOut",
         "type": "object"
+      },
+      "FaultSpec": {
+        "additionalProperties": false,
+        "properties": {
+          "max_per_step": {
+            "default": 1,
+            "description": "fire at most this many times in one step",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Max Per Step",
+            "type": "integer"
+          },
+          "node_key": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Key"
+          },
+          "params": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "title": "Params",
+            "type": "object"
+          },
+          "point": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Point"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "probability": {
+            "default": 0.3,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Probability",
+            "type": "number"
+          },
+          "tool": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool"
+          },
+          "type": {
+            "$ref": "#/components/schemas/FaultType"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "FaultSpec",
+        "type": "object"
+      },
+      "FaultType": {
+        "enum": [
+          "provider_timeout",
+          "provider_rate_limit",
+          "malformed_model_response",
+          "corrupted_fixture_response",
+          "context_overflow",
+          "invalid_tool_arguments",
+          "tool_timeout",
+          "tool_failure",
+          "malicious_tool_result",
+          "duplicate_delivery",
+          "worker_crash",
+          "redis_interruption",
+          "postgres_interruption",
+          "delayed_notifications",
+          "approval_delay",
+          "approval_rejection",
+          "budget_exhaustion"
+        ],
+        "title": "FaultType",
+        "type": "string"
       },
       "Gates": {
         "additionalProperties": false,
@@ -3826,6 +4097,20 @@
         "title": "PlannedRunCreate",
         "type": "object"
       },
+      "Point": {
+        "enum": [
+          "step_start",
+          "before_model_call",
+          "after_model_call",
+          "before_tool",
+          "after_tool",
+          "after_complete",
+          "run_creation",
+          "approval"
+        ],
+        "title": "Point",
+        "type": "string"
+      },
       "PromoteRequest": {
         "additionalProperties": false,
         "properties": {
@@ -4172,6 +4457,32 @@
           "duration_ms"
         ],
         "title": "RunOut",
+        "type": "object"
+      },
+      "ScenarioCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 3,
+            "title": "Name",
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/ChaosPlan"
+          }
+        },
+        "required": [
+          "name",
+          "plan"
+        ],
+        "title": "ScenarioCreate",
         "type": "object"
       },
       "SignalOut": {
@@ -7723,6 +8034,530 @@
         "summary": "Stream",
         "tags": [
           "autopilot"
+        ]
+      }
+    },
+    "/api/v1/chaos/catalog": {
+      "get": {
+        "operationId": "catalog_api_v1_chaos_catalog_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Catalog Api V1 Chaos Catalog Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Catalog",
+        "tags": [
+          "chaos-lab"
+        ]
+      }
+    },
+    "/api/v1/chaos/compare": {
+      "post": {
+        "operationId": "compare_api_v1_chaos_compare_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Compare Api V1 Chaos Compare Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Compare",
+        "tags": [
+          "chaos-lab"
+        ]
+      }
+    },
+    "/api/v1/chaos/experiments": {
+      "get": {
+        "operationId": "list_experiments_api_v1_chaos_experiments_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Experiments Api V1 Chaos Experiments Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Experiments",
+        "tags": [
+          "chaos-lab"
+        ]
+      },
+      "post": {
+        "description": "Create the experiment and its seeded runs. Faults fire only for these runs, only while the window is open.",
+        "operationId": "start_experiment_api_v1_chaos_experiments_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Start Experiment Api V1 Chaos Experiments Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Start Experiment",
+        "tags": [
+          "chaos-lab"
+        ]
+      }
+    },
+    "/api/v1/chaos/experiments/{experiment_id}": {
+      "get": {
+        "operationId": "get_experiment_api_v1_chaos_experiments__experiment_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Experiment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Experiment Api V1 Chaos Experiments  Experiment Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Experiment",
+        "tags": [
+          "chaos-lab"
+        ]
+      }
+    },
+    "/api/v1/chaos/experiments/{experiment_id}/abort": {
+      "post": {
+        "operationId": "abort_api_v1_chaos_experiments__experiment_id__abort_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "experiment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Experiment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Abort Api V1 Chaos Experiments  Experiment Id  Abort Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Abort",
+        "tags": [
+          "chaos-lab"
+        ]
+      }
+    },
+    "/api/v1/chaos/scenarios": {
+      "get": {
+        "operationId": "scenarios_api_v1_chaos_scenarios_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Scenarios Api V1 Chaos Scenarios Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Scenarios",
+        "tags": [
+          "chaos-lab"
+        ]
+      },
+      "post": {
+        "operationId": "create_scenario_api_v1_chaos_scenarios_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Create Scenario Api V1 Chaos Scenarios Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Scenario",
+        "tags": [
+          "chaos-lab"
         ]
       }
     },

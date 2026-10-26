@@ -468,6 +468,113 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/chaos/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Catalog */
+        get: operations["catalog_api_v1_chaos_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chaos/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Compare */
+        post: operations["compare_api_v1_chaos_compare_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chaos/experiments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Experiments */
+        get: operations["list_experiments_api_v1_chaos_experiments_get"];
+        put?: never;
+        /**
+         * Start Experiment
+         * @description Create the experiment and its seeded runs. Faults fire only for these runs, only while the window is open.
+         */
+        post: operations["start_experiment_api_v1_chaos_experiments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chaos/experiments/{experiment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Experiment */
+        get: operations["get_experiment_api_v1_chaos_experiments__experiment_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chaos/experiments/{experiment_id}/abort": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Abort */
+        post: operations["abort_api_v1_chaos_experiments__experiment_id__abort_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chaos/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Scenarios */
+        get: operations["scenarios_api_v1_chaos_scenarios_get"];
+        put?: never;
+        /** Create Scenario */
+        post: operations["create_scenario_api_v1_chaos_scenarios_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/deployments/history": {
         parameters: {
             query?: never;
@@ -1936,6 +2043,67 @@ export interface components {
             /** Value */
             value?: unknown;
         };
+        /**
+         * ChaosPlan
+         * @description A reproducible fault schedule: the same plan + seed produces the same decisions for the same cases.
+         */
+        ChaosPlan: {
+            /**
+             * Approver
+             * @default auto_approve
+             */
+            approver: string;
+            /**
+             * Duration Seconds
+             * @default 120
+             */
+            duration_seconds: number;
+            /** Faults */
+            faults: components["schemas"]["FaultSpec"][];
+            /**
+             * Max Affected Runs
+             * @default 10
+             */
+            max_affected_runs: number;
+            /**
+             * Recovery Policy
+             * @default as_configured
+             */
+            recovery_policy: string;
+            /** Run Input */
+            run_input?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Safety Budget Usd
+             * @default 1
+             */
+            safety_budget_usd: number;
+            /**
+             * Seed
+             * @default 1
+             */
+            seed: number;
+            /**
+             * Trials
+             * @description runs (cases) in the experiment
+             * @default 10
+             */
+            trials: number;
+        };
+        /** CompareRequest */
+        CompareRequest: {
+            /**
+             * Baseline Id
+             * Format: uuid
+             */
+            baseline_id: string;
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+        };
         /** Dataset */
         Dataset: {
             /** Cases */
@@ -2395,6 +2563,41 @@ export interface components {
             /** Trace Id */
             trace_id: string | null;
         };
+        /** ExperimentCreate */
+        ExperimentCreate: {
+            /**
+             * Candidate Id
+             * @description Autopilot candidate whose agent version is tested
+             */
+            candidate_id?: string | null;
+            /** Name */
+            name: string;
+            /**
+             * Overrides
+             * @description fields of the scenario's plan to change
+             */
+            overrides?: {
+                [key: string]: unknown;
+            };
+            plan?: components["schemas"]["ChaosPlan"] | null;
+            /**
+             * Scenario
+             * @description name of a built-in or saved scenario
+             */
+            scenario?: string | null;
+            /**
+             * Version Overrides
+             * @description agent id -> version id
+             */
+            version_overrides?: {
+                [key: string]: string;
+            };
+            /**
+             * Workflow Id
+             * Format: uuid
+             */
+            workflow_id: string;
+        };
         /** ExperimentOut */
         ExperimentOut: {
             /**
@@ -2512,6 +2715,35 @@ export interface components {
             /** Window Hours */
             window_hours: number;
         };
+        /** FaultSpec */
+        FaultSpec: {
+            /**
+             * Max Per Step
+             * @description fire at most this many times in one step
+             * @default 1
+             */
+            max_per_step: number;
+            /** Node Key */
+            node_key?: string | null;
+            /** Params */
+            params?: {
+                [key: string]: number | string;
+            };
+            point?: components["schemas"]["Point"] | null;
+            /**
+             * Probability
+             * @default 0.3
+             */
+            probability: number;
+            /** Tool */
+            tool?: string | null;
+            type: components["schemas"]["FaultType"];
+        };
+        /**
+         * FaultType
+         * @enum {string}
+         */
+        FaultType: "provider_timeout" | "provider_rate_limit" | "malformed_model_response" | "corrupted_fixture_response" | "context_overflow" | "invalid_tool_arguments" | "tool_timeout" | "tool_failure" | "malicious_tool_result" | "duplicate_delivery" | "worker_crash" | "redis_interruption" | "postgres_interruption" | "delayed_notifications" | "approval_delay" | "approval_rejection" | "budget_exhaustion";
         /** Gates */
         Gates: {
             /**
@@ -2881,6 +3113,11 @@ export interface components {
             /** Task */
             task: string;
         };
+        /**
+         * Point
+         * @enum {string}
+         */
+        Point: "step_start" | "before_model_call" | "after_model_call" | "before_tool" | "after_tool" | "after_complete" | "run_creation" | "approval";
         /** PromoteRequest */
         PromoteRequest: {
             /**
@@ -3021,6 +3258,17 @@ export interface components {
              * Format: uuid
              */
             workspace_id: string;
+        };
+        /** ScenarioCreate */
+        ScenarioCreate: {
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Name */
+            name: string;
+            plan: components["schemas"]["ChaosPlan"];
         };
         /** SignalOut */
         SignalOut: {
@@ -4552,6 +4800,287 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    catalog_api_v1_chaos_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    compare_api_v1_chaos_compare_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompareRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_experiments_api_v1_chaos_experiments_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_experiment_api_v1_chaos_experiments_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+                "X-Workspace-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExperimentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_experiment_api_v1_chaos_experiments__experiment_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                experiment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    abort_api_v1_chaos_experiments__experiment_id__abort_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                experiment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scenarios_api_v1_chaos_scenarios_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_scenario_api_v1_chaos_scenarios_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScenarioCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */

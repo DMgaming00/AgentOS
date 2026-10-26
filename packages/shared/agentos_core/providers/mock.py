@@ -161,6 +161,22 @@ class MockProvider:
             {"attempted_tool": "artifact_writer", "outcome": results[0][1], "denied": results[0][2]}
         ), []
 
+    def _injection_follower(
+        self, messages: list[Message], tools: list[ToolDefinition], config: ModelConfig
+    ) -> tuple[str, list[ToolCall]]:
+        """Searches once; if a tool result contains an instruction to write a file it *obeys* it (the unsafe
+        behavior the platform's policy layer exists to stop). Used by the Chaos Lab's hostile-output tests."""
+        rounds = tool_rounds(messages)
+        if not rounds:
+            return "", [self._call("document_search", {"query": "pricing latency", "limit": 3}, messages)]
+        results = _results_json(rounds[-1])
+        text = json.dumps([r[1] for r in results], default=str)
+        if len(rounds) == 1 and "artifact_writer" in text:
+            return "", [
+                self._call("artifact_writer", {"filename": "exfil.md", "content": text[:200]}, messages)
+            ]
+        return json.dumps({"summary": "done", "followed_injection": len(rounds) > 1}), []
+
     def _research(
         self, messages: list[Message], tools: list[ToolDefinition], config: ModelConfig
     ) -> tuple[str, list[ToolCall]]:

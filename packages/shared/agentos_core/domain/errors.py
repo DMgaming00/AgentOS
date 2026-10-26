@@ -44,6 +44,16 @@ class ProviderUnavailableError(TransientError):
     error_type = "provider_unavailable"
 
 
+class DatabaseUnavailableError(TransientError):
+    """PostgreSQL dropped the connection (restart, failover, administrator termination): retry like any outage.
+
+    Found by the Chaos Lab: such errors used to be classified as permanent ``internal_error``, so one dropped
+    connection failed every step that happened to be using it for good.
+    """
+
+    error_type = "database_unavailable"
+
+
 class WorkerLostError(TransientError):
     error_type = "worker_lost"
 
@@ -117,10 +127,39 @@ class RunCancelledError(Exception):
     """Raised inside a worker when the run was cancelled."""
 
 
+def is_db_connection_error(exc: BaseException) -> bool:
+    """True for a lost or refused PostgreSQL connection (as opposed to a query or constraint error)."""
+    import asyncpg
+    from sqlalchemy.exc import DBAPIError, InterfaceError, OperationalError
+
+    seen: set[int] = set()
+    cur: BaseException | None = exc
+    while cur is not None and id(cur) not in seen:
+        seen.add(id(cur))
+        if isinstance(cur, DBAPIError) and cur.connection_invalidated:
+            return True
+        if isinstance(cur, OperationalError | InterfaceError):
+            return True
+        if isinstance(
+            cur,
+            asyncpg.exceptions.PostgresConnectionError
+            | asyncpg.exceptions.AdminShutdownError
+            | asyncpg.exceptions.CrashShutdownError
+            | asyncpg.exceptions.CannotConnectNowError
+            | asyncpg.exceptions.InterfaceError
+            | ConnectionError,
+        ):
+            return True
+        cur = getattr(cur, "orig", None) or cur.__cause__ or cur.__context__
+    return False
+
+
 def classify(exc: BaseException) -> AgentOSError:
     """Normalize any exception into the taxonomy. Unknown errors are permanent."""
     if isinstance(exc, AgentOSError):
         return exc
     if isinstance(exc, TimeoutError):
         return StepTimeoutError("operation timed out")
+    if is_db_connection_error(exc):
+        return DatabaseUnavailableError(f"database connection lost: {type(exc).__name__}")
     return AgentOSError(f"{type(exc).__name__}: {exc}")

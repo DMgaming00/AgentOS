@@ -1,5 +1,5 @@
 {
-  "label": "cmp_current",
+  "label": "cmp_base_r0",
   "quick": false,
   "machine": {
     "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
@@ -10,8 +10,8 @@
     "cpu": "Apple M1",
     "postgres": "postgres (PostgreSQL) 16.15"
   },
-  "duration_s": 44.5,
-  "started_at": "2026-10-26T14:50:36-0700",
+  "duration_s": 33.2,
+  "started_at": "2026-10-26T15:11:30-0700",
   "suites": [
     "scaling"
   ],

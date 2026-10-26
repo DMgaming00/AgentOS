@@ -11,6 +11,7 @@ from opentelemetry import trace
 from sqlalchemy import select
 
 from agentos_core.autopilot.versions import AgentSpec, load_agent_spec
+from agentos_core.chaos.context import ChaosContext
 from agentos_core.config import get_settings
 from agentos_core.db.models import AgentDefinition, Document
 from agentos_core.db.session import get_sessionmaker
@@ -86,6 +87,9 @@ class StepExecutor:
         ) as span:
             try:
                 async with asyncio.timeout(timeout):
+                    chaos = ChaosContext.from_claim(claim)
+                    if chaos is not None:
+                        await chaos.step_start()
                     await self._inject(claim)
                     result = await self._dispatch(claim)
             except LeaseLostError:
@@ -110,6 +114,10 @@ class StepExecutor:
                     await complete_step(
                         claim.step_id, claim.lease_token, result.output, metadata=result.metadata
                     )
+                    if chaos is not None:  # duplicate completion delivery: the lease fence must reject it
+                        await chaos.after_complete(
+                            lambda: complete_step(claim.step_id, claim.lease_token, result.output)
+                        )
                     return "succeeded"
                 if isinstance(result, Suspended):
                     await suspend_for_approval(
@@ -198,6 +206,7 @@ class StepExecutor:
 
     def _scope(self, claim: ClaimedStep, allowed: set[str], agent_name: str | None) -> StepScope:
         return StepScope(
+            chaos=ChaosContext.from_claim(claim),
             workspace_id=claim.workspace_id,
             run_id=claim.run_id,
             step_id=claim.step_id,

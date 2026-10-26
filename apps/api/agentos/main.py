@@ -18,6 +18,7 @@ from agentos.api import (
     artifacts,
     auth,
     autopilot,
+    chaos,
     deployments,
     documents,
     evaluations,
@@ -136,6 +137,7 @@ def create_app() -> FastAPI:
         experiments,
         deployments,
         flight,
+        chaos,
     ):
         app.include_router(module.router)
 

@@ -42,6 +42,7 @@ async def call_model(
     agent_version_id: uuid.UUID | None = None,
     attempt_number: int | None = None,
     meta: dict[str, Any] | None = None,
+    chaos: Any = None,
 ) -> ModelResponse:
     reserve = reservation_usd or Decimal(str(get_settings().default_model_call_reservation_usd))
     record_id = uuid.uuid4()  # the Flight Recorder row for this call; the events below reference it
@@ -70,7 +71,12 @@ async def call_model(
     ) as span:
         try:
             await enforce_real_spend(provider_name, reserve)
+            call_index = sum(1 for m in messages if m.role == "assistant")
+            if chaos is not None:
+                await chaos.before_model_call(call_index)
             resp = await provider.generate(system, messages, tools, config)
+            if chaos is not None:
+                resp = await chaos.after_model_call(resp, call_index)
         except Exception as exc:
             err: AgentOSError = classify(exc)
             span.record_exception(exc)

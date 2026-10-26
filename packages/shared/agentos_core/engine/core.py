@@ -132,9 +132,10 @@ def _clear_lease(step: WorkflowStep) -> None:
 
 
 def effective_priority(priority: int, waited_seconds: float, aging_seconds: float) -> float:
-    """Scheduling score: run priority plus one point per ``aging_seconds`` waited (starvation protection).
+    """Scheduling score: run priority plus one point per ``aging_seconds`` of run age (starvation protection).
 
-    A priority-0 step that has waited ``9 * aging_seconds`` outranks a freshly ready priority-9 step.
+    A priority-0 run that is ``9 * aging_seconds`` older than a newly created priority-9 run outranks it. Runs
+    created at the same moment keep their priority gap (they age together); aging protects against later arrivals.
     """
     return priority + max(0.0, waited_seconds) / max(aging_seconds, 1e-6)
 
@@ -610,6 +611,9 @@ async def materialize_run(
     budget_cap_usd: float | None = None,
     deadline_cap: datetime | None = None,
     replay_of_run_id: uuid.UUID | None = None,
+    chaos_experiment_id: uuid.UUID | None = None,
+    chaos_case_index: int | None = None,
+    budget_override: dict[str, Any] | None = None,
 ) -> WorkflowRun:
     """Create a run and its steps atomically. Root steps become ready immediately.
 
@@ -617,7 +621,7 @@ async def materialize_run(
     so later edits, promotions or rollbacks never change a run that already started.
     """
     now = utcnow()
-    budget = spec.budget.model_dump()
+    budget = {**spec.budget.model_dump(), **(budget_override or {})}
     if budget_cap_usd is not None:
         budget["max_cost_usd"] = min(float(budget["max_cost_usd"]), budget_cap_usd)
     deadline = now + timedelta(seconds=spec.budget.max_duration_seconds)
@@ -640,6 +644,8 @@ async def materialize_run(
         parent_step_id=parent[1].id if parent else None,
         depth=(parent[0].depth + 1) if parent else 0,
         replay_of_run_id=replay_of_run_id,
+        chaos_experiment_id=chaos_experiment_id,
+        chaos_case_index=chaos_case_index,
     )
     session.add(run)
     await session.flush()
@@ -759,6 +765,7 @@ class ClaimedStep:
     agent_version_id: uuid.UUID | None
     run_purpose: str
     replay_of_run_id: uuid.UUID | None
+    chaos: dict[str, Any] | None
     dependency_outputs: dict[str, Any]
     attempt_id: uuid.UUID
     attempt_number: int
@@ -776,13 +783,14 @@ async def claim_steps(worker_id: str, limit: int, *, lease_ttl: float | None = N
 
     async def _claim(session: AsyncSession) -> list[ClaimedStep]:
         now = utcnow()
-        # Runs are ordered by effective priority: run priority + waiting time / aging interval, so a
-        # low-priority run cannot be starved forever by a stream of high-priority work.
+        # Runs are ordered by effective priority = run priority + run age / aging interval. Age is measured from run
+        # creation, not from when the next step became ready: a step-level clock restarts every time a multi-step
+        # run advances, which a benchmark showed starves low-priority runs once per step (see AGENTOS_2_BENCHMARKS).
         aging = get_settings().priority_aging_seconds
         oldest = func.min(WorkflowStep.ready_at)
         score = (
             WorkflowRun.priority
-            + func.extract("epoch", literal(now, DateTime(timezone=True)) - oldest) / aging
+            + func.extract("epoch", literal(now, DateTime(timezone=True)) - WorkflowRun.created_at) / aging
         )
         runnable_runs = (
             await session.execute(
@@ -795,7 +803,7 @@ async def claim_steps(worker_id: str, limit: int, *, lease_ttl: float | None = N
                         [RunStatus.RUNNING, RunStatus.WAITING_APPROVAL, RunStatus.PLANNING]
                     ),
                 )
-                .group_by(WorkflowStep.run_id, WorkflowRun.priority)
+                .group_by(WorkflowStep.run_id, WorkflowRun.priority, WorkflowRun.created_at)
                 .order_by(score.desc(), oldest)
                 .limit(max(limit * 4, 16))
             )
@@ -904,6 +912,7 @@ async def _claim_one(
         agent_version_id=step.agent_version_id,
         run_purpose=run.purpose,
         replay_of_run_id=run.replay_of_run_id,
+        chaos=await _chaos_for(session, run),
         dependency_outputs=deps,
         attempt_id=attempt.id,
         attempt_number=attempt.attempt_number,
@@ -912,6 +921,24 @@ async def _claim_one(
         max_attempts=step.max_attempts,
         failure_count=step.failure_count,
     )
+
+
+async def _chaos_for(session: AsyncSession, run: WorkflowRun) -> dict[str, Any] | None:
+    """The fault plan for a run that belongs to a running chaos experiment (None for every normal run)."""
+    if run.chaos_experiment_id is None:
+        return None
+    from agentos_core.db.models import ChaosExperiment
+
+    exp = await session.get(ChaosExperiment, run.chaos_experiment_id)
+    if exp is None or exp.status != "running" or exp.started_at is None:
+        return None
+    ends = exp.started_at + timedelta(seconds=int(exp.plan.get("duration_seconds", 120)))
+    return {
+        "experiment_id": str(exp.id),
+        "case_index": run.chaos_case_index or 0,
+        "plan": exp.plan,
+        "ends_at": ends.isoformat(),
+    }
 
 
 # =========================================================================== fenced results

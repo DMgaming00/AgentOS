@@ -409,12 +409,12 @@ async def test_pausing_a_parent_pauses_its_child_runs_and_pause_is_idempotent(se
                 await s.execute(select(WorkflowRun).where(WorkflowRun.parent_run_id == run_id))
             ).scalar_one()
 
+    c = await child()  # created when the parent run was materialized
+    async with unit_of_work() as s:  # pause before any worker exists: no race with an early claim
+        await core.pause_run(s, run_id, user_id=None)
+        await core.pause_run(s, run_id, user_id=None)  # idempotent: no second event
+    assert (await child()).paused_at is not None  # pause reached the child run
     async with running_workers(1):
-        c = await child()  # created when the parent run was materialized
-        async with unit_of_work() as s:
-            await core.pause_run(s, run_id, user_id=None)
-            await core.pause_run(s, run_id, user_id=None)  # idempotent: no second event
-        assert (await child()).paused_at is not None  # pause reached the child run
         await asyncio.sleep(1.0)
         assert (await get_steps(c.id))["n1"].attempt_count == 0  # nothing in the child was claimed
         async with unit_of_work() as s:
@@ -427,13 +427,12 @@ async def test_pausing_a_parent_pauses_its_child_runs_and_pause_is_idempotent(se
 
 
 async def make_ready_run(seeded, priority, ready_ago_seconds):
+    """A run created ``ready_ago_seconds`` ago whose first step has been ready for just as long."""
     run_id = await start_run(seeded, {"nodes": [calc("only")]}, priority=priority)
+    then = utcnow() - timedelta(seconds=ready_ago_seconds)
     async with unit_of_work() as s:
-        await s.execute(
-            update(WorkflowStep)
-            .where(WorkflowStep.run_id == run_id)
-            .values(ready_at=utcnow() - timedelta(seconds=ready_ago_seconds))
-        )
+        await s.execute(update(WorkflowStep).where(WorkflowStep.run_id == run_id).values(ready_at=then))
+        await s.execute(update(WorkflowRun).where(WorkflowRun.id == run_id).values(created_at=then))
     return run_id
 
 
