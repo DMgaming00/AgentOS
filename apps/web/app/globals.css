@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #f7f8fa;
+  --foreground: #0f1419;
+  --card: #ffffff;
+  --card-foreground: #0f1419;
+  --muted: #eef0f3;
+  --muted-foreground: #5b6573;
+  --border: #e1e4e8;
+  --input: #d6dae0;
+  --primary: #3b5bdb;
+  --primary-foreground: #ffffff;
+  --accent: #edf1ff;
+  --ring: #3b5bdb;
+  --success: #2f9e44;
+  --warning: #e8590c;
+  --danger: #e03131;
+  --info: #1c7ed6;
+  --sidebar: #0f1419;
+  --sidebar-foreground: #c9d1d9;
+  /* chart tokens: validated reference palette (dataviz skill), light steps */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-critical: #d03b3b;
+  --chart-grid: #e1e4e8;
+}
+
+.dark {
+  --background: #0b0e13;
+  --foreground: #e6edf3;
+  --card: #11161d;
+  --card-foreground: #e6edf3;
+  --muted: #1a212b;
+  --muted-foreground: #8b949e;
+  --border: #232b36;
+  --input: #2d3744;
+  --primary: #6d8bff;
+  --primary-foreground: #0b0e13;
+  --accent: #18213a;
+  --ring: #6d8bff;
+  --success: #3fb950;
+  --warning: #f0883e;
+  --danger: #f85149;
+  --info: #58a6ff;
+  --sidebar: #080a0e;
+  --sidebar-foreground: #c9d1d9;
+  /* dark steps of the same hues, validated against the dark surface */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --chart-grid: #232b36;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  border-color: var(--border);
+}
+
+@keyframes agentos-pulse-ring {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--info) 55%, transparent); }
+  70% { box-shadow: 0 0 0 10px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+.node-running {
+  animation: agentos-pulse-ring 1.6s ease-out infinite;
+}
+
+.react-flow__attribution {
+  display: none;
+}

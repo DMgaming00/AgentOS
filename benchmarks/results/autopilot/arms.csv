@@ -1,0 +1,7 @@
+arm,split,trials,executions,task_success,success_numerator,success_denominator,schema_compliance,grounding,tool_correctness,cost_per_success_usd,total_cost_usd,latency_p50_ms,latency_p95_ms,candidate,decision,regressions,regression_rate,diff_mean,ci_low,ci_high
+baseline v1,validation,3,48,0.4375,21,48,0.4375,0.4375,1.0,0.006993571428571428,0.146865,357.25600000000003,579.962,Return numeric values as JSON numbers,,,,,,
+candidate v2,validation,3,48,1.0,48,48,1.0,1.0,1.0,0.002146125,0.103014,342.264,536.664,Return numeric values as JSON numbers,eligible,0,0.0,0.5625,0.3125,0.8125
+baseline v1,validation,3,48,0.4375,21,48,0.4375,0.4375,1.0,0.006993571428571428,0.146865,316.26,432.23,Fast path: answer without retrieval,,,,,,
+candidate v3,validation,3,48,0,0,48,0.0,0.0,0.0,,0.026091,187.87599999999998,265.368,Fast path: answer without retrieval,not_eligible,7,0.4375,-0.4375,-0.6875,-0.1875
+baseline v1,test,3,24,0.375,9,24,0.375,0.375,1.0,0.008412333333333334,0.075711,347.099,456.84999999999997,,,,,,,
+promoted v2,test,3,24,1.0,24,24,1.0,1.0,1.0,0.002136625,0.051279,303.18899999999996,345.01599999999996,,,,,,,

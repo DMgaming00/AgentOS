@@ -1,0 +1,109 @@
+name: agentos
+
+x-backend-env: &backend-env
+  AGENTOS_ENVIRONMENT: ${AGENTOS_ENVIRONMENT:-development}
+  AGENTOS_DATABASE_URL: postgresql+asyncpg://agentos:${POSTGRES_PASSWORD:-agentos}@postgres:5432/agentos
+  AGENTOS_REDIS_URL: redis://redis:6379/0
+  AGENTOS_JWT_SECRET: ${AGENTOS_JWT_SECRET:-dev-insecure-jwt-secret-change-me-0000}
+  AGENTOS_ARTIFACT_DIR: /data/artifacts
+  AGENTOS_PLANNER_PROVIDER: ${AGENTOS_PLANNER_PROVIDER:-mock}
+  AGENTOS_ANTHROPIC_MODEL: ${AGENTOS_ANTHROPIC_MODEL:-claude-opus-5-5}
+  AGENTOS_OPENAI_MODEL: ${AGENTOS_OPENAI_MODEL:-}
+  AGENTOS_EXECUTION_MODE: ${AGENTOS_EXECUTION_MODE:-offline}
+  AGENTOS_ALLOW_PAID_PROVIDERS: ${AGENTOS_ALLOW_PAID_PROVIDERS:-false}
+  AGENTOS_MAX_REAL_API_SPEND_USD: ${AGENTOS_MAX_REAL_API_SPEND_USD:-0}
+  AGENTOS_ENABLE_NETWORK_MODEL_REQUESTS: ${AGENTOS_ENABLE_NETWORK_MODEL_REQUESTS:-false}
+  AGENTOS_AUTOPILOT_ANTHROPIC_MODEL: ${AGENTOS_AUTOPILOT_ANTHROPIC_MODEL:-claude-haiku-5-5}
+  AGENTOS_AUTOPILOT_OPENAI_MODEL: ${AGENTOS_AUTOPILOT_OPENAI_MODEL:-}
+  AGENTOS_OTEL_ENABLED: ${AGENTOS_OTEL_ENABLED:-false}
+  AGENTOS_OTEL_ENDPOINT: ${AGENTOS_OTEL_ENDPOINT:-http://otel-collector:4318}
+  AGENTOS_LEASE_TTL_SECONDS: ${AGENTOS_LEASE_TTL_SECONDS:-15}
+  AGENTOS_CORS_ORIGINS: '["http://localhost:3000"]'
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: agentos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agentos}
+      POSTGRES_DB: agentos
+    ports: ["127.0.0.1:55432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentos -d agentos"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    ports: ["127.0.0.1:56379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    build: { context: ., dockerfile: infra/docker/backend.Dockerfile }
+    environment: *backend-env
+    command: ["sh", "-c", "alembic -c apps/api/alembic.ini upgrade head && python -m agentos.seed"]
+    volumes: [artifacts:/data/artifacts]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  api:
+    build: { context: ., dockerfile: infra/docker/backend.Dockerfile }
+    environment: *backend-env
+    command: ["uvicorn", "agentos.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+    ports: ["127.0.0.1:8000:8000"]
+    volumes: [artifacts:/data/artifacts]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/ready').status==200 else 1)"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  worker:
+    build: { context: ., dockerfile: infra/docker/backend.Dockerfile }
+    environment: *backend-env
+    command: ["agentos-worker"]
+    volumes: [artifacts:/data/artifacts]
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on:
+      api: { condition: service_healthy }
+
+  # Optional tracing stack: docker compose --profile observability up
+  otel-collector:
+    profiles: ["observability"]
+    image: otel/opentelemetry-collector-contrib:0.114.0
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes: ["./infra/otel/collector.yaml:/etc/otel/config.yaml:ro"]
+    depends_on: [jaeger]
+
+  jaeger:
+    profiles: ["observability"]
+    image: jaegertracing/all-in-one:1.63.0
+    ports: ["127.0.0.1:16686:16686"]
+
+volumes:
+  pgdata:
+  artifacts:

@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+# Node
+node_modules/
+.next/
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/blob-report/
+# Local state
+var/
+.env
+.env.*
+!.env.example
+benchmarks/results/raw/
+*.log
+.DS_Store

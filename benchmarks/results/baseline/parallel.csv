@@ -1,0 +1,11 @@
+mode,rep,nodes,work_per_node_s,max_concurrency,completion_s,ideal_s,scheduler_overhead_s
+sequential,0,8,0.5,1,4.681,4.0,0.681
+sequential,1,8,0.5,1,4.658,4.0,0.658
+sequential,2,8,0.5,1,4.599,4.0,0.599
+sequential,3,8,0.5,1,4.692,4.0,0.692
+sequential,4,8,0.5,1,4.66,4.0,0.66
+parallel,0,8,0.5,8,1.376,0.5,0.876
+parallel,1,8,0.5,8,1.36,0.5,0.86
+parallel,2,8,0.5,8,1.252,0.5,0.752
+parallel,3,8,0.5,8,1.335,0.5,0.835
+parallel,4,8,0.5,8,1.345,0.5,0.845

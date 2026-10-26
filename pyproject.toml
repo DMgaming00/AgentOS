@@ -1,0 +1,65 @@
+[project]
+name = "agentos-monorepo"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["agentos-core", "agentos-api", "agentos-worker", "openeval"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/shared", "packages/openeval", "apps/api", "apps/worker"]
+
+[tool.uv.sources]
+agentos-core = { workspace = true }
+agentos-api = { workspace = true }
+agentos-worker = { workspace = true }
+openeval = { workspace = true }
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.25",
+  "pytest-timeout>=2.3",
+  "ruff>=0.8",
+  "mypy>=1.13",
+  "asgi-lifespan>=2.1",
+]
+bench = ["matplotlib>=3.9", "psutil>=6.0"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "S", "SIM", "RUF"]
+ignore = ["S101", "S311", "B008", "RUF012", "S105", "S106", "E501", "ASYNC109"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["agentos_core", "agentos", "agentos_worker", "openeval"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S", "B", "RUF"]
+"benchmarks/**" = ["S"]
+"scripts/**" = ["S"]
+"conftest.py" = ["S"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["packages/openeval/tests", "packages/shared/tests", "apps/api/tests", "apps/worker/tests"]
+timeout = 120
+markers = [
+  "integration: requires PostgreSQL and Redis (docker compose up -d postgres redis)",
+  "live: calls a real LLM provider; opt-in via AGENTOS_LIVE_TESTS=1",
+]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+strict = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+explicit_package_bases = true
+mypy_path = ["packages/shared", "packages/openeval", "apps/api", "apps/worker"]

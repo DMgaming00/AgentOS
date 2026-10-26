@@ -1,0 +1,23 @@
+{
+  "fixture_set": "offline-smoke",
+  "version": 1,
+  "simulated": true,
+  "description": "Hand-written, clearly simulated responses used to test the fixture provider and offline demos. Not recorded from any real model.",
+  "fixtures": [
+    {
+      "id": "greeting",
+      "match": {"system_contains": "fixture-smoke", "last_user_contains": "say hello"},
+      "response": {"text": "Hello from a stored fixture.", "usage": {"input_tokens": 12, "output_tokens": 6}, "latency_ms": 3}
+    },
+    {
+      "id": "calc-call",
+      "match": {"system_contains": "fixture-smoke", "last_user_contains": "add 2 and 3"},
+      "response": {
+        "text": "",
+        "tool_calls": [{"name": "calculator", "arguments": {"operation": "add", "values": [2, 3]}}],
+        "usage": {"input_tokens": 20, "output_tokens": 14},
+        "latency_ms": 4
+      }
+    }
+  ]
+}

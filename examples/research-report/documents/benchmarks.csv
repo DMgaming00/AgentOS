@@ -1,0 +1,4 @@
+platform,p50_latency_ms,p95_latency_ms,tokens_per_second,price_per_1m_output_usd
+Nimbus Inference,180,420,2400,1.20
+Helix Serve,140,300,3100,0.95
+Vector Forge,260,900,3600,0.60

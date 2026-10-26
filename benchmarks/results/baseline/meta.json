@@ -1,0 +1,32 @@
+{
+  "label": "baseline",
+  "quick": false,
+  "started_at": "2026-10-25T05:58:08-0700",
+  "machine": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "python": "3.13.7",
+    "cpu_count": 8,
+    "memory_gb": 8.0,
+    "cpu": "Apple M1",
+    "postgres": "postgres (PostgreSQL) 16.15"
+  },
+  "suites": {
+    "throughput": {
+      "rows": 15,
+      "seconds": 85.9
+    },
+    "parallel": {
+      "rows": 10,
+      "seconds": 51.4
+    },
+    "recovery": {
+      "rows": 18,
+      "seconds": 139.8
+    },
+    "overhead": {
+      "rows": 2,
+      "seconds": 26.5
+    }
+  }
+}

@@ -1,0 +1,9 @@
+phase,seconds
+observe_dev_benchmark_s,2.947
+detect_failures_s,0.069
+diagnose_s,0.072
+generate_candidates_s,0.098
+experiment_Return numeric val_s,15.174
+experiment_Fast path: answer _s,15.383
+promote_s,0.062
+regression_detection_after_deploy_s,1.112

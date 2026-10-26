@@ -1,0 +1,23 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+processors:
+  batch: {}
+  # Defense in depth: drop any attribute that could carry content.
+  attributes/privacy:
+    actions:
+      - { key: http.request.header.authorization, action: delete }
+      - { key: gen_ai.prompt, action: delete }
+      - { key: gen_ai.completion, action: delete }
+exporters:
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls: { insecure: true }
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [attributes/privacy, batch]
+      exporters: [otlp/jaeger]

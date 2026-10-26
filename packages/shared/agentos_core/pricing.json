@@ -1,0 +1,13 @@
+{
+  "version": "2026-10-06",
+  "source": "Anthropic first-party list prices (input/output, and cache-read where published) as cached on the version date. Rates marked null are not bundled; they fall back to the input rate, which over-estimates. OpenAI rates are not bundled: add them via AGENTOS_PRICING_FILE. All values are estimates, not invoice amounts.",
+  "currency": "USD",
+  "unit": "per_million_tokens",
+  "models": {
+    "anthropic/claude-opus-5-5": {"input": 4.0, "output": 20.0, "cached_input": 0.2, "cache_write": null, "effective_date": "2026-10-06"},
+    "anthropic/claude-sonnet-5-5": {"input": 2.0, "output": 10.0, "cached_input": 0.2, "cache_write": null, "effective_date": "2026-10-06"},
+    "anthropic/claude-haiku-5-5": {"input": 0.1, "output": 0.5, "cached_input": null, "cache_write": null, "effective_date": "2026-10-06"},
+    "mock/*": {"input": 1.0, "output": 2.0, "cached_input": 0.1, "cache_write": 1.25, "effective_date": "2026-10-06", "simulated": true},
+    "fixture/*": {"input": 1.0, "output": 2.0, "cached_input": 0.1, "cache_write": 1.25, "effective_date": "2026-10-06", "simulated": true}
+  }
+}

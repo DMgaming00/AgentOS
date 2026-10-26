@@ -1,0 +1,19 @@
+[project]
+name = "agentos-worker"
+version = "0.1.0"
+description = "AgentOS durable workflow worker"
+requires-python = ">=3.12"
+dependencies = ["agentos-core"]
+
+[project.scripts]
+agentos-worker = "agentos_worker.main:run"
+
+[tool.uv.sources]
+agentos-core = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["agentos_worker"]

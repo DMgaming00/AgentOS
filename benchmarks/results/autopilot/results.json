@@ -1,0 +1,34 @@
+{
+  "candidates": [
+    {
+      "title": "Return numeric values as JSON numbers",
+      "status": "proposed",
+      "violations": []
+    },
+    {
+      "title": "Fast path: answer without retrieval",
+      "status": "proposed",
+      "violations": []
+    },
+    {
+      "title": "Persist extractions as artifacts",
+      "status": "rejected_policy",
+      "violations": [
+        "allowed_tool_ids: adds tools not in the agent's approved allowlist: ['artifact_writer']"
+      ]
+    }
+  ],
+  "decisions": {
+    "Return numeric values as JSON numbers": "eligible",
+    "Fast path: answer without retrieval": "not_eligible"
+  },
+  "live": {
+    "before_regression_failure_rate": 0.0,
+    "regressed_failure_rate": 1.0,
+    "after_rollback_failure_rate": 0.0,
+    "runs_per_phase": 10,
+    "regressed_candidate_offline_decision": "eligible"
+  },
+  "autopilot_llm_spend_usd_simulated": 0.005608,
+  "final_active_max_steps": 6
+}

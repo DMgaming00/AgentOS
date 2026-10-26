@@ -1,0 +1,562 @@
+{
+  "name": "numeric-extraction",
+  "version": 1,
+  "split": "development",
+  "description": "Extract numeric facts with units and citations from fictional platform docs.",
+  "cases": [
+    {
+      "case_id": "numx-001",
+      "task": "From the workspace documents, extract for Nimbus Inference: p95 latency (ms); Price per 1M output tokens (USD). Return a JSON object with the keys p95_latency_ms, price_per_1m_output_tokens_usd and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+      "input": {
+        "subject": "Nimbus Inference",
+        "fields": [
+          {
+            "key": "p95_latency_ms",
+            "label": "p95 latency",
+            "unit": "ms",
+            "subject": "Nimbus Inference"
+          },
+          {
+            "key": "price_per_1m_output_tokens_usd",
+            "label": "Price per 1M output tokens",
+            "unit": "USD",
+            "subject": "Nimbus Inference"
+          }
+        ],
+        "documents": [
+          "platform-nimbus.md"
+        ]
+      },
+      "input_artifacts": [
+        "platform-nimbus.md"
+      ],
+      "expected_output": {
+        "p95_latency_ms": 420,
+        "price_per_1m_output_tokens_usd": 1.2
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "source_citation_check",
+        "tool_correctness",
+        "task_completion"
+      ],
+      "evaluator_config": {
+        "numeric_tolerance": {
+          "fields": {
+            "p95_latency_ms": {
+              "abs": 0.5
+            },
+            "price_per_1m_output_tokens_usd": {
+              "abs": 0.001
+            }
+          }
+        },
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 6,
+          "max_identical_calls": 2
+        }
+      },
+      "tags": [
+        "numerical_extraction",
+        "retrieval",
+        "currency"
+      ]
+    },
+    {
+      "case_id": "numx-005",
+      "task": "From the workspace documents, extract for Helix Serve: Median latency (p50) (ms); Throughput per GPU (tokens/s). Return a JSON object with the keys p50_latency_ms, throughput_tokens_per_s and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+      "input": {
+        "subject": "Helix Serve",
+        "fields": [
+          {
+            "key": "p50_latency_ms",
+            "label": "Median latency (p50)",
+            "unit": "ms",
+            "subject": "Helix Serve"
+          },
+          {
+            "key": "throughput_tokens_per_s",
+            "label": "Throughput per GPU",
+            "unit": "tokens/s",
+            "subject": "Helix Serve"
+          }
+        ],
+        "documents": [
+          "platform-helix.md"
+        ]
+      },
+      "input_artifacts": [
+        "platform-helix.md"
+      ],
+      "expected_output": {
+        "p50_latency_ms": 140,
+        "throughput_tokens_per_s": 3100
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "source_citation_check",
+        "tool_correctness",
+        "task_completion"
+      ],
+      "evaluator_config": {
+        "numeric_tolerance": {
+          "fields": {
+            "p50_latency_ms": {
+              "abs": 0.5
+            },
+            "throughput_tokens_per_s": {
+              "abs": 0.5
+            }
+          }
+        },
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 6,
+          "max_identical_calls": 2
+        }
+      },
+      "tags": [
+        "numerical_extraction",
+        "retrieval"
+      ]
+    },
+    {
+      "case_id": "numx-009",
+      "task": "From the workspace documents, extract for Vector Forge: Price per 1M input tokens (USD); Max context window (tokens). Return a JSON object with the keys price_per_1m_input_tokens_usd, max_context_tokens and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+      "input": {
+        "subject": "Vector Forge",
+        "fields": [
+          {
+            "key": "price_per_1m_input_tokens_usd",
+            "label": "Price per 1M input tokens",
+            "unit": "USD",
+            "subject": "Vector Forge"
+          },
+          {
+            "key": "max_context_tokens",
+            "label": "Max context window",
+            "unit": "tokens",
+            "subject": "Vector Forge"
+          }
+        ],
+        "documents": [
+          "platform-vectorforge.md"
+        ]
+      },
+      "input_artifacts": [
+        "platform-vectorforge.md"
+      ],
+      "expected_output": {
+        "price_per_1m_input_tokens_usd": 0.15,
+        "max_context_tokens": 64000
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "source_citation_check",
+        "tool_correctness",
+        "task_completion"
+      ],
+      "evaluator_config": {
+        "numeric_tolerance": {
+          "fields": {
+            "price_per_1m_input_tokens_usd": {
+              "abs": 0.001
+            },
+            "max_context_tokens": {
+              "abs": 0.5
+            }
+          }
+        },
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 6,
+          "max_identical_calls": 2
+        }
+      },
+      "tags": [
+        "numerical_extraction",
+        "retrieval",
+        "currency"
+      ]
+    },
+    {
+      "case_id": "numx-013",
+      "task": "From the workspace documents, extract for Nimbus Inference: Cold start time (s); Max context window (tokens). Return a JSON object with the keys cold_start_s, max_context_tokens and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+      "input": {
+        "subject": "Nimbus Inference",
+        "fields": [
+          {
+            "key": "cold_start_s",
+            "label": "Cold start time",
+            "unit": "s",
+            "subject": "Nimbus Inference"
+          },
+          {
+            "key": "max_context_tokens",
+            "label": "Max context window",
+            "unit": "tokens",
+            "subject": "Nimbus Inference"
+          }
+        ],
+        "documents": [
+          "platform-nimbus.md"
+        ]
+      },
+      "input_artifacts": [
+        "platform-nimbus.md"
+      ],
+      "expected_output": {
+        "cold_start_s": 9,
+        "max_context_tokens": 128000
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "source_citation_check",
+        "tool_correctness",
+        "task_completion"
+      ],
+      "evaluator_config": {
+        "numeric_tolerance": {
+          "fields": {
+            "cold_start_s": {
+              "abs": 0.5
+            },
+            "max_context_tokens": {
+              "abs": 0.5
+            }
+          }
+        },
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 6,
+          "max_identical_calls": 2
+        }
+      },
+      "tags": [
+        "numerical_extraction",
+        "retrieval"
+      ]
+    },
+    {
+      "case_id": "numx-017",
+      "task": "From the workspace documents, extract for Helix Serve: Price per 1M output tokens (USD); Price per 1M input tokens (USD). Return a JSON object with the keys price_per_1m_output_tokens_usd, price_per_1m_input_tokens_usd and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+      "input": {
+        "subject": "Helix Serve",
+        "fields": [
+          {
+            "key": "price_per_1m_output_tokens_usd",
+            "label": "Price per 1M output tokens",
+            "unit": "USD",
+            "subject": "Helix Serve"
+          },
+          {
+            "key": "price_per_1m_input_tokens_usd",
+            "label": "Price per 1M input tokens",
+            "unit": "USD",
+            "subject": "Helix Serve"
+          }
+        ],
+        "documents": [
+          "platform-helix.md"
+        ]
+      },
+      "input_artifacts": [
+        "platform-helix.md"
+      ],
+      "expected_output": {
+        "price_per_1m_output_tokens_usd": 0.95,
+        "price_per_1m_input_tokens_usd": 0.22
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "source_citation_check",
+        "tool_correctness",
+        "task_completion"
+      ],
+      "evaluator_config": {
+        "numeric_tolerance": {
+          "fields": {
+            "price_per_1m_output_tokens_usd": {
+              "abs": 0.001
+            },
+            "price_per_1m_input_tokens_usd": {
+              "abs": 0.001
+            }
+          }
+        },
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 6,
+          "max_identical_calls": 2
+        }
+      },
+      "tags": [
+        "numerical_extraction",
+        "retrieval",
+        "currency"
+      ]
+    },
+    {
+      "case_id": "numx-021",
+      "task": "From the workspace documents, extract for Vector Forge: p95 latency (ms); Max context window (tokens). Return a JSON object with the keys p95_latency_ms, max_context_tokens and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+      "input": {
+        "subject": "Vector Forge",
+        "fields": [
+          {
+            "key": "p95_latency_ms",
+            "label": "p95 latency",
+            "unit": "ms",
+            "subject": "Vector Forge"
+          },
+          {
+            "key": "max_context_tokens",
+            "label": "Max context window",
+            "unit": "tokens",
+            "subject": "Vector Forge"
+          }
+        ],
+        "documents": [
+          "platform-vectorforge.md"
+        ]
+      },
+      "input_artifacts": [
+        "platform-vectorforge.md"
+      ],
+      "expected_output": {
+        "p95_latency_ms": 900,
+        "max_context_tokens": 64000
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "source_citation_check",
+        "tool_correctness",
+        "task_completion"
+      ],
+      "evaluator_config": {
+        "numeric_tolerance": {
+          "fields": {
+            "p95_latency_ms": {
+              "abs": 0.5
+            },
+            "max_context_tokens": {
+              "abs": 0.5
+            }
+          }
+        },
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 6,
+          "max_identical_calls": 2
+        }
+      },
+      "tags": [
+        "numerical_extraction",
+        "retrieval"
+      ]
+    },
+    {
+      "case_id": "numx-025",
+      "task": "From the workspace documents, extract for Nimbus Inference: Median latency (p50) (ms); p95 latency (ms). Return a JSON object with the keys p50_latency_ms, p95_latency_ms and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+      "input": {
+        "subject": "Nimbus Inference",
+        "fields": [
+          {
+            "key": "p50_latency_ms",
+            "label": "Median latency (p50)",
+            "unit": "ms",
+            "subject": "Nimbus Inference"
+          },
+          {
+            "key": "p95_latency_ms",
+            "label": "p95 latency",
+            "unit": "ms",
+            "subject": "Nimbus Inference"
+          }
+        ],
+        "documents": [
+          "platform-nimbus.md"
+        ]
+      },
+      "input_artifacts": [
+        "platform-nimbus.md"
+      ],
+      "expected_output": {
+        "p50_latency_ms": 180,
+        "p95_latency_ms": 420
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "source_citation_check",
+        "tool_correctness",
+        "task_completion"
+      ],
+      "evaluator_config": {
+        "numeric_tolerance": {
+          "fields": {
+            "p50_latency_ms": {
+              "abs": 0.5
+            },
+            "p95_latency_ms": {
+              "abs": 0.5
+            }
+          }
+        },
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 6,
+          "max_identical_calls": 2
+        }
+      },
+      "tags": [
+        "numerical_extraction",
+        "retrieval"
+      ]
+    },
+    {
+      "case_id": "numx-029",
+      "task": "From the workspace documents, extract for Helix Serve: Cold start time (s); Throughput per GPU (tokens/s). Return a JSON object with the keys cold_start_s, throughput_tokens_per_s and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+      "input": {
+        "subject": "Helix Serve",
+        "fields": [
+          {
+            "key": "cold_start_s",
+            "label": "Cold start time",
+            "unit": "s",
+            "subject": "Helix Serve"
+          },
+          {
+            "key": "throughput_tokens_per_s",
+            "label": "Throughput per GPU",
+            "unit": "tokens/s",
+            "subject": "Helix Serve"
+          }
+        ],
+        "documents": [
+          "platform-helix.md"
+        ]
+      },
+      "input_artifacts": [
+        "platform-helix.md"
+      ],
+      "expected_output": {
+        "cold_start_s": null,
+        "throughput_tokens_per_s": 3100
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "source_citation_check",
+        "tool_correctness",
+        "task_completion"
+      ],
+      "evaluator_config": {
+        "numeric_tolerance": {
+          "fields": {
+            "cold_start_s": {
+              "abs": 0.5
+            },
+            "throughput_tokens_per_s": {
+              "abs": 0.5
+            }
+          }
+        },
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 6,
+          "max_identical_calls": 2
+        }
+      },
+      "tags": [
+        "numerical_extraction",
+        "retrieval",
+        "missing_evidence"
+      ]
+    },
+    {
+      "case_id": "numx-033",
+      "task": "From the workspace documents, extract for Vector Forge: Price per 1M input tokens (USD); p95 latency (ms). Return a JSON object with the keys price_per_1m_input_tokens_usd, p95_latency_ms and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+      "input": {
+        "subject": "Vector Forge",
+        "fields": [
+          {
+            "key": "price_per_1m_input_tokens_usd",
+            "label": "Price per 1M input tokens",
+            "unit": "USD",
+            "subject": "Vector Forge"
+          },
+          {
+            "key": "p95_latency_ms",
+            "label": "p95 latency",
+            "unit": "ms",
+            "subject": "Vector Forge"
+          }
+        ],
+        "documents": [
+          "platform-vectorforge.md"
+        ]
+      },
+      "input_artifacts": [
+        "platform-vectorforge.md"
+      ],
+      "expected_output": {
+        "price_per_1m_input_tokens_usd": 0.15,
+        "p95_latency_ms": 900
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "source_citation_check",
+        "tool_correctness",
+        "task_completion"
+      ],
+      "evaluator_config": {
+        "numeric_tolerance": {
+          "fields": {
+            "price_per_1m_input_tokens_usd": {
+              "abs": 0.001
+            },
+            "p95_latency_ms": {
+              "abs": 0.5
+            }
+          }
+        },
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 6,
+          "max_identical_calls": 2
+        }
+      },
+      "tags": [
+        "numerical_extraction",
+        "retrieval",
+        "currency"
+      ]
+    }
+  ]
+}
