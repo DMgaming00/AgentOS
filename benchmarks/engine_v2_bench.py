@@ -113,13 +113,20 @@ async def measure(run_ids: list[uuid.UUID], pool: Any) -> dict[str, Any]:
     }
 
 
+SCALING_OVERRIDES: dict[str, int | None] = {"max_workers": None, "reps": None}
+
+
 async def suite_scaling(quick: bool) -> list[dict[str, Any]]:
     """Repetitions are the OUTER loop (cells are interleaved across time), because a single repetition proved
     sensitive to ambient load: the same cell varied by more than 3x between runs in a pilot."""
     rows = []
     n_wf, reps = (20, 1) if quick else (40, 3)
+    reps = SCALING_OVERRIDES["reps"] or reps
+    worker_counts = [
+        w for w in ((1, 2, 4) if quick else (1, 2, 4, 8)) if w <= (SCALING_OVERRIDES["max_workers"] or 8)
+    ]
     for rep in range(reps):
-        for n_workers in (1, 2, 4) if quick else (1, 2, 4, 8):
+        for n_workers in worker_counts:
             for size in (5, 20):
                 seeded = await reset()
                 definition = fanout(size, kind="aggregation")
@@ -302,7 +309,10 @@ async def main() -> None:
     ap.add_argument("--label", default="engine_v2")
     ap.add_argument("--suites", default=",".join(SUITES))
     ap.add_argument("--quick", action="store_true")
+    ap.add_argument("--max-workers", type=int, help="scaling suite: largest worker count")
+    ap.add_argument("--reps", type=int, help="scaling suite: repetitions")
     args = ap.parse_args()
+    SCALING_OVERRIDES.update(max_workers=args.max_workers, reps=args.reps)
     out = OUT / args.label
     out.mkdir(parents=True, exist_ok=True)
     await create_database()
