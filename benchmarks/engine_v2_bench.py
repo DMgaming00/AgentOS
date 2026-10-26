@@ -166,20 +166,23 @@ async def suite_fanout(quick: bool) -> list[dict[str, Any]]:
 
 
 async def suite_priority(quick: bool) -> list[dict[str, Any]]:
-    """Starvation protection: a backlog of high-priority work with a few low-priority runs mixed in.
+    """Starvation protection under a *stream* of high-priority arrivals.
 
-    Aging is accelerated (0.5 s per priority point instead of the default 30 s) so the effect is visible in
-    a short benchmark; with aging effectively off, low-priority runs wait for the whole high-priority backlog.
+    A pilot with everything submitted at once showed no effect, and that is expected: runs in a pre-filled backlog
+    all age together, so a priority-0 run never closes the gap to a priority-9 run submitted at the same moment.
+    Aging helps against *later* arrivals, so the benchmark submits 6 low-priority runs at t=0 and then a steady
+    stream of high-priority runs faster than one worker can serve them. Aging is accelerated (0.5 s per priority
+    point instead of the default 30 s) so the effect is visible in a short benchmark.
     """
     rows = []
-    n_high, n_low = (30, 4) if quick else (60, 6)
+    n_low, seconds, rate_hz = (4, 5, 6) if quick else (6, 10, 8)
     chain = {
         "nodes": [
             {
                 "key": f"s{i}",
                 "type": "aggregation",
                 "depends_on": [f"s{i - 1}"] if i else [],
-                "inject": {"sleep_seconds": 0.05},
+                "inject": {"sleep_seconds": 0.2},
             }
             for i in range(4)
         ]
@@ -188,36 +191,36 @@ async def suite_priority(quick: bool) -> list[dict[str, Any]]:
         for rep in range(2 if quick else 3):
             seeded = await reset()
             low = [await start_run(seeded, chain, name="low", priority=0) for _ in range(n_low)]
-            high = [await start_run(seeded, chain, name="high", priority=9) for _ in range(n_high)]
+            high: list[uuid.UUID] = []
             with workers(1, 4, env={"AGENTOS_PRIORITY_AGING_SECONDS": str(aging)}) as pool:
                 t0 = time.perf_counter()
+                while time.perf_counter() - t0 < seconds:  # a steady arrival stream, faster than service
+                    high.append(await start_run(seeded, chain, name="high", priority=9))
+                    await asyncio.sleep(1 / rate_hz)
                 await wait_runs(low + high, pool, timeout=300)
                 total = time.perf_counter() - t0
             async with get_sessionmaker()() as s:
                 got = await select_runs(s, low + high)
-            start = min(r.created_at for r in got.values())
-            lo, hi = completion_times(got, start, low), completion_times(got, start, high)
+            lat = lambda ids: sorted((got[i].completed_at - got[i].created_at).total_seconds() for i in ids)  # noqa: E731
+            lo, hi = lat(low), lat(high)
+            stream_end = max(got[i].created_at for i in high)
             row = {
                 "config": label,
                 "rep": rep,
-                "high_runs": n_high,
+                "high_runs": len(high),
                 "low_runs": n_low,
                 "total_s": round(total, 2),
-                "low_completion_p50_s": round(pct(lo, 0.5) or 0, 2),
-                "low_completion_max_s": round(lo[-1], 2),
-                "high_completion_p50_s": round(pct(hi, 0.5) or 0, 2),
-                "high_completion_max_s": round(hi[-1], 2),
-                "low_finished_before_high_backlog_drained_pct": round(
-                    100 * sum(1 for x in lo if x < hi[-1] - 0.5) / len(lo), 1
+                "low_latency_p50_s": round(pct(lo, 0.5) or 0, 2),
+                "low_latency_max_s": round(lo[-1], 2),
+                "high_latency_p50_s": round(pct(hi, 0.5) or 0, 2),
+                "high_latency_p95_s": round(pct(hi, 0.95) or 0, 2),
+                "low_done_before_stream_ended_pct": round(
+                    100 * sum(1 for i in low if got[i].completed_at < stream_end) / n_low, 1
                 ),
             }
             print("priority", row, flush=True)
             rows.append(row)
     return rows
-
-
-def completion_times(got: dict[uuid.UUID, WorkflowRun], start: Any, ids: list[uuid.UUID]) -> list[float]:
-    return sorted((got[i].completed_at - start).total_seconds() for i in ids)  # type: ignore[operator]
 
 
 async def select_runs(s: Any, ids: list[uuid.UUID]) -> dict[uuid.UUID, WorkflowRun]:
