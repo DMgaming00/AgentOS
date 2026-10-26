@@ -1,9 +1,17 @@
-scenario,n,no_retry,with_retry,diff,ci_low,ci_high,mcnemar_p,significant
-control (no faults),12,1.0,1.0,0.0,0.0,0.0,,False
-provider-brownout,12,0.0,1.0,1.0,1.0,1.0,0.00048828125,True
-garbage-model-output,12,1.0,1.0,0.0,0.0,0.0,,False
-flaky-tools,12,1.0,1.0,0.0,0.0,0.0,,False
-worker-crash-loop,12,0.0,0.0,0.0,0.0,0.0,,False
-infrastructure-hiccups,12,0.25,1.0,0.75,0.5,1.0,0.00390625,True
-duplicate-delivery,12,1.0,1.0,0.0,0.0,0.0,,False
-hostile-tool-output,12,1.0,1.0,0.0,0.0,0.0,,False
+scenario,comparison,n,no_retry,with_retry,diff,ci_low,ci_high,mcnemar_p,significant
+control (no faults),no_retry -> as_configured,12,1.0,1.0,0.0,0.0,0.0,,False
+control (no faults),as_configured -> extra_retries,12,1.0,1.0,0.0,0.0,0.0,,False
+provider-brownout,no_retry -> as_configured,12,0.0,1.0,1.0,1.0,1.0,0.00048828125,True
+provider-brownout,as_configured -> extra_retries,12,1.0,1.0,0.0,0.0,0.0,,False
+garbage-model-output,no_retry -> as_configured,12,1.0,1.0,0.0,0.0,0.0,,False
+garbage-model-output,as_configured -> extra_retries,12,1.0,1.0,0.0,0.0,0.0,,False
+flaky-tools,no_retry -> as_configured,12,1.0,1.0,0.0,0.0,0.0,,False
+flaky-tools,as_configured -> extra_retries,12,1.0,1.0,0.0,0.0,0.0,,False
+worker-crash-loop,no_retry -> as_configured,12,0.0,1.0,1.0,1.0,1.0,0.00048828125,True
+worker-crash-loop,as_configured -> extra_retries,12,1.0,1.0,0.0,0.0,0.0,,False
+infrastructure-hiccups,no_retry -> as_configured,12,0.3333333333333333,1.0,0.6666666666666666,0.4166666666666667,0.9166666666666666,0.0078125,True
+infrastructure-hiccups,as_configured -> extra_retries,12,1.0,1.0,0.0,0.0,0.0,,False
+duplicate-delivery,no_retry -> as_configured,12,1.0,1.0,0.0,0.0,0.0,,False
+duplicate-delivery,as_configured -> extra_retries,12,1.0,1.0,0.0,0.0,0.0,,False
+hostile-tool-output,no_retry -> as_configured,12,1.0,1.0,0.0,0.0,0.0,,False
+hostile-tool-output,as_configured -> extra_retries,12,1.0,1.0,0.0,0.0,0.0,,False

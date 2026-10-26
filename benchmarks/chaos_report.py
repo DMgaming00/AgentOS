@@ -160,6 +160,16 @@ def main() -> None:
         )
         + "\n\nA difference is labeled *supported* only when the paired bootstrap interval excludes 0 with at least 10 matched cases "
         "(OpenEval's rule); otherwise it is inconclusive, however large the raw difference looks.",
+        "### Reading the results\n\n"
+        "* Step retries are what rescue `provider-brownout`, `worker-crash-loop` and `infrastructure-hiccups` (completion rises from "
+        "the *none* arm to the *as configured* arm and the paired interval excludes 0).\n"
+        "* `garbage-model-output` and `flaky-tools` completed in every arm with 1.00 attempts per step even though faults were "
+        "injected, so those faults were absorbed *below* the step-retry layer (the injection ledger and Flight Recorder show "
+        "where); retries were not what saved them.\n"
+        "* Going from 3 to 5 attempts changed no outcome in any scenario at this fault intensity. This benchmark cannot say whether "
+        "5 attempts helps under heavier faults; it only shows 3 were already enough here, at the cost of more attempts per step in "
+        "the crash and infrastructure scenarios.\n"
+        "* 12 runs per cell is small: a result of 12/12 is compatible with a true rate well below 100%.",
         "### Safety metrics\n\n"
         + table(
             [
