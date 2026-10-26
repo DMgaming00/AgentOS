@@ -6,10 +6,13 @@ import csv
 import json
 from pathlib import Path
 
-from plot import INK, S1, S2, plt, save
+from plot import INK, S1, S2, S3, plt, save
 
 RES = Path(__file__).parent / "results" / "chaos"
 FRAG = Path(__file__).resolve().parents[1] / "docs" / "benchmarks" / "fragments"
+
+
+POLICY_LABEL = {"no_retry": "none", "as_configured": "as configured", "extra_retries": "5 attempts"}
 
 
 def load(name: str) -> list[dict[str, str]]:
@@ -38,10 +41,11 @@ def sec(v: str | None) -> str:
 def chart(rows: list[dict[str, str]]) -> None:
     scen = list(dict.fromkeys(r["scenario"] for r in rows))
     fig, ax = plt.subplots(figsize=(10, 3.8))
-    w = 0.38
+    w = 0.27
     for off, policy, color, label in (
-        (-w / 2 - 0.01, "no_retry", S1, "no retries (1 attempt per step)"),
-        (w / 2 + 0.01, "as_configured", S2, "retries as configured (3 attempts)"),
+        (-w - 0.01, "no_retry", S1, "no retries (1 attempt per step)"),
+        (0, "as_configured", S2, "retries as configured (3 attempts)"),
+        (w + 0.01, "extra_retries", S3, "extra retries (5 attempts)"),
     ):
         vals = [
             float(
@@ -69,7 +73,7 @@ def chart(rows: list[dict[str, str]]) -> None:
     ax.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
     ax.yaxis.set_major_formatter(lambda v, _: f"{v * 100:.0f}%")
     ax.set_ylabel("runs that completed")
-    ax.legend(loc="upper center", ncols=2, fontsize=8)
+    ax.legend(loc="upper center", ncols=3, fontsize=8)
     ax.set_title(
         "Task completion under injected faults (mock provider; same fault schedule per pair)",
         fontsize=10,
@@ -89,8 +93,8 @@ def main() -> None:
         f"Machine: {m['cpu']}, {m['cpu_count']} cores, {m['memory_gb']} GB, {m['platform']}, Python {m['python']}, {m['postgres']} "
         f"in Docker. Started {meta['started_at']}, took {meta['duration_s']} s. {meta['workers']}, lease TTL "
         f"{meta['lease_ttl_seconds']} s, {meta['trials_per_experiment']} runs per experiment, mock provider, **no model calls**. "
-        "Each built-in scenario is run twice with the identical fault schedule: with retries disabled (`no_retry`) and with the "
-        "workflow's own retries (`as_configured`). These numbers describe how the *platform* responds to faults, not how a "
+        "Each built-in scenario is run three times with the identical fault schedule: retries disabled (`no_retry`), the "
+        "workflow's own retries (`as_configured`, 3 attempts) and `extra_retries` (5 attempts). These numbers describe how the *platform* responds to faults, not how a "
         "real model behaves. Reproduce: `cd benchmarks && uv run --group bench python chaos_bench.py --label chaos`.",
         "### Completion with and without retries\n\n![chaos](chaos_completion.png)\n\n"
         + table(
@@ -110,7 +114,7 @@ def main() -> None:
             [
                 [
                     r["scenario"],
-                    "none" if r["recovery_policy"] == "no_retry" else "as configured",
+                    POLICY_LABEL[r["recovery_policy"]],
                     r["runs"],
                     r["injections"],
                     f"{r['completed']}/{r['runs']} ({pct(r['completion'])})",
@@ -128,9 +132,10 @@ def main() -> None:
         + table(
             [
                 "scenario",
+                "comparison",
                 "n",
-                "no retries",
-                "with retries",
+                "baseline",
+                "candidate",
                 "paired difference",
                 "95% CI",
                 "McNemar p",
@@ -139,6 +144,7 @@ def main() -> None:
             [
                 [
                     e["scenario"],
+                    e["comparison"],
                     e["n"],
                     pct(e["no_retry"]),
                     pct(e["with_retry"]),

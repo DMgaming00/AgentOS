@@ -29,6 +29,7 @@ from agentos_core.engine.tx import unit_of_work
 from agentos_core.testing import add_agent, save_workflow
 
 OUT = Path(__file__).parent / "results"
+POLICIES = ("no_retry", "as_configured", "extra_retries")
 FAST = {"max_attempts": 3, "backoff_base_seconds": 0.2, "backoff_max_seconds": 0.5}
 ENV = {
     "AGENTOS_LEASE_TTL_SECONDS": "3",
@@ -167,7 +168,7 @@ async def main() -> None:
     pair: dict[str, ChaosExperiment] = {}
     trials = 6 if args.quick else 12
     for name, (kind, raw) in SCENARIOS.items():
-        for policy in ("no_retry", "as_configured"):
+        for policy in POLICIES:
             seeded = await reset()
             await add_agent(
                 seeded, "Gullible Agent", scenario="injection_follower", tools=["document_search"]
@@ -183,34 +184,33 @@ async def main() -> None:
         w.writerows(rows)
     # Paired before/after (same plan, so the same fault schedule) for the scenarios where retries can matter.
     cmps = []
-    for name in SCENARIOS:
-        a, b = pair[f"{name}|no_retry"], pair[f"{name}|as_configured"]
-        # recovery_policy is part of the plan hash, so the arms differ by design: compare the paired outcomes directly.
-        from openeval.metrics import CaseRecord
-        from openeval.stats import compare
+    from openeval.metrics import CaseRecord
+    from openeval.stats import compare
 
-        ra = [
+    def records(e: ChaosExperiment) -> list[CaseRecord]:
+        return [
             CaseRecord(case_id=str(c["case_index"]), attempt=0, passed=bool(c["completed"]))
-            for c in (a.results or {})["per_case"]
+            for c in (e.results or {})["per_case"]
         ]
-        rb = [
-            CaseRecord(case_id=str(c["case_index"]), attempt=0, passed=bool(c["completed"]))
-            for c in (b.results or {})["per_case"]
-        ]
-        c = compare(ra, rb, min_n=min(10, trials))
-        cmps.append(
-            {
-                "scenario": name,
-                "n": c.n_matched,
-                "no_retry": c.baseline_success,
-                "with_retry": c.candidate_success,
-                "diff": c.diff_mean,
-                "ci_low": c.ci[0] if c.ci else None,
-                "ci_high": c.ci[1] if c.ci else None,
-                "mcnemar_p": c.mcnemar_p,
-                "significant": c.significant,
-            }
-        )
+
+    # recovery_policy is part of the plan hash, so the arms differ by design: compare the paired outcomes directly.
+    for name in SCENARIOS:
+        for lo, hi in (("no_retry", "as_configured"), ("as_configured", "extra_retries")):
+            c = compare(records(pair[f"{name}|{lo}"]), records(pair[f"{name}|{hi}"]), min_n=min(10, trials))
+            cmps.append(
+                {
+                    "scenario": name,
+                    "comparison": f"{lo} -> {hi}",
+                    "n": c.n_matched,
+                    "no_retry": c.baseline_success,
+                    "with_retry": c.candidate_success,
+                    "diff": c.diff_mean,
+                    "ci_low": c.ci[0] if c.ci else None,
+                    "ci_high": c.ci[1] if c.ci else None,
+                    "mcnemar_p": c.mcnemar_p,
+                    "significant": c.significant,
+                }
+            )
     with (out / "retry_effect.csv").open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(cmps[0]))
         w.writeheader()
