@@ -27,6 +27,7 @@ from agentos.api import (
     flight,
     metrics,
     runs,
+    security,
     tools,
     workflows,
     workspace,
@@ -138,6 +139,7 @@ def create_app() -> FastAPI:
         deployments,
         flight,
         chaos,
+        security,
     ):
         app.include_router(module.router)
 

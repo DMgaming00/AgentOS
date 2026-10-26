@@ -155,6 +155,13 @@ async def test_recovery_policy_no_retry_turns_the_same_faults_into_failures(seed
     assert m == {"value": 0.0, "numerator": 0, "denominator": 4}
     assert metric(exp, "recovery_rate")["numerator"] == 0 and metric(exp, "state_consistency")["value"] == 1.0
     assert all(c["error"] == "provider_timeout" for c in exp.results["per_case"])
+    # runs that fail on purpose are not production failures: Failure Intelligence must not see them
+    from agentos_core.autopilot.failures import analyze
+    from agentos_core.db.models import FailureSignal
+
+    async with unit_of_work() as s:
+        await analyze(s, seeded.workspace.id, window_hours=2)
+        assert (await s.execute(select(func.count()).select_from(FailureSignal))).scalar_one() == 0
 
 
 async def test_before_after_comparison_under_the_same_fault_schedule(seeded):
@@ -596,6 +603,39 @@ async def test_abort_and_injection_evidence_is_immutable(seeded):
     with pytest.raises(DBAPIError, match="immutable"):
         async with unit_of_work() as s:
             await s.execute(text("UPDATE chaos_injections SET outcome = '{\"a\": 2}'::jsonb"))
+
+
+async def test_safety_budget_counts_spend_not_transient_reservations(seeded):
+    wf = {"nodes": [{"key": "slow", "type": "aggregation", "inject": {"sleep_seconds": 120}}]}
+    wf_id = await save_workflow(seeded, "safety", wf)
+    p = plan([{"type": "provider_timeout", "probability": 0.0}], trials=2, safety_budget_usd=0.01)
+    async with unit_of_work() as s:
+        exp = await create_experiment(
+            s, workspace_id=seeded.workspace.id, user_id=None, name="s", workflow_id=wf_id, plan=p
+        )
+        exp_id = exp.id
+        for r in (
+            await s.execute(select(WorkflowRun).where(WorkflowRun.chaos_experiment_id == exp_id))
+        ).scalars():
+            r.cost_reserved_usd = (
+                0.05  # in-flight holds, five times the safety budget, but nothing actually spent
+            )
+    assert await chaos_exp.chaos_tick() == 0
+    async with unit_of_work() as s:
+        assert (await s.get(ChaosExperiment, exp_id)).status == "running"
+        for r in (
+            await s.execute(select(WorkflowRun).where(WorkflowRun.chaos_experiment_id == exp_id))
+        ).scalars():
+            r.cost_reserved_usd = 0
+            r.cost_spent_usd = 0.02  # now real (estimated) spend exceeds the budget
+    assert await chaos_exp.chaos_tick() == 1
+    async with unit_of_work() as s:
+        done = await s.get(ChaosExperiment, exp_id)
+        assert (
+            done.status == "cancelled"
+            and "safety budget exceeded" in done.abort_reason
+            and done.results["partial"] is True
+        )
 
 
 async def test_experiments_are_bounded(seeded):

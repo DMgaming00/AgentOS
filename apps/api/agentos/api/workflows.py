@@ -40,6 +40,8 @@ from agentos_core.engine.core import create_planning_run, materialize_run
 from agentos_core.planner import plan_workflow
 from agentos_core.providers.base import ModelConfig
 from agentos_core.providers.factory import get_provider
+from agentos_core.security.policy_tests import SCOPE_WORKFLOW
+from agentos_core.security.runner import HARNESS as SECURITY_HARNESS
 from agentos_core.tools.registry import get_registry
 
 router = APIRouter(prefix="/api/v1", tags=["workflows"])
@@ -77,7 +79,9 @@ async def list_workflows(
         )
         .where(
             WorkflowDefinition.workspace_id == ctx.workspace_id,
-            WorkflowDefinition.name.not_in([PLANNED_WORKFLOW, HARNESS_WORKFLOW]),
+            WorkflowDefinition.name.not_in(
+                [PLANNED_WORKFLOW, HARNESS_WORKFLOW, SECURITY_HARNESS, SCOPE_WORKFLOW]
+            ),
         )
         .group_by(WorkflowDefinition.name)
         .subquery()
@@ -123,7 +127,7 @@ async def list_workflows(
 async def create_workflow(body: WorkflowCreate, session: SessionDep, ctx: WorkspaceDep) -> WorkflowOut:
     """Create a workflow, or a new immutable version if the name already exists."""
     ctx.require(Role.DEVELOPER)
-    if body.name in (PLANNED_WORKFLOW, HARNESS_WORKFLOW):
+    if body.name in (PLANNED_WORKFLOW, HARNESS_WORKFLOW, SECURITY_HARNESS, SCOPE_WORKFLOW):
         raise api_error(422, "reserved_name", "this workflow name is reserved")
     result, _ = await validate_for_workspace(session, ctx.workspace_id, body.definition)
     if not result.ok:

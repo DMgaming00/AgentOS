@@ -7,6 +7,7 @@ action, and it must also show that the action was actually attempted (otherwise 
 
 from __future__ import annotations
 
+import contextlib
 import uuid
 from dataclasses import dataclass, field
 from datetime import timedelta
@@ -57,11 +58,31 @@ class PolicyCase:
 
 
 class Env:
-    """A paused, synthetic run (so no worker claims its step) whose attempt gives tests a real tool scope."""
+    """Synthetic runs whose single step is already RUNNING under a lease held by the suite (and the run is paused so
+    no worker claims anything), giving each case a real step scope to call the real tool-execution path with."""
 
     def __init__(self, workspace_id: uuid.UUID, user_id: uuid.UUID | None, storage: Storage) -> None:
         self.workspace_id, self.user_id, self.storage = workspace_id, user_id, storage
         self.probe_workspace_id: uuid.UUID | None = None
+        self.runs: list[uuid.UUID] = []
+
+    @staticmethod
+    def _lease(step: WorkflowStep, run_id: uuid.UUID) -> StepAttempt:
+        step.status = "running"
+        step.lease_owner = "security-suite"
+        step.lease_token = uuid.uuid4()
+        step.lease_expires_at = utcnow() + timedelta(minutes=10)
+        step.attempt_count += 1
+        step.started_at = step.started_at or utcnow()
+        return StepAttempt(
+            step_id=step.id,
+            run_id=run_id,
+            attempt_number=step.attempt_count,
+            worker_id="security-suite",
+            lease_token=step.lease_token,
+            status="running",
+            started_at=utcnow(),
+        )
 
     async def scope(self, allowed: set[str], *, max_tool_calls: int | None = None) -> StepScope:
         async with unit_of_work() as s:
@@ -90,30 +111,57 @@ class Env:
                 purpose="security",
                 budget_override={"max_tool_calls": max_tool_calls} if max_tool_calls is not None else None,
             )
-            await core.pause_run(s, run.id, user_id=None, reason="security scope: never executed")
+            await core.pause_run(s, run.id, user_id=None, reason="security scope: never executed by a worker")
             step = (await s.execute(select(WorkflowStep).where(WorkflowStep.run_id == run.id))).scalar_one()
-            attempt = StepAttempt(
-                step_id=step.id,
-                run_id=run.id,
-                attempt_number=1,
-                worker_id="security-suite",
-                lease_token=uuid.uuid4(),
-                status="running",
-                started_at=utcnow(),
-            )
+            attempt = self._lease(step, run.id)
             s.add(attempt)
             await s.flush()
-            return StepScope(
-                workspace_id=self.workspace_id,
-                run_id=run.id,
-                step_id=step.id,
-                node_key="probe",
-                attempt_id=attempt.id,
-                lease_token=attempt.lease_token,
-                agent_name="Security Probe",
-                allowed_tools=frozenset(allowed),
-                storage=self.storage,
-            )
+            self.runs.append(run.id)
+            return self._to_scope(run.id, step, attempt, allowed)
+
+    def _to_scope(
+        self, run_id: uuid.UUID, step: WorkflowStep, attempt: StepAttempt, allowed: set[str] | frozenset[str]
+    ) -> StepScope:
+        return StepScope(
+            workspace_id=self.workspace_id,
+            run_id=run_id,
+            step_id=step.id,
+            node_key="probe",
+            attempt_id=attempt.id,
+            lease_token=attempt.lease_token,
+            agent_name="Security Probe",
+            allowed_tools=frozenset(allowed),
+            storage=self.storage,
+        )
+
+    async def reclaim(self, scope: StepScope) -> StepScope:
+        """What a worker does when it resumes a step after an approval: a new attempt under a new lease."""
+        async with unit_of_work() as s:
+            step = (
+                await s.execute(
+                    select(WorkflowStep).where(WorkflowStep.id == scope.step_id).with_for_update()
+                )
+            ).scalar_one()
+            if step.status != "ready":
+                raise RuntimeError(f"step is {step.status}, not ready to resume")
+            attempt = self._lease(step, scope.run_id)
+            s.add(attempt)
+            await s.flush()
+            return self._to_scope(scope.run_id, step, attempt, scope.allowed_tools)
+
+    async def request_approval(self, scope: StepScope, call: ToolCallRequest) -> Any:
+        """Drive the real flow up to a pending human decision: the call needs approval, the step suspends, and the
+        approval request is opened (bound to the call's exact arguments)."""
+        out = await execute_tool_call(call, scope, get_registry())
+        if out.kind != "needs_approval" or out.approval is None:
+            raise RuntimeError(f"expected needs_approval, got {out.kind}")
+        await core.suspend_for_approval(
+            scope.step_id, scope.lease_token, checkpoint={"security": True}, approval=out.approval
+        )
+        async with unit_of_work() as s:
+            return (
+                await s.execute(select(ApprovalRequest).where(ApprovalRequest.run_id == scope.run_id))
+            ).scalar_one()
 
     async def probe_workspace(self) -> uuid.UUID:
         """An ephemeral second workspace holding a canary document and data file, owned by nobody who can log in."""
@@ -132,7 +180,7 @@ class Env:
                 s,
                 workspace_id=ws.id,
                 filename="canary-notes.md",
-                data=f"# Canary\n\nThe secret marker is {CANARY}.".encode(),
+                data=f"# Quarterly Blue Heron\n\nQuarterly Blue Heron report. The secret marker is {CANARY}.".encode(),
                 storage=self.storage,
             )
             await ingest_document(
@@ -146,6 +194,22 @@ class Env:
         return ws.id
 
     async def cleanup(self) -> None:
+        # The approved-write cases really write artifacts; they are test data, so they are removed again.
+        async with unit_of_work() as s:
+            rows = (
+                (await s.execute(select(Artifact).where(Artifact.run_id.in_(self.runs)))).scalars().all()
+                if self.runs
+                else []
+            )
+            for a in rows:
+                if a.storage_path:
+                    with contextlib.suppress(OSError):
+                        self.storage.resolve(a.storage_path).unlink()
+                await s.delete(a)
+        for run_id in self.runs:
+            async with unit_of_work() as s:
+                with contextlib.suppress(core.EngineError):
+                    await core.cancel_run(s, run_id, user_id=None)
         if self.probe_workspace_id is not None:
             async with unit_of_work() as s:
                 ws = await s.get(Workspace, self.probe_workspace_id)
@@ -175,11 +239,16 @@ async def _artifact_count(run_id: uuid.UUID) -> int:
         )
 
 
+def _result_text(content: dict[str, Any]) -> str:
+    """The data a tool returned, without echoes of the request (a search echoes its own query string)."""
+    return repr({k: v for k, v in content.items() if k not in ("query", "filename", "error")})
+
+
 def _call(call_id: str, name: str, args: dict[str, Any]) -> ToolCallRequest:
     return ToolCallRequest(call_id=call_id, name=name, arguments=args)
 
 
-WRITE = {"filename": "report.md", "content": "hello", "content_type": "text/markdown"}
+WRITE = {"filename": "report.md", "content": "hello", "reason": "security test"}
 
 
 async def p_unauthorized_tool(env: Env) -> CaseOutcome:
@@ -226,18 +295,18 @@ async def p_schema_enforced(env: Env) -> CaseOutcome:
     )
 
 
+async def _resolve(
+    approval_id: uuid.UUID, decision: ApprovalStatus, user_id: uuid.UUID | None, reason: str
+) -> None:
+    async with unit_of_work() as s:
+        await core.resolve_approval(s, approval_id, decision=decision, user_id=user_id, reason=reason)
+
+
 async def p_approval_bound_to_arguments(env: Env) -> CaseOutcome:
     scope = await env.scope({"artifact_writer"})
-    a = await execute_tool_call(_call("c1", "artifact_writer", WRITE), scope, get_registry())
-    if a.kind != "needs_approval":
-        return CaseOutcome("error", {"first": a.kind}, {})
-    async with unit_of_work() as s:
-        approval = (
-            await s.execute(select(ApprovalRequest).where(ApprovalRequest.run_id == scope.run_id))
-        ).scalar_one()
-        await core.resolve_approval(
-            s, approval.id, decision=ApprovalStatus.APPROVED, user_id=env.user_id, reason="security test"
-        )
+    approval = await env.request_approval(scope, _call("c1", "artifact_writer", WRITE))
+    await _resolve(approval.id, ApprovalStatus.APPROVED, env.user_id, "security test")
+    scope = await env.reclaim(scope)  # the step resumes under a new lease, as a worker would
     tampered = {**WRITE, "content": "TAMPERED after approval"}
     b = await execute_tool_call(_call("c1", "artifact_writer", tampered), scope, get_registry())
     wrote_tampered = await _artifact_count(scope.run_id)
@@ -257,38 +326,34 @@ async def p_approval_bound_to_arguments(env: Env) -> CaseOutcome:
 
 async def p_rejected_action_not_executed(env: Env) -> CaseOutcome:
     scope = await env.scope({"artifact_writer"})
-    a = await execute_tool_call(_call("c1", "artifact_writer", WRITE), scope, get_registry())
-    async with unit_of_work() as s:
-        approval = (
-            await s.execute(select(ApprovalRequest).where(ApprovalRequest.run_id == scope.run_id))
-        ).scalar_one()
-        await core.resolve_approval(
-            s, approval.id, decision=ApprovalStatus.REJECTED, user_id=env.user_id, reason="no"
-        )
-    b = await execute_tool_call(_call("c1", "artifact_writer", WRITE), scope, get_registry())
+    approval = await env.request_approval(scope, _call("c1", "artifact_writer", WRITE))
+    await _resolve(approval.id, ApprovalStatus.REJECTED, env.user_id, "no")
+    b = await execute_tool_call(
+        _call("c1", "artifact_writer", WRITE), scope, get_registry()
+    )  # retrying the same call
+    rows = await _executions(scope)
     ok = (
-        a.kind == "needs_approval"
-        and b.kind == "error"
-        and b.extra.get("rejected")
+        b.kind == "error"
+        and bool(b.extra.get("rejected"))
         and await _artifact_count(scope.run_id) == 0
+        and all(r.status != "succeeded" for r in rows)
     )
     return CaseOutcome(
         "pass" if ok else "fail",
-        {"after_rejection": b.kind, "artifacts": await _artifact_count(scope.run_id)},
+        {
+            "after_rejection": b.kind,
+            "artifacts": await _artifact_count(scope.run_id),
+            "execution_statuses": [r.status for r in rows],
+        },
         {},
     )
 
 
 async def p_approval_single_use(env: Env) -> CaseOutcome:
     scope = await env.scope({"artifact_writer"})
-    await execute_tool_call(_call("c1", "artifact_writer", WRITE), scope, get_registry())
-    async with unit_of_work() as s:
-        approval = (
-            await s.execute(select(ApprovalRequest).where(ApprovalRequest.run_id == scope.run_id))
-        ).scalar_one()
-        await core.resolve_approval(
-            s, approval.id, decision=ApprovalStatus.APPROVED, user_id=env.user_id, reason="once"
-        )
+    approval = await env.request_approval(scope, _call("c1", "artifact_writer", WRITE))
+    await _resolve(approval.id, ApprovalStatus.APPROVED, env.user_id, "once")
+    scope = await env.reclaim(scope)
     first = await execute_tool_call(_call("c1", "artifact_writer", WRITE), scope, get_registry())
     replay = await execute_tool_call(
         _call("c2", "artifact_writer", WRITE), scope, get_registry()
@@ -317,20 +382,15 @@ async def p_approval_single_use(env: Env) -> CaseOutcome:
 
 async def p_expired_approval(env: Env) -> CaseOutcome:
     scope = await env.scope({"artifact_writer"})
-    await execute_tool_call(_call("c1", "artifact_writer", WRITE), scope, get_registry())
+    approval = await env.request_approval(scope, _call("c1", "artifact_writer", WRITE))
     async with unit_of_work() as s:
-        approval = (
-            await s.execute(select(ApprovalRequest).where(ApprovalRequest.run_id == scope.run_id))
-        ).scalar_one()
-        approval.expires_at = utcnow() - timedelta(seconds=1)
-    async with unit_of_work() as s:
-        await core.expire_approvals(now=utcnow())
+        row = await s.get(ApprovalRequest, approval.id)
+        assert row is not None
+        row.expires_at = utcnow() - timedelta(seconds=1)
+    await core.expire_approvals()
     refused = False
     try:
-        async with unit_of_work() as s:
-            await core.resolve_approval(
-                s, approval.id, decision=ApprovalStatus.APPROVED, user_id=env.user_id, reason="too late"
-            )
+        await _resolve(approval.id, ApprovalStatus.APPROVED, env.user_id, "too late")
     except Exception:
         refused = True
     after = await execute_tool_call(_call("c1", "artifact_writer", WRITE), scope, get_registry())
@@ -338,7 +398,12 @@ async def p_expired_approval(env: Env) -> CaseOutcome:
         status = (
             await s.execute(select(ApprovalRequest.status).where(ApprovalRequest.id == approval.id))
         ).scalar_one()
-    ok = status != "approved" and after.kind != "result" and await _artifact_count(scope.run_id) == 0
+    ok = (
+        status == "expired"
+        and refused
+        and after.kind != "result"
+        and await _artifact_count(scope.run_id) == 0
+    )
     return CaseOutcome(
         "pass" if ok else "fail",
         {"approval_status": status, "late_approval_refused": refused, "execution_after": after.kind},
@@ -367,9 +432,9 @@ async def p_workspace_isolation_search(env: Env) -> CaseOutcome:
     probe = await env.probe_workspace()
     scope = await env.scope({"document_search"})
     out = await execute_tool_call(
-        _call("c1", "document_search", {"query": CANARY, "limit": 10}), scope, get_registry()
+        _call("c1", "document_search", {"query": "Quarterly Blue Heron", "limit": 10}), scope, get_registry()
     )
-    leaked = CANARY in repr(out.content)
+    leaked = CANARY in _result_text(out.content)
     async with unit_of_work() as s:  # control: the canary really exists, in the other workspace
         exists = (
             await s.execute(select(func.count()).select_from(Document).where(Document.workspace_id == probe))

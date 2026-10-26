@@ -75,7 +75,7 @@ async def list_runs(
     ctx: WorkspaceDep,
     status: str | None = None,
     workflow_id: uuid.UUID | None = None,
-    purpose: str | None = Query(None, pattern="^(workflow|evaluation|replay)$"),
+    purpose: str | None = Query(None, pattern="^(workflow|evaluation|replay|chaos|security)$"),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ) -> Page[RunOut]:
@@ -86,6 +86,8 @@ async def list_runs(
         base = base.where(WorkflowRun.workflow_definition_id == workflow_id)
     if purpose:
         base = base.where(WorkflowRun.purpose == purpose)
+    else:  # experiment, test and re-execution runs have their own pages; they stay out of the default listing
+        base = base.where(WorkflowRun.purpose.not_in(["chaos", "security", "replay"]))
     total = (await session.execute(select(func.count()).select_from(base.subquery()))).scalar_one()
     rows = (
         await session.execute(base.order_by(WorkflowRun.created_at.desc()).limit(limit).offset(offset))

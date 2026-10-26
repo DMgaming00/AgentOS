@@ -8,8 +8,8 @@ Legend: ✅ done and tested · 🟡 partly done · ⏭️ not started. Updated a
 | 1 | Offline execution modes, guarded adapters (2 layers), spend ledger, fixture provider, isolation tests, UI indicator, `.env`/compose defaults, `docs/ENABLE_REAL_CLAUDE.md` | ✅ |
 | 2 | Engine v2: conditional branches + joins, bounded `fan_out`, nested `sub_workflow` (depth-limited, durable parent wait), priority with aging, pause/resume, cancellation propagation; fault-injection tests with real processes | ✅ implemented and tested · 🟡 scheduling benchmarks being re-run from a frozen checkout (see Known limitations) |
 | 3 | Flight Recorder: immutable sanitized model-call records, frames with status deltas and integrity checks, playback UI (play, pause, step, scrub, jump, keyboard), recorded replay vs deterministic re-execution, structured run diff, fail-closed sanitized export | ✅ |
-| 4 | Chaos Lab | ⏭️ |
-| 5 | Security Center | ⏭️ |
+| 4 | Chaos Lab: 17 faults at real boundaries, seeded reproducible schedules, safety limits, injection ledger, scorecard with defined metrics, before/after via OpenEval statistics, API + UI + tests; benchmark of all presets with and without retries | ✅ · found and fixed 4 platform bugs |
+| 5 | Security Center: 11 engine-level policy tests, 28-attack + 8-control injection corpus run through real workflows, trace-sanitization checks, metrics with denominators, derived incidents, API + UI + tests; sensitivity tests prove the suite can fail | ✅ |
 | 6 | OpenEval expansion and Agent Arena | ⏭️ |
 | 7 | Memory Lab | ⏭️ |
 | 8 | Optimization Lab 2.0 | ⏭️ |

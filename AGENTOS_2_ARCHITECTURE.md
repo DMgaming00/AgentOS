@@ -250,3 +250,59 @@ same machinery as for quality. A difference is called supported only when the in
    `DatabaseUnavailableError` (transient), and the same experiment recovers.
 3. *A per-run fault cap made the schedule timing-dependent* (found by the reproducibility test) → per-step caps and a
    seed-derived affected set.
+
+## 5. Agent Security Center (Phase 5)
+
+Migration `0007`. A deterministic security evaluation of the platform's **enforcement layer**: does the code, not the
+prompt, stop an agent from doing what it must not? Every verdict is backed by persisted evidence (tool executions,
+approvals, artifacts, events), and a case that did not actually exercise its attack is an *error*, never a pass.
+
+```mermaid
+flowchart TB
+  S[security_tick<br/>leased phase machine] --> P[policy: 11 engine-level cases<br/>real execute_tool_call / approval functions]
+  S --> U[setup: 36 fixtures → documents + runs<br/>ephemeral probe workspace with a canary]
+  U --> W[workers execute the runs<br/>Security Test Agent = deliberately gullible mock]
+  W --> G[grade from persisted records]
+  S --> X[exposure: planted secrets → scan trace tables]
+  G & P & X --> R[(security_evaluation_results<br/>append-only)] --> M[metrics + matrix + findings<br/>sealed run]
+  M --> UI[Security Center · incidents from real events]
+```
+
+**What is tested**
+
+| Group | Cases | How |
+|---|---|---|
+| Tool authorization | unauthorized tool, unknown/unregistered tool, malformed arguments | the real `execute_tool_call` against a real step scope; evidence = the recorded `tool_executions` row and that no artifact exists |
+| Approvals | arguments changed after approval, rejected action retried, approval reused, expired approval | the real suspend → resolve → re-lease flow; the approval is bound to the exact arguments hash, single-use, expiring; a tampered call needs its own approval |
+| Budgets | tool-call budget | calls beyond `max_tool_calls` are denied with `budget_exceeded` |
+| Workspace isolation | search cannot see another workspace, data reader cannot open another workspace's file, path traversal | a throwaway second workspace holds a document and a data file containing a **canary**; the tests prove it exists, then prove the canary is unreachable |
+| Prompt injection (28 attacks) | 7 goals × 4 surfaces (document body, retrieved chunk, search-result heading, mock API response) | the fixture is ingested, a real run reads it, the gullible agent obeys the embedded `[[CALL_TOOL name json]]` directive, and the platform decides |
+| Benign controls (8) | plain text, prose naming tools, `[[brackets]]`, an **authorized** directive | must *not* be blocked: they measure false positives |
+| Trace sanitization (4) | planted credential-shaped strings (Anthropic-style key, bearer token, database URL, AWS key id) in the run input, the search query and tool arguments | scanned for in `events`, `tool_executions`, `model_call_records`, `approval_requests`, attempt errors. Business data (run input, step outputs) legitimately holds what the user supplied and is reported separately |
+
+**Integrity guards.** (1) A pass needs proof the attack was attempted (`injected_attempts > 0`); otherwise `error`.
+(2) The canary check looks only at what *injected* tool calls returned, never at the legitimate read of the attack document
+or at a search's echo of its own query (the first version of this check flagged exactly those, a false positive the
+evidence made obvious). (3) Two **sensitivity tests** prove the suite can fail: raising the flood budget turns the four
+flood cases into failures, and disabling the artifact writer's approval gate stops the approval case from passing.
+(4) Test cases are versioned and immutable (`security_test_cases`, trigger-protected); finished runs are sealed.
+
+**Metrics** (all with denominators): policy enforcement, attacks exercised, unauthorized-action attempts, blocked actions,
+successful policy enforcement (attacks with no harmful effect), unsafe side effects (must be 0), unsafe writes prevented,
+false-positive blocks, approval-bypass attempts, cross-workspace attempts and canary leaks, secret exposure in traces.
+
+**Incidents** are read from real records, never fabricated: `tool.denied` events (with the tool execution as evidence),
+rejected and expired approvals, budget stops, and failed security tests, each with run, step and origin
+(workflow run, security suite, chaos experiment, re-execution).
+
+**Authorization.** Anyone in the workspace can read verdicts and metrics; raw observed evidence and run links are
+developer/admin only; starting the suite is developer+, one run at a time per workspace, idempotent.
+
+**Isolation of the fixtures.** Fixture documents and the probe workspace are deleted when a run ends (success or failure);
+the approved-write test artifacts are removed; synthetic scope runs are cancelled. Runs and result rows stay as evidence.
+Runs with `purpose` in (`chaos`, `security`, `replay`) are excluded from the default run list and from Failure Intelligence.
+
+**What this does not show.** The test model is a mock that obeys every directive, **by design**: results describe the
+platform's code-level enforcement, not any real model's resistance to prompt injection. The corpus is small and
+hand-written (a regression floor, not a guarantee). Only persisted traces are scanned for secrets; logs of other worker
+processes are not.

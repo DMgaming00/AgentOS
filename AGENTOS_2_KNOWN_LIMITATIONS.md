@@ -58,3 +58,30 @@ Updated each phase. Items are things that are not done, not verified, or weaker 
   characters. Truncated records say so.
 * **Spans**: `trace_id`/`span_id` are the OpenTelemetry ids active when the event was written; they correlate with a
   collector only if one is configured (OTLP export was never exercised against a collector).
+
+## Phase 4 (Chaos Lab)
+
+* **Fault injection is not a network or OS sandbox**: faults are applied inside the platform's own code paths. A
+  `postgres_interruption` kills only the injecting process's connections, but in a shared process (in-process test
+  workers) that includes every concurrent step.
+* **A worker crash takes down every step that worker is running**, so with high crash probability a step can lose its
+  worker several times in a row and exhaust its retries; the benchmark shows this (see AGENTOS_2_BENCHMARKS.md).
+* **Approvals in experiments are decided by a simulated reviewer**; results say nothing about human review latency.
+* **The same fault schedule is guaranteed only where two configurations reach the same coordinates**
+  (seed, case, step, attempt, call): a configuration that makes different calls faces different faults.
+* **Detection time is "first platform reaction recorded after the injection"**, which can be an unrelated reaction in the
+  same run; silent absorptions are counted separately rather than hidden.
+* Chaos experiments use the mock provider offline; they measure the platform's behavior, not any model's.
+
+## Phase 5 (Security Center)
+
+* The injection model is a **mock that obeys every directive by design**. Passing means the *platform's enforcement*
+  held; it is not evidence about any real model.
+* The corpus is **28 hand-written attacks and 8 benign controls** across 7 goals and 4 surfaces. New attack classes need new
+  cases (and a new suite version). Directive syntax is uniform (`[[CALL_TOOL ...]]`), so natural-language obfuscation
+  of instructions is not exercised.
+* Secret scanning covers **persisted trace data** only; structured logs of other worker processes are not scanned.
+* The suite needs workers (it runs real workflows), takes about 25–30 s, and temporarily writes fixture documents into the
+  workspace and creates a throwaway workspace; both are removed at the end, but a crash between phases can leave them
+  until the next run's cleanup or a manual removal.
+* Security-run agents appear in the Agents list (`Security Test Agent`, labeled as a fixture).

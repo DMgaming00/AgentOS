@@ -89,3 +89,18 @@ no re-execute or export controls.
   database row order; now in declared order.
 * **Test infrastructure**: a failing migration no longer turns the whole integration suite into skips; a second
   concurrent pytest session now fails fast instead of dropping the first session's database.
+
+## Phase 4–5 verification (2026-10-26)
+
+| Check | Result |
+|---|---|
+| Full backend suite (`uv run pytest`) | **348 passed, 3 skipped**, 280 s |
+| `ruff check` / `ruff format --check` | clean (224 files) |
+| `mypy --strict` | clean (131 source files) — one error found in the new security runner and fixed |
+| Alembic | `upgrade head` on dev data (0006 → 0007 → 0008), `downgrade 0006` + `upgrade head` round trip, `alembic check`: no drift |
+| Original demos (`scripts/demo.py all`) | all checks passed |
+| Autopilot demo (`make autopilot-demo`) | all checks passed (42.7 s) |
+| Playwright (Docker stack) | **14 passed** (adds chaos ×3, flight ×2, security ×2) |
+
+Notes: 3 skipped tests are the pre-existing opt-in/live-provider tests. Earlier in development one Autopilot Playwright
+spec failed once immediately after a rebuild and passed on rerun and in every later full run; the cause was not determined.

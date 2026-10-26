@@ -17,6 +17,7 @@ from agentos_core.engine.core import (
     subflow_tick,
 )
 from agentos_core.log import get_logger
+from agentos_core.security.runner import security_tick
 
 log = get_logger(__name__)
 
@@ -32,6 +33,7 @@ class TickResult:
     experiments_completed: int = 0
     regressions_flagged: int = 0
     chaos_finalized: int = 0
+    security_advanced: int = 0
 
 
 async def coordinator_tick() -> TickResult:
@@ -46,6 +48,7 @@ async def coordinator_tick() -> TickResult:
     r.experiments_completed = await experiments_tick()
     r.regressions_flagged = await monitoring_tick()
     r.chaos_finalized = await chaos_tick()
+    r.security_advanced = await security_tick()
     if r.leases_expired or r.runs_timed_out or r.subflows_propagated:
         log.info("coordinator_tick", **r.__dict__)
     return r

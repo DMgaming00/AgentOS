@@ -111,7 +111,12 @@ async def detect(
     agent_id: uuid.UUID | None = None,
     thresholds: Thresholds = Thresholds(),
 ) -> list[Signal]:
-    run_filter = [WorkflowRun.workspace_id == workspace_id, WorkflowRun.created_at >= since]
+    # Chaos, security and replay runs fail on purpose; they must not look like production agent failures.
+    run_filter = [
+        WorkflowRun.workspace_id == workspace_id,
+        WorkflowRun.created_at >= since,
+        WorkflowRun.purpose.not_in(["chaos", "security", "replay"]),
+    ]
     step_q = (
         select(WorkflowStep, WorkflowRun.purpose)
         .join(WorkflowRun, WorkflowRun.id == WorkflowStep.run_id)

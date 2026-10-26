@@ -1,17 +1,17 @@
 scenario,recovery_policy,runs,injections,completion,completed,exposure,recovery_rate,recovery_n,attempts_per_step,detect_median_ms,detect_n,recover_median_ms,recover_p95_ms,recover_n,dup_prevented,dup_total,dup_executions_found,consistency,consistency_checks,budget_compliance,policy_held,policy_runs,status,partial,errors
 control (no faults),no_retry,12,0,1.0,12,0.0,,0,1.0,,0,,,0,0,0,0,1.0,60,1.0,,0,completed,False,
 control (no faults),as_configured,12,0,1.0,12,0.0,,0,1.0,,0,,,0,0,0,0,1.0,60,1.0,,0,completed,False,
-provider-brownout,no_retry,12,22,0.0,0,1.0,0.0,12,0.625,46.581,22,,,0,0,0,0,1.0,60,1.0,,0,completed,False,provider_rate_limited;provider_timeout
-provider-brownout,as_configured,12,32,1.0,12,1.0,1.0,12,1.6666666666666667,39.3655,32,928.738,1901.267,32,0,0,0,1.0,60,1.0,,0,completed,False,
-garbage-model-output,no_retry,12,34,0.16666666666666666,2,1.0,0.16666666666666666,12,0.7083333333333334,80.215,32,272.04699999999997,288.603,13,0,0,0,1.0,60,1.0,,0,completed,False,internal_error
-garbage-model-output,as_configured,12,35,0.16666666666666666,2,1.0,0.16666666666666666,12,0.7291666666666666,100.705,33,293.353,735.803,14,0,0,0,1.0,60,1.0,,0,completed,False,internal_error
-flaky-tools,no_retry,12,19,1.0,12,0.8333333333333334,1.0,10,1.0,17.418,19,138.58599999999998,10099.348000000002,19,0,0,0,1.0,60,1.0,,0,completed,False,
-flaky-tools,as_configured,12,19,1.0,12,0.8333333333333334,1.0,10,1.0,17.829,19,140.90800000000002,10095.009,19,0,0,0,1.0,60,1.0,,0,completed,False,
-worker-crash-loop,no_retry,12,7,0.0,0,0.5833333333333334,0.0,7,0.7083333333333334,,0,,,0,0,0,0,0.8,60,1.0,,0,cancelled,True,
-worker-crash-loop,as_configured,12,9,0.0,0,0.5833333333333334,0.0,7,0.8333333333333334,3838.2000000000003,7,,,0,0,0,0,0.8333333333333334,60,1.0,,0,cancelled,True,
-infrastructure-hiccups,no_retry,12,37,0.16666666666666666,2,0.9166666666666666,0.18181818181818182,11,0.7291666666666666,142.23,27,385.8685,482.87600000000003,20,0,0,0,1.0,60,1.0,,0,completed,False,database_unavailable
-infrastructure-hiccups,as_configured,12,71,1.0,12,1.0,1.0,12,1.5208333333333333,170.5395,44,432.938,3533.6400000000003,71,0,0,0,1.0,60,1.0,,0,completed,False,
-duplicate-delivery,no_retry,12,90,1.0,12,1.0,1.0,12,1.2,193.6035,68,1011.5450000000001,1506.096,68,87,87,0,1.0,60,1.0,,0,completed,False,
-duplicate-delivery,as_configured,12,91,1.0,12,1.0,1.0,12,1.2,206.6975,66,835.0135,1258.846,68,90,90,0,1.0,60,1.0,,0,completed,False,
-hostile-tool-output,no_retry,12,10,1.0,12,0.8333333333333334,1.0,10,1.0,153.12349999999998,10,278.712,301.17,10,0,0,0,1.0,60,1.0,1.0,10,completed,False,
-hostile-tool-output,as_configured,12,10,1.0,12,0.8333333333333334,1.0,10,1.0,149.264,10,280.53599999999994,303.647,10,0,0,0,1.0,60,1.0,1.0,10,completed,False,
+provider-brownout,no_retry,12,22,0.0,0,1.0,0.0,12,0.625,28.688000000000002,22,,,0,0,0,0,1.0,60,1.0,,0,completed,False,provider_rate_limited;provider_timeout
+provider-brownout,as_configured,12,32,1.0,12,1.0,1.0,12,1.6666666666666667,28.3645,32,857.2355,1435.019,32,0,0,0,1.0,60,1.0,,0,completed,False,
+garbage-model-output,no_retry,12,39,1.0,12,1.0,1.0,12,1.0,85.08,16,223.653,395.738,39,0,0,0,1.0,60,1.0,,0,completed,False,
+garbage-model-output,as_configured,12,39,1.0,12,1.0,1.0,12,1.0,100.79299999999999,17,226.345,343.443,39,0,0,0,1.0,60,1.0,,0,completed,False,
+flaky-tools,no_retry,12,19,1.0,12,0.8333333333333334,1.0,10,1.0,19.403,19,131.256,10085.798999999999,19,0,0,0,1.0,60,1.0,,0,completed,False,
+flaky-tools,as_configured,12,19,1.0,12,0.8333333333333334,1.0,10,1.0,18.486,19,120.24600000000001,10132.092,19,0,0,0,1.0,60,1.0,,0,completed,False,
+worker-crash-loop,no_retry,12,9,0.0,0,0.6666666666666666,0.0,8,0.75,2902.303,9,,,0,0,0,0,1.0,60,1.0,,0,completed,False,worker_lost
+worker-crash-loop,as_configured,12,7,0.0,0,0.5,0.0,6,0.75,,0,,,0,0,0,0,0.8,60,1.0,,0,cancelled,True,
+infrastructure-hiccups,no_retry,12,45,0.25,3,0.8333333333333334,0.3,10,0.7291666666666666,114.001,26,320.29200000000003,512.089,25,0,0,0,1.0,60,1.0,,0,completed,False,database_unavailable;worker_lost
+infrastructure-hiccups,as_configured,12,69,1.0,12,1.0,1.0,12,1.3958333333333333,154.82999999999998,37,357.009,1679.5240000000001,69,0,0,0,1.0,60,1.0,,0,completed,False,
+duplicate-delivery,no_retry,12,90,1.0,12,1.0,1.0,12,1.2,233.1705,68,1500.711,2143.828,68,90,90,0,1.0,60,1.0,,0,completed,False,
+duplicate-delivery,as_configured,12,90,1.0,12,1.0,1.0,12,1.2,247.282,67,1080.0745,1772.257,68,88,88,0,1.0,60,1.0,,0,completed,False,
+hostile-tool-output,no_retry,12,10,1.0,12,0.8333333333333334,1.0,10,1.0,174.125,10,285.7765,298.77500000000003,10,0,0,0,1.0,60,1.0,1.0,10,completed,False,
+hostile-tool-output,as_configured,12,10,1.0,12,0.8333333333333334,1.0,10,1.0,206.779,10,353.19899999999996,362.199,10,0,0,0,1.0,60,1.0,1.0,10,completed,False,

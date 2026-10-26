@@ -11,8 +11,8 @@
     "cpu": "Apple M1",
     "postgres": "postgres (PostgreSQL) 16.15"
   },
-  "duration_s": 98.8,
-  "started_at": "2026-10-26T16:10:16-0700",
+  "duration_s": 96.5,
+  "started_at": "2026-10-26T16:21:05-0700",
   "provider": "mock (deterministic); no model calls",
   "workers": "3 processes x concurrency 4, supervised",
   "lease_ttl_seconds": 3

@@ -265,7 +265,9 @@ async def chaos_tick() -> int:
                     )
                 ).scalars()
             )
-            spent = sum(float(r.cost_spent_usd) + float(r.cost_reserved_usd) for r in runs)
+            # Actual (estimated) spend only. Reservations are transient holds sized for the worst case per call: counting
+            # them cancelled healthy experiments whenever many steps were in flight at once (found by the benchmark).
+            spent = sum(float(r.cost_spent_usd) for r in runs)
             now = utcnow()
             if spent > plan.safety_budget_usd:
                 await _finalize(

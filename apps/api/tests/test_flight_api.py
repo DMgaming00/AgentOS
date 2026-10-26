@@ -117,6 +117,8 @@ async def test_reexecute_export_and_compare_with_roles_and_idempotency(client, r
     assert again.status_code == 409 and again.json()["error"]["code"] == "run_not_replayable"
     listed = (await client.get("/api/v1/runs", headers=roles["viewer"], params={"purpose": "replay"})).json()
     assert [x["id"] for x in listed["items"]] == [str(replay_id)]
+    default = (await client.get("/api/v1/runs", headers=roles["viewer"])).json()
+    assert str(replay_id) not in {x["id"] for x in default["items"]}  # re-executions have their own listing
 
     cmp = await client.get(
         "/api/v1/flight/compare", headers=roles["viewer"], params={"a": str(run_id), "b": str(replay_id)}
