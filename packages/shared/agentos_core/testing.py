@@ -79,13 +79,17 @@ async def start_run(
     *,
     name: str | None = None,
     run_input: dict[str, Any] | None = None,
+    priority: int = 0,
+    exact_name: bool = False,
 ) -> uuid.UUID:
+    """Create a workflow definition and start a run. ``exact_name`` keeps the name unsuffixed, so
+    other workflows can reference it from a ``sub_workflow`` node."""
     spec = WorkflowSpec.model_validate(definition)
     async with unit_of_work() as session:
         wf = WorkflowDefinition(
             id=uuid.uuid4(),
             workspace_id=seeded.workspace.id,
-            name=f"{name or 'wf'}-{uuid.uuid4().hex[:8]}",
+            name=name if exact_name and name else f"{name or 'wf'}-{uuid.uuid4().hex[:8]}",
             version=1,
             definition=definition,
         )
@@ -98,8 +102,23 @@ async def start_run(
             run_input=run_input or {},
             requested_by=seeded.users["admin"].id,
             agents_by_name={n: AgentRef(a.id, n) for n, a in seeded.agents.items()},
+            priority=priority,
         )
         return run.id
+
+
+async def save_workflow(seeded: Seeded, name: str, definition: dict[str, Any], version: int = 1) -> uuid.UUID:
+    """Store a workflow definition without running it (used as a sub_workflow target)."""
+    async with unit_of_work() as session:
+        wf = WorkflowDefinition(
+            id=uuid.uuid4(),
+            workspace_id=seeded.workspace.id,
+            name=name,
+            version=version,
+            definition=definition,
+        )
+        session.add(wf)
+        return wf.id
 
 
 async def get_run(run_id: uuid.UUID) -> WorkflowRun:
@@ -159,3 +178,41 @@ async def running_workers(n: int = 1, **kw: Any):  # type: ignore[no-untyped-def
         for w in workers:
             w.stop()
         await asyncio.gather(*tasks, return_exceptions=True)
+
+
+# --- real worker processes (crash tests) -------------------------------------------------------
+
+
+def spawn_worker(worker_id: str, concurrency: int = 4) -> Any:
+    """Start a real worker process. Fault injection can make it ``os._exit(137)`` mid-step."""
+    import os
+    import subprocess
+    import sys
+
+    return subprocess.Popen(  # noqa: S603 - fixed argv, test helper
+        [sys.executable, "-m", "agentos_worker.main", "--id", worker_id, "--concurrency", str(concurrency)],
+        env={**os.environ, "AGENTOS_LOG_LEVEL": "WARNING"},
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+    )
+
+
+async def wait_exit(proc: Any, timeout: float = 30) -> int:
+    async def done() -> bool:
+        return bool(proc.poll() is not None)
+
+    await wait_for(done, timeout)
+    return int(proc.returncode)
+
+
+def stop_workers(*procs: Any) -> None:
+    import subprocess
+
+    for p in procs:
+        if p.poll() is None:
+            p.terminate()
+    for p in procs:
+        try:
+            p.wait(timeout=15)
+        except subprocess.TimeoutExpired:
+            p.kill()

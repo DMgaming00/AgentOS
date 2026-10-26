@@ -21,6 +21,7 @@ from agentos_core.domain.errors import (
     InvalidInputError,
     InvalidModelOutputError,
     LeaseLostError,
+    PolicyViolationError,
     ProviderUnavailableError,
     StepTimeoutError,
     ToolExecutionError,
@@ -50,6 +51,11 @@ from agentos_worker.model_calls import call_model
 
 log = get_logger(__name__)
 tracer = trace.get_tracer("agentos.worker")
+
+
+# Tools a deterministic re-execution may run: pure or read-only. Everything else (artifact writes, any tool added
+# later) is refused in replay runs, so re-executing a recording can never repeat an external side effect.
+REPLAY_SAFE_TOOLS = frozenset({"calculator", "document_search", "structured_data_reader"})
 
 
 class _Done:
@@ -152,14 +158,24 @@ class StepExecutor:
     # ------------------------------------------------------------------ dispatch
 
     async def _dispatch(self, claim: ClaimedStep) -> Completed | Suspended | _Done:
-        context = {
+        context: dict[str, Any] = {
             "input": claim.run_input,
             "steps": {k: {"output": v} for k, v in claim.dependency_outputs.items()},
         }
+        # fan_out children carry their list item as data: it is exposed to refs as ``item``/``index`` but
+        # never template-resolved itself (an item containing "{{x}}" must stay a literal).
+        fan_item = "fan_out_parent" in claim.node_config
+        raw_input = claim.step_input
+        if fan_item:
+            context["item"] = raw_input.get("item")
+            context["index"] = raw_input.get("index")
+            raw_input = {k: v for k, v in raw_input.items() if k not in ("item", "index")}
         try:
-            resolved_input = resolve_refs(claim.step_input, context)
+            resolved_input = resolve_refs(raw_input, context)
         except KeyError as exc:
             raise InvalidInputError(f"unresolved reference {exc.args[0]!r}") from exc
+        if fan_item:
+            resolved_input["item"], resolved_input["index"] = context["item"], context["index"]
 
         if claim.node_type == "plan":
             return await self._plan(claim)
@@ -201,6 +217,8 @@ class StepExecutor:
         allowed = (agent_tools if node_tools is None else agent_tools & set(node_tools)) & set(
             self.registry.names()
         )
+        if claim.run_purpose == "replay":
+            allowed &= REPLAY_SAFE_TOOLS
         scope = self._scope(claim, allowed, agent.name)
         return await self.runtime.run(
             claim, agent, scope, resolved_input, after_tool=self._after_tool_hook(claim)
@@ -227,6 +245,10 @@ class StepExecutor:
     async def _tool(self, claim: ClaimedStep, context: dict[str, Any]) -> Completed | Suspended:
         cfg = claim.node_config
         tool_name = cfg["tool"]
+        if claim.run_purpose == "replay" and tool_name not in REPLAY_SAFE_TOOLS:
+            raise PolicyViolationError(
+                f"tool {tool_name!r} is not allowed in a deterministic re-execution (side effects are refused)"
+            )
         try:
             arguments = resolve_refs(cfg.get("arguments") or {}, context)
         except KeyError as exc:
@@ -246,8 +268,14 @@ class StepExecutor:
             str(outcome.content.get("error", "tool failed")), details={"tool": tool_name}
         )
 
-    def _approval_gate(self, claim: ClaimedStep, resolved_input: dict[str, Any]) -> Suspended:
+    def _approval_gate(self, claim: ClaimedStep, resolved_input: dict[str, Any]) -> Completed | Suspended:
         cfg = claim.node_config
+        if claim.run_purpose == "replay":
+            # Nothing gated is ever executed in a re-execution, so no human decision is requested or implied.
+            return Completed(
+                output={"replayed": True, "approval": "not_requested_in_replay", "action": cfg.get("action")},
+                metadata={"replay": True},
+            )
         args = {"action": cfg.get("action"), "input": resolved_input}
         return Suspended(
             approval=ApprovalSpec(

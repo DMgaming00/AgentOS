@@ -11,6 +11,8 @@ export const STATUS_META: Record<string, { tone: Tone; label: string; icon: Reac
   running: { tone: "info", label: "Running", icon: Loader2 },
   waiting_approval: { tone: "warning", label: "Waiting approval", icon: PauseCircle },
   retry_wait: { tone: "warning", label: "Retrying", icon: RotateCw },
+  waiting_child: { tone: "info", label: "Waiting on children", icon: Hourglass },
+  paused: { tone: "warning", label: "Paused", icon: PauseCircle },
   succeeded: { tone: "success", label: "Succeeded", icon: CheckCircle2 },
   failed: { tone: "danger", label: "Failed", icon: XCircle },
   skipped: { tone: "neutral", label: "Skipped", icon: CircleSlash },

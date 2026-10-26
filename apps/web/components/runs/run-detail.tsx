@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Ban, Radio, RefreshCw } from "lucide-react";
+import { Ban, Pause, Play, Radio, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
@@ -39,6 +39,11 @@ export function RunDetailView() {
   const { events, state } = useRunEvents(id);
   const { role } = useAuth();
   const qc = useQueryClient();
+  const pauseResume = useMutation({
+    mutationFn: async (pause: boolean) =>
+      unwrap(await api.POST(pause ? "/api/v1/runs/{run_id}/pause" : "/api/v1/runs/{run_id}/resume", { params: { path: { run_id: id } } })),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["run", id] }),
+  });
   const cancel = useMutation({
     mutationFn: async () => unwrap(await api.POST("/api/v1/runs/{run_id}/cancel", { params: { path: { run_id: id } } })),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["run", id] }),
@@ -92,9 +97,12 @@ export function RunDetailView() {
           <h1 className="flex items-center gap-3 text-xl font-semibold">
             Run <span className="font-mono">{shortId(r.id)}</span>
             <span data-testid="run-status"><StatusBadge status={r.status} /></span>
+            {r.paused_at ? <span data-testid="run-paused"><StatusBadge status="paused" /></span> : null}
           </h1>
           <p className="text-xs text-muted-foreground">
-            Created {formatTime(r.created_at)}{r.trace_id ? ` · trace ${r.trace_id}` : ""}
+            Created {formatTime(r.created_at)}{r.trace_id ? ` · trace ${r.trace_id}` : ""} · priority {r.priority}
+            {r.parent_run_id ? <> · nested (depth {r.depth}) in <Link className="hover:underline" href={`/runs/${r.parent_run_id}`}>parent run</Link></> : null}
+            {r.paused_at && r.pause_reason ? ` · paused: ${r.pause_reason}` : ""}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -103,13 +111,18 @@ export function RunDetailView() {
             <RefreshCw aria-hidden /> Refresh
           </Button>
           {ACTIVE.has(r.status) && canWrite(role) ? (
+            <Button variant="outline" size="sm" data-testid="pause-resume" onClick={() => pauseResume.mutate(!r.paused_at)} disabled={pauseResume.isPending}>
+              {r.paused_at ? <><Play aria-hidden /> Resume</> : <><Pause aria-hidden /> Pause</>}
+            </Button>
+          ) : null}
+          {ACTIVE.has(r.status) && canWrite(role) ? (
             <Button variant="destructive" size="sm" onClick={() => cancel.mutate()} disabled={cancel.isPending}>
               <Ban aria-hidden /> Cancel run
             </Button>
           ) : null}
         </div>
       </div>
-      <InlineError error={cancel.error} />
+      <InlineError error={cancel.error ?? pauseResume.error} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
         <StatCard label="Duration" value={formatDuration(r.duration_ms ?? durationBetween(r.started_at, r.completed_at))} />

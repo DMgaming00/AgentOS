@@ -49,6 +49,11 @@ EVENT_TYPES = frozenset(
         "run.failed",
         "run.cancelled",
         "budget.exceeded",
+        # engine v2
+        "run.paused",
+        "run.unpaused",
+        "step.fan_out",
+        "step.waiting_child",
     }
 )
 
@@ -59,6 +64,11 @@ PENDING_KEY = "pending_events"
 def current_trace_id() -> str | None:
     ctx = trace.get_current_span().get_span_context()
     return format(ctx.trace_id, "032x") if ctx.is_valid else None
+
+
+def current_span_id() -> str | None:
+    ctx = trace.get_current_span().get_span_context()
+    return format(ctx.span_id, "016x") if ctx.is_valid else None
 
 
 async def append_event(
@@ -83,6 +93,7 @@ async def append_event(
         timestamp=utcnow(),
         payload=redact(payload or {}),
         trace_id=current_trace_id(),
+        span_id=current_span_id(),
     )
     if not get_settings().event_batching:
         # Unbatched mode (kept for A/B benchmarking): sequence number assigned immediately.

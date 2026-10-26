@@ -27,4 +27,4 @@ export type WorkspaceInfo = S["WorkspaceOut"];
 
 export type RunStatus = "pending" | "planning" | "running" | "waiting_approval" | "succeeded" | "failed" | "cancelled";
 export type StepStatus =
-  | "pending" | "ready" | "running" | "waiting_approval" | "retry_wait" | "succeeded" | "failed" | "skipped" | "cancelled";
+  | "pending" | "ready" | "running" | "waiting_approval" | "retry_wait" | "waiting_child" | "succeeded" | "failed" | "skipped" | "cancelled";

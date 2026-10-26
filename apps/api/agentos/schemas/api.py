@@ -234,6 +234,14 @@ class PlanResponse(BaseModel):
 class RunCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     input: dict[str, Any] = Field(default_factory=dict)
+    priority: int = Field(
+        default=0, ge=0, le=9, description="0 lowest .. 9 highest; waiting steps age upward"
+    )
+
+
+class PauseRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason: str | None = Field(default=None, max_length=500)
 
 
 class PlannedRunCreate(BaseModel):
@@ -264,6 +272,12 @@ class RunOut(ORM):
     cost_reserved_usd: Decimal
     event_seq: int
     trace_id: str | None
+    priority: int = 0
+    paused_at: datetime | None = None
+    pause_reason: str | None = None
+    parent_run_id: uuid.UUID | None = None
+    parent_step_id: uuid.UUID | None = None
+    depth: int = 0
     created_at: datetime
     started_at: datetime | None
     completed_at: datetime | None

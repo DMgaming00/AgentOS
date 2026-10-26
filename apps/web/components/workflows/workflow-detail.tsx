@@ -92,7 +92,7 @@ function StartRun({ workflowId, disabled }: { workflowId: string; disabled: bool
       const parsed = JSON.parse(input) as Record<string, never>;
       return unwrap(await api.POST("/api/v1/workflows/{workflow_id}/runs", {
         params: { path: { workflow_id: workflowId }, header: { "Idempotency-Key": key.current } },
-        body: { input: parsed },
+        body: { input: parsed, priority: 0 },
       }));
     },
     onSuccess: (run) => router.push(`/runs/${run.id}`),

@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import func, select, update
+from sqlalchemy import DateTime, func, literal, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from agentos_core.config import get_settings
@@ -35,11 +35,20 @@ from agentos_core.db.models import (
     WorkflowRun,
     WorkflowStep,
 )
-from agentos_core.domain.dag import NodeType, WorkflowSpec
+from agentos_core.domain.dag import (
+    NodeDefinition,
+    NodeType,
+    WorkflowSpec,
+    _lookup,
+    evaluate_condition,
+    resolve_refs,
+)
 from agentos_core.domain.errors import (
     AgentOSError,
     ApprovalRejectedError,
     BudgetExceededError,
+    FanOutError,
+    SubWorkflowError,
     WorkerLostError,
 )
 from agentos_core.domain.states import (
@@ -122,23 +131,315 @@ def _clear_lease(step: WorkflowStep) -> None:
     step.lease_expires_at = None
 
 
+def effective_priority(priority: int, waited_seconds: float, aging_seconds: float) -> float:
+    """Scheduling score: run priority plus one point per ``aging_seconds`` waited (starvation protection).
+
+    A priority-0 step that has waited ``9 * aging_seconds`` outranks a freshly ready priority-9 step.
+    """
+    return priority + max(0.0, waited_seconds) / max(aging_seconds, 1e-6)
+
+
+def _step_context(run: WorkflowRun, deps: list[WorkflowStep]) -> dict[str, Any]:
+    return {"input": run.input, "steps": {d.node_key: {"output": d.output} for d in deps}}
+
+
+async def _skip_step(session: AsyncSession, run: WorkflowRun, step: WorkflowStep, reason: str) -> None:
+    _set_step_status(step, StepStatus.SKIPPED)
+    step.completed_at = utcnow()
+    await append_event(
+        session, run.id, "step.skipped", {"node_key": step.node_key, "reason": reason}, step_id=step.id
+    )
+
+
+async def _fail_engine_step(
+    session: AsyncSession, run: WorkflowRun, steps: list[WorkflowStep], step: WorkflowStep, err: AgentOSError
+) -> None:
+    """Fail an engine-handled step (fan_out / sub_workflow) that never had a worker lease."""
+    _set_step_status(step, StepStatus.FAILED)
+    step.error = err.to_dict()
+    step.completed_at = utcnow()
+    await append_event(
+        session, run.id, "step.failed", {"node_key": step.node_key, "error": err.to_dict()}, step_id=step.id
+    )
+    await _halt_unstarted(session, run, steps, reason="upstream_failure")
+
+
 async def _promote_dependents(session: AsyncSession, run: WorkflowRun, steps: list[WorkflowStep]) -> int:
-    """Move pending steps whose dependencies all succeeded to ready."""
+    """Advance pending steps whose dependencies are all terminal.
+
+    * all deps succeeded (or, with ``trigger: any_succeeded``, at least one) and the ``when`` condition
+      holds -> ready; engine-handled nodes (fan_out, sub_workflow) are resolved here instead;
+    * a skipped dependency, or a false condition, skips the step (skips propagate downstream);
+    * ``waiting_child`` fan_out steps complete once every child is terminal.
+    """
     by_key = {s.node_key: s for s in steps}
     now = utcnow()
     promoted = 0
-    for s in steps:
-        if s.status != StepStatus.PENDING:
-            continue
-        deps = [by_key[d] for d in s.dependency_keys if d in by_key]
-        if all(d.status == StepStatus.SUCCEEDED for d in deps):
+    changed = True
+    while changed:
+        changed = False
+        for s in list(steps):
+            if s.status == StepStatus.WAITING_CHILD and s.node_type == NodeType.FAN_OUT:
+                changed |= await _finish_fan_out(session, run, by_key, s)
+                continue
+            if s.status != StepStatus.PENDING:
+                continue
+            deps = [by_key[d] for d in s.dependency_keys if d in by_key]
+            if any(d.status not in (StepStatus.SUCCEEDED, StepStatus.SKIPPED) for d in deps):
+                continue
+            ok = [d for d in deps if d.status == StepStatus.SUCCEEDED]
+            trigger = s.node_config.get("trigger") or "all_succeeded"
+            if deps and (len(ok) != len(deps) if trigger == "all_succeeded" else not ok):
+                await _skip_step(session, run, s, "upstream_skipped")
+                changed = True
+                continue
+            ctx = _step_context(run, deps)
+            cond = s.node_config.get("when")
+            if cond and not evaluate_condition(cond, ctx):
+                await _skip_step(session, run, s, "condition_false")
+                changed = True
+                continue
+            if s.node_type == NodeType.FAN_OUT:
+                await _expand_fan_out(session, run, steps, by_key, s, ctx)
+                changed = True
+                continue
+            if s.node_type == NodeType.SUB_WORKFLOW:
+                await _start_sub_workflow(session, run, steps, s, ctx)
+                changed = True
+                continue
             _set_step_status(s, StepStatus.READY)
             s.ready_at = now
             promoted += 1
+            changed = True
             await append_event(session, run.id, "step.ready", {"node_key": s.node_key}, step_id=s.id)
     if promoted:
         notify_work(session)
     return promoted
+
+
+async def _expand_fan_out(
+    session: AsyncSession,
+    run: WorkflowRun,
+    steps: list[WorkflowStep],
+    by_key: dict[str, WorkflowStep],
+    step: WorkflowStep,
+    ctx: dict[str, Any],
+) -> None:
+    """Replace a fan_out node by at most ``max_items`` parallel children; the node itself waits for them."""
+    from agentos_core.autopilot.versions import resolve_pins
+
+    cfg = step.node_config
+    try:
+        items = _lookup(cfg["over"], ctx)
+    except KeyError:
+        return await _fail_engine_step(
+            session, run, steps, step, FanOutError(f"fan_out 'over' {cfg['over']!r} did not resolve")
+        )
+    if not isinstance(items, list):
+        return await _fail_engine_step(
+            session, run, steps, step, FanOutError(f"fan_out 'over' {cfg['over']!r} is not a list")
+        )
+    limit = int(cfg.get("max_items") or 10)
+    truncated = len(items) > limit
+    if truncated and cfg.get("on_overflow") != "truncate":
+        return await _fail_engine_step(
+            session,
+            run,
+            steps,
+            step,
+            FanOutError(
+                f"fan_out produced {len(items)} items; max_items is {limit}",
+                details={"items": len(items), "max_items": limit},
+            ),
+        )
+    items = items[:limit]
+    max_nodes = get_settings().max_dag_nodes
+    if len(steps) + len(items) > max_nodes:
+        return await _fail_engine_step(
+            session,
+            run,
+            steps,
+            step,
+            FanOutError(f"expanding {len(items)} children would exceed the {max_nodes}-step run limit"),
+        )
+    tmpl = cfg["template"]
+    agent_id: uuid.UUID | None = None
+    version_id: uuid.UUID | None = None
+    if tmpl.get("agent"):
+        agent_id = (
+            await session.execute(
+                select(AgentDefinition.id).where(
+                    AgentDefinition.workspace_id == run.workspace_id, AgentDefinition.name == tmpl["agent"]
+                )
+            )
+        ).scalar_one_or_none()
+        if agent_id is None:
+            return await _fail_engine_step(
+                session, run, steps, step, FanOutError(f"fan_out template agent {tmpl['agent']!r} not found")
+            )
+        version_id = next(
+            (s.agent_version_id for s in steps if s.agent_definition_id == agent_id and s.agent_version_id),
+            None,
+        )
+        if version_id is None:
+            version_id = (await resolve_pins(session, {agent_id}, run.id, None)).get(agent_id)
+    children: list[WorkflowStep] = []
+    for i, item in enumerate(items):
+        key = f"{step.node_key}[{i}]"
+        node = NodeDefinition.model_validate({**tmpl, "key": "child", "depends_on": []})
+        config = node.model_dump(mode="json", exclude_none=True)
+        config.update({"key": key, "fan_out_parent": step.node_key, "fan_out_index": i})
+        children.append(
+            WorkflowStep(
+                id=uuid.uuid4(),
+                run_id=run.id,
+                node_key=key,
+                node_type=node.type.value,
+                node_config=config,
+                agent_definition_id=agent_id,
+                agent_version_id=version_id,
+                dependency_keys=list(step.dependency_keys),
+                status=StepStatus.PENDING.value,
+                input={**(tmpl.get("input") or {}), "item": item, "index": i},
+                max_attempts=node.retry.max_attempts,
+            )
+        )
+    session.add_all(children)
+    for c in children:
+        steps.append(c)
+        by_key[c.node_key] = c
+    _set_step_status(step, StepStatus.WAITING_CHILD)
+    step.started_at = utcnow()
+    step.checkpoint = {
+        "children": [c.node_key for c in children],
+        "count": len(children),
+        "truncated": truncated,
+    }
+    await session.flush()
+    await append_event(
+        session,
+        run.id,
+        "step.fan_out",
+        {
+            "node_key": step.node_key,
+            "count": len(children),
+            "truncated": truncated,
+            "children": [c.node_key for c in children],
+        },
+        step_id=step.id,
+    )
+
+
+async def _finish_fan_out(
+    session: AsyncSession, run: WorkflowRun, by_key: dict[str, WorkflowStep], step: WorkflowStep
+) -> bool:
+    keys = (step.checkpoint or {}).get("children", [])
+    children = [by_key[k] for k in keys if k in by_key]
+    if len(children) != len(keys) or not all(
+        c.status in (StepStatus.SUCCEEDED, StepStatus.SKIPPED) for c in children
+    ):
+        return False  # a failed or cancelled child halts the whole run through the normal failure path
+    _set_step_status(step, StepStatus.SUCCEEDED)
+    step.output = {"results": [c.output for c in children], "count": len(children)}
+    step.completed_at = utcnow()
+    await append_event(
+        session,
+        run.id,
+        "step.completed",
+        {"node_key": step.node_key, "fan_out": len(children)},
+        step_id=step.id,
+    )
+    return True
+
+
+async def _start_sub_workflow(
+    session: AsyncSession,
+    run: WorkflowRun,
+    steps: list[WorkflowStep],
+    step: WorkflowStep,
+    ctx: dict[str, Any],
+) -> None:
+    """Start the latest version of the named workflow as a child run; the step waits for it durably."""
+    from agentos_core.workflow_service import latest_workflow, validate_for_workspace
+
+    name = step.node_config["workflow"]
+    max_depth = get_settings().max_nested_depth
+    if run.depth + 1 > max_depth:
+        return await _fail_engine_step(
+            session,
+            run,
+            steps,
+            step,
+            SubWorkflowError(
+                f"nested workflow depth {run.depth + 1} exceeds the limit of {max_depth}",
+                details={"reason": "depth_exceeded", "max_depth": max_depth},
+            ),
+        )
+    wf = await latest_workflow(session, run.workspace_id, name)
+    if wf is None:
+        return await _fail_engine_step(
+            session,
+            run,
+            steps,
+            step,
+            SubWorkflowError(
+                f"workflow {name!r} does not exist in this workspace", details={"reason": "not_found"}
+            ),
+        )
+    result, agents = await validate_for_workspace(session, run.workspace_id, wf.definition)
+    if not result.ok or result.spec is None:
+        return await _fail_engine_step(
+            session,
+            run,
+            steps,
+            step,
+            SubWorkflowError(f"workflow {name!r} no longer validates", details={"reason": "invalid"}),
+        )
+    try:
+        child_input = resolve_refs(step.input, ctx)
+    except KeyError as exc:
+        return await _fail_engine_step(
+            session,
+            run,
+            steps,
+            step,
+            SubWorkflowError(f"unresolved reference {exc.args[0]!r}", details={"reason": "unresolved_input"}),
+        )
+    remaining = (
+        float(run.budget.get("max_cost_usd", 0)) - float(run.cost_spent_usd) - float(run.cost_reserved_usd)
+    )
+    if remaining <= 0:
+        return await _fail_engine_step(
+            session,
+            run,
+            steps,
+            step,
+            BudgetExceededError(
+                "no budget left to start a nested workflow", details={"limit": "max_cost_usd"}
+            ),
+        )
+    child = await materialize_run(
+        session,
+        workflow=wf,
+        spec=result.spec,
+        run_input=child_input,
+        requested_by=run.requested_by,
+        agents_by_name=agents,
+        priority=run.priority,
+        parent=(run, step),
+        budget_cap_usd=remaining,
+        deadline_cap=run.deadline_at,
+    )
+    _set_step_status(step, StepStatus.WAITING_CHILD)
+    step.started_at = utcnow()
+    step.checkpoint = {"child_run_id": str(child.id), "workflow": name, "workflow_version": wf.version}
+    await append_event(
+        session,
+        run.id,
+        "step.waiting_child",
+        {"node_key": step.node_key, "child_run_id": str(child.id), "workflow": name, "depth": child.depth},
+        step_id=step.id,
+    )
 
 
 async def _expire_step_approvals(session: AsyncSession, step: WorkflowStep, reason: str) -> None:
@@ -169,6 +470,15 @@ async def _expire_step_approvals(session: AsyncSession, step: WorkflowStep, reas
         )
 
 
+async def _cancel_child_run(session: AsyncSession, step: WorkflowStep) -> None:
+    """Cancel the child run of a sub_workflow step. Lock order is always parent run, then child run."""
+    child_id = (step.checkpoint or {}).get("child_run_id")
+    if not child_id:
+        return
+    with contextlib.suppress(EngineError):  # already terminal
+        await cancel_run(session, uuid.UUID(child_id), user_id=None)
+
+
 async def _halt_unstarted(
     session: AsyncSession, run: WorkflowRun, steps: list[WorkflowStep], *, reason: str
 ) -> None:
@@ -187,6 +497,14 @@ async def _halt_unstarted(
                 {"node_key": s.node_key, "reason": reason},
                 step_id=s.id,
             )
+        elif s.status == StepStatus.WAITING_CHILD:
+            _set_step_status(s, StepStatus.CANCELLED)
+            s.completed_at = utcnow()
+            if s.node_type == NodeType.SUB_WORKFLOW:
+                await _cancel_child_run(session, s)
+            await append_event(
+                session, run.id, "step.cancelled", {"node_key": s.node_key, "reason": reason}, step_id=s.id
+            )
         elif s.status == StepStatus.WAITING_APPROVAL:
             _set_step_status(s, StepStatus.CANCELLED)
             s.completed_at = utcnow()
@@ -197,9 +515,15 @@ async def _halt_unstarted(
 
 
 def _sink_outputs(steps: list[WorkflowStep]) -> dict[str, Any]:
-    depended = {d for s in steps for d in s.dependency_keys}
+    # A skipped branch does not consume its upstream output: the upstream step then is a sink.
+    depended = {d for s in steps if s.status != StepStatus.SKIPPED for d in s.dependency_keys}
     return {
-        s.node_key: s.output for s in steps if s.node_key not in depended and s.node_key != PLANNER_NODE_KEY
+        s.node_key: s.output
+        for s in steps
+        if s.node_key not in depended
+        and s.node_key != PLANNER_NODE_KEY
+        and s.status == StepStatus.SUCCEEDED
+        and "fan_out_parent" not in s.node_config  # children are reported through their fan_out node
     }
 
 
@@ -241,7 +565,12 @@ async def refresh_run(
     if run.status == RunStatus.PLANNING:
         return
     waiting = StepStatus.WAITING_APPROVAL in statuses
-    active = statuses & {StepStatus.RUNNING, StepStatus.READY, StepStatus.RETRY_WAIT}
+    active = statuses & {
+        StepStatus.RUNNING,
+        StepStatus.READY,
+        StepStatus.RETRY_WAIT,
+        StepStatus.WAITING_CHILD,
+    }
     if waiting and not active and run.status != RunStatus.WAITING_APPROVAL:
         _set_run_status(run, RunStatus.WAITING_APPROVAL)
         await append_event(session, run.id, "run.waiting_approval", {})
@@ -276,6 +605,11 @@ async def materialize_run(
     planned_task: str | None = None,
     version_overrides: dict[uuid.UUID, uuid.UUID] | None = None,
     purpose: str = "workflow",
+    priority: int = 0,
+    parent: tuple[WorkflowRun, WorkflowStep] | None = None,
+    budget_cap_usd: float | None = None,
+    deadline_cap: datetime | None = None,
+    replay_of_run_id: uuid.UUID | None = None,
 ) -> WorkflowRun:
     """Create a run and its steps atomically. Root steps become ready immediately.
 
@@ -283,6 +617,12 @@ async def materialize_run(
     so later edits, promotions or rollbacks never change a run that already started.
     """
     now = utcnow()
+    budget = spec.budget.model_dump()
+    if budget_cap_usd is not None:
+        budget["max_cost_usd"] = min(float(budget["max_cost_usd"]), budget_cap_usd)
+    deadline = now + timedelta(seconds=spec.budget.max_duration_seconds)
+    if deadline_cap is not None:
+        deadline = min(deadline, deadline_cap)
     run = WorkflowRun(
         id=uuid.uuid4(),
         workspace_id=workflow.workspace_id,
@@ -291,10 +631,15 @@ async def materialize_run(
         status=RunStatus.PENDING.value,
         input=run_input,
         requested_by=requested_by,
-        budget=spec.budget.model_dump(),
-        deadline_at=now + timedelta(seconds=spec.budget.max_duration_seconds),
+        budget=budget,
+        deadline_at=deadline,
         event_seq=0,
         purpose=purpose,
+        priority=priority,
+        parent_run_id=parent[0].id if parent else None,
+        parent_step_id=parent[1].id if parent else None,
+        depth=(parent[0].depth + 1) if parent else 0,
+        replay_of_run_id=replay_of_run_id,
     )
     session.add(run)
     await session.flush()
@@ -308,6 +653,8 @@ async def materialize_run(
     run.started_at = now
     await append_event(session, run.id, "run.started", {"step_count": len(steps)})
     await _promote_dependents(session, run, steps)
+    # Engine-handled root nodes (fan_out, sub_workflow) and skipped branches can finish a run right here.
+    await refresh_run(session, run, steps)
     return run
 
 
@@ -410,6 +757,8 @@ class ClaimedStep:
     checkpoint: dict[str, Any] | None
     agent_definition_id: uuid.UUID | None
     agent_version_id: uuid.UUID | None
+    run_purpose: str
+    replay_of_run_id: uuid.UUID | None
     dependency_outputs: dict[str, Any]
     attempt_id: uuid.UUID
     attempt_number: int
@@ -427,18 +776,27 @@ async def claim_steps(worker_id: str, limit: int, *, lease_ttl: float | None = N
 
     async def _claim(session: AsyncSession) -> list[ClaimedStep]:
         now = utcnow()
+        # Runs are ordered by effective priority: run priority + waiting time / aging interval, so a
+        # low-priority run cannot be starved forever by a stream of high-priority work.
+        aging = get_settings().priority_aging_seconds
+        oldest = func.min(WorkflowStep.ready_at)
+        score = (
+            WorkflowRun.priority
+            + func.extract("epoch", literal(now, DateTime(timezone=True)) - oldest) / aging
+        )
         runnable_runs = (
             await session.execute(
-                select(WorkflowStep.run_id, func.min(WorkflowStep.ready_at).label("oldest"))
+                select(WorkflowStep.run_id, oldest.label("oldest"))
                 .join(WorkflowRun, WorkflowRun.id == WorkflowStep.run_id)
                 .where(
                     WorkflowStep.status == StepStatus.READY,
+                    WorkflowRun.paused_at.is_(None),
                     WorkflowRun.status.in_(
                         [RunStatus.RUNNING, RunStatus.WAITING_APPROVAL, RunStatus.PLANNING]
                     ),
                 )
-                .group_by(WorkflowStep.run_id)
-                .order_by("oldest")
+                .group_by(WorkflowStep.run_id, WorkflowRun.priority)
+                .order_by(score.desc(), oldest)
                 .limit(max(limit * 4, 16))
             )
         ).all()
@@ -447,8 +805,8 @@ async def claim_steps(worker_id: str, limit: int, *, lease_ttl: float | None = N
             if len(claimed) >= limit:
                 break
             run = await lock_run(session, run_id, skip_locked=True)
-            if run is None or run.status in TERMINAL_RUN:
-                continue  # another transaction is mutating this run; try it next tick
+            if run is None or run.status in TERMINAL_RUN or run.paused_at is not None:
+                continue  # mutated, paused or finished since the ordering query; try it next tick
             running = (
                 await session.execute(
                     select(func.count()).where(
@@ -513,7 +871,10 @@ async def _claim_one(
                 WorkflowStep.run_id == run.id, WorkflowStep.node_key.in_(step.dependency_keys)
             )
         )
-        deps = {k: o for k, o in rows.all()}
+        outputs = {k: o for k, o in rows.all()}
+        # Declared order, not row order: the prompt built from these must be identical on every execution
+        # (the unordered SELECT made it vary, which a deterministic re-execution exposed).
+        deps = {k: outputs[k] for k in step.dependency_keys if k in outputs}
     await append_event(
         session,
         run.id,
@@ -541,6 +902,8 @@ async def _claim_one(
         checkpoint=step.checkpoint,
         agent_definition_id=step.agent_definition_id,
         agent_version_id=step.agent_version_id,
+        run_purpose=run.purpose,
+        replay_of_run_id=run.replay_of_run_id,
         dependency_outputs=deps,
         attempt_id=attempt.id,
         attempt_number=attempt.attempt_number,
@@ -1173,6 +1536,137 @@ async def enforce_deadlines(*, now: datetime | None = None) -> int:
     return len(ids)
 
 
+# =========================================================================== pause / resume
+
+
+async def pause_run(
+    session: AsyncSession, run_id: uuid.UUID, *, user_id: uuid.UUID | None, reason: str | None = None
+) -> WorkflowRun:
+    """Stop claiming new steps for a run (and its child runs). Running steps finish; state is kept."""
+    run = await lock_run(session, run_id)
+    if run is None:
+        raise NotFoundError("run not found", code="not_found")
+    if run.status in TERMINAL_RUN:
+        raise EngineError(f"run already {run.status}", code="run_terminal")
+    if run.paused_at is None:
+        run.paused_at = utcnow()
+        run.pause_reason = reason
+        await append_event(
+            session, run_id, "run.paused", {"by": str(user_id) if user_id else None, "reason": reason}
+        )
+    for child_id in await _child_run_ids(session, run_id):  # parent lock first, then child
+        with contextlib.suppress(EngineError):
+            await pause_run(session, child_id, user_id=user_id, reason=reason)
+    return run
+
+
+async def resume_run(session: AsyncSession, run_id: uuid.UUID, *, user_id: uuid.UUID | None) -> WorkflowRun:
+    run = await lock_run(session, run_id)
+    if run is None:
+        raise NotFoundError("run not found", code="not_found")
+    if run.status in TERMINAL_RUN:
+        raise EngineError(f"run already {run.status}", code="run_terminal")
+    if run.paused_at is not None:
+        waited = _ms(run.paused_at, utcnow())
+        run.paused_at = None
+        run.pause_reason = None
+        await append_event(
+            session, run_id, "run.unpaused", {"by": str(user_id) if user_id else None, "paused_ms": waited}
+        )
+        notify_work(session)
+    for child_id in await _child_run_ids(session, run_id):
+        with contextlib.suppress(EngineError):
+            await resume_run(session, child_id, user_id=user_id)
+    return run
+
+
+async def _child_run_ids(session: AsyncSession, run_id: uuid.UUID) -> list[uuid.UUID]:
+    return list(
+        (
+            await session.execute(
+                select(WorkflowRun.id)
+                .where(WorkflowRun.parent_run_id == run_id)
+                .order_by(WorkflowRun.created_at)
+            )
+        ).scalars()
+    )
+
+
+# =========================================================================== nested workflows
+
+
+async def subflow_tick(*, batch: int = 50) -> int:
+    """Propagate finished child runs to the sub_workflow steps waiting for them.
+
+    Done by the coordinator (not inside the child's own transaction) so lock order stays parent -> child
+    and a crash between the two commits is harmless: the waiting step is simply picked up on the next tick.
+    """
+    async with _read_session() as session:
+        rows = (
+            await session.execute(
+                select(WorkflowStep.id, WorkflowStep.run_id, WorkflowRun.id)
+                .join(WorkflowRun, WorkflowRun.parent_step_id == WorkflowStep.id)
+                .where(
+                    WorkflowStep.status == StepStatus.WAITING_CHILD,
+                    WorkflowStep.node_type == NodeType.SUB_WORKFLOW,
+                    WorkflowRun.status.in_([s.value for s in TERMINAL_RUN]),
+                )
+                .limit(batch)
+            )
+        ).all()
+    done = 0
+    for step_id, parent_id, child_id in rows:
+
+        async def _do(
+            session: AsyncSession,
+            step_id: uuid.UUID = step_id,
+            parent_id: uuid.UUID = parent_id,
+            child_id: uuid.UUID = child_id,
+        ) -> bool:
+            run = await lock_run(session, parent_id, skip_locked=True)
+            if run is None or run.status in TERMINAL_RUN:
+                return False
+            steps = await _run_steps(session, parent_id, lock=True)
+            step = next((x for x in steps if x.id == step_id), None)
+            child = await session.get(WorkflowRun, child_id)
+            if step is None or child is None or step.status != StepStatus.WAITING_CHILD:
+                return False
+            now = utcnow()
+            run.cost_spent_usd = (run.cost_spent_usd or Decimal(0)) + (child.cost_spent_usd or Decimal(0))
+            run.model_calls += child.model_calls
+            run.tool_calls += child.tool_calls
+            if child.status == RunStatus.SUCCEEDED:
+                _set_step_status(step, StepStatus.SUCCEEDED)
+                step.output = {"child_run_id": str(child.id), "output": child.output}
+                step.completed_at = now
+                await append_event(
+                    session,
+                    parent_id,
+                    "step.completed",
+                    {"node_key": step.node_key, "child_run_id": str(child.id)},
+                    step_id=step.id,
+                )
+                await session.flush()
+                await _promote_dependents(session, run, steps)
+            else:
+                err = SubWorkflowError(
+                    f"child run ended {child.status}",
+                    details={
+                        "reason": "child_failed",
+                        "child_run_id": str(child.id),
+                        "child_status": child.status,
+                        "child_error": child.error,
+                    },
+                )
+                await _fail_engine_step(session, run, steps, step, err)
+            await refresh_run(session, run, steps)
+            return True
+
+        if await run_in_transaction(_do):
+            done += 1
+    return done
+
+
 # =========================================================================== cancellation
 
 
@@ -1477,6 +1971,7 @@ async def complete_planner_step(
         )
         steps = [s for s in await _run_steps(session, run.id) if s.node_key != PLANNER_NODE_KEY]
         await _promote_dependents(session, run, steps)
+        await refresh_run(session, run)
 
     await run_in_transaction(_do)
 
@@ -1507,11 +2002,47 @@ async def record_model_call(
     usage: UsageRecord,
     reserved_usd: Decimal,
     event_payload: dict[str, Any],
+    body: Any = None,
+    node_key: str | None = None,
+    attempt_number: int | None = None,
+    agent_version_id: uuid.UUID | None = None,
 ) -> None:
-    from agentos_core.db.models import ModelUsage
+    """Persist usage, settle the budget reservation, append the event and (optionally) the sanitized
+    request/response record, all in one transaction."""
+    from agentos_core.db.models import ModelCallRecord, ModelUsage
 
     async def _do(session: AsyncSession) -> None:
-        await lock_run(session, run_id)
+        run = await lock_run(session, run_id)
+        if body is not None and run is not None:
+            index = (
+                await session.execute(
+                    select(func.count())
+                    .select_from(ModelCallRecord)
+                    .where(ModelCallRecord.step_id == step_id)
+                )
+            ).scalar_one()
+            session.add(
+                ModelCallRecord(
+                    id=body.record_id,
+                    workspace_id=run.workspace_id,
+                    run_id=run_id,
+                    step_id=step_id,
+                    attempt_id=attempt_id,
+                    node_key=node_key or "",
+                    call_index=index,
+                    attempt_number=attempt_number,
+                    provider=usage.provider,
+                    model=usage.model,
+                    agent_version_id=agent_version_id,
+                    request_digest=body.request_digest,
+                    request=body.request,
+                    response=body.response,
+                    error=body.error,
+                    status=usage.status,
+                    latency_ms=usage.latency_ms,
+                    truncated=body.truncated,
+                )
+            )
         session.add(
             ModelUsage(
                 run_id=run_id,

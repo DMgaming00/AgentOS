@@ -61,6 +61,10 @@ class Settings(BaseSettings):
     worker_concurrency: int = 4
     approval_ttl_seconds: int = 24 * 3600
     max_dag_nodes: int = 50
+    # Nested workflows (sub_workflow nodes): maximum depth below the top-level run.
+    max_nested_depth: int = Field(default=3, ge=1, le=5)
+    # Scheduling: a waiting step gains one priority point per this many seconds (starvation protection).
+    priority_aging_seconds: float = Field(default=30.0, gt=0)
     max_run_cost_usd: float = 25.0
     default_model_call_reservation_usd: float = 0.05
     pricing_file: Path | None = None

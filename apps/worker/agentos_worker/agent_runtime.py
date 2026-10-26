@@ -8,9 +8,10 @@ stopped instead of repeating model calls. Tool permissions are enforced by
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any
 
@@ -158,6 +159,29 @@ class AgentRuntime:
             metadata={"attempt_number": claim.attempt_number, "node_key": claim.node_key},
         )
 
+        # Deterministic re-execution: model responses come from the source run's recordings, never a provider.
+        replaying = claim.run_purpose == "replay" and claim.replay_of_run_id is not None
+        provider_name = "recorded" if replaying else agent.provider
+        call_config = model_config
+        if replaying:
+            call_config = replace(
+                model_config,
+                extra={
+                    **model_config.extra,
+                    "replay_run_id": str(claim.replay_of_run_id),
+                    "replay_node_key": claim.node_key,
+                },
+            )
+        recording_meta = {
+            "agent": agent.name,
+            "agent_version": agent.version,
+            "agent_version_id": str(agent.version_id) if agent.version_id else None,
+            "node_prompt_sha256": hashlib.sha256(
+                (claim.node_config.get("prompt") or "").encode()
+            ).hexdigest()[:16],
+            "run_purpose": claim.run_purpose,
+        }
+
         def snapshot() -> dict[str, Any]:
             return {
                 "messages": [m.to_dict() for m in messages],
@@ -213,21 +237,24 @@ class AgentRuntime:
                 )
 
             resp = await call_model(
-                provider_name=agent.provider,
+                provider_name=provider_name,
                 system=system,
                 messages=messages,
                 tools=tool_defs,
-                config=model_config,
+                config=call_config,
                 run_id=claim.run_id,
                 step_id=claim.step_id,
                 attempt_id=claim.attempt_id,
                 agent_definition_id=agent.id,
                 node_key=claim.node_key,
+                agent_version_id=agent.version_id,
+                attempt_number=claim.attempt_number,
+                meta=recording_meta,
             )
             iterations += 1
             messages.append(resp.as_message())
             est = get_pricing().estimate(
-                agent.provider,
+                provider_name,
                 resp.model,
                 input_tokens=resp.usage.input_tokens,
                 output_tokens=resp.usage.output_tokens,

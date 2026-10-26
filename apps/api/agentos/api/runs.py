@@ -13,6 +13,7 @@ from agentos.schemas.api import (
     EventOut,
     ModelUsageOut,
     Page,
+    PauseRequest,
     RunOut,
     StepDetail,
     StepOut,
@@ -31,7 +32,7 @@ from agentos_core.db.models import (
     WorkflowStep,
 )
 from agentos_core.domain.states import Role
-from agentos_core.engine.core import EngineError, cancel_run
+from agentos_core.engine.core import EngineError, cancel_run, pause_run, resume_run
 from agentos_core.util import utcnow
 
 router = APIRouter(prefix="/api/v1/runs", tags=["runs"])
@@ -74,7 +75,7 @@ async def list_runs(
     ctx: WorkspaceDep,
     status: str | None = None,
     workflow_id: uuid.UUID | None = None,
-    purpose: str | None = Query(None, pattern="^(workflow|evaluation)$"),
+    purpose: str | None = Query(None, pattern="^(workflow|evaluation|replay)$"),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ) -> Page[RunOut]:
@@ -103,6 +104,35 @@ async def cancel(run_id: uuid.UUID, session: SessionDep, ctx: WorkspaceDep) -> R
     await get_run_for(session, ctx, run_id)
     try:
         run = await cancel_run(session, run_id, user_id=ctx.user.id)
+    except EngineError as exc:
+        raise api_error(exc.status_code, exc.code, str(exc)) from None
+    await session.flush()
+    await session.refresh(run)
+    return await run_out(session, run)
+
+
+@router.post("/{run_id}/pause", response_model=RunOut, dependencies=[rate_limited("critical")])
+async def pause(
+    run_id: uuid.UUID, session: SessionDep, ctx: WorkspaceDep, body: PauseRequest | None = None
+) -> RunOut:
+    """Stop claiming new steps for this run and its child runs. Running steps finish; nothing is lost."""
+    ctx.require(Role.DEVELOPER)
+    await get_run_for(session, ctx, run_id)
+    try:
+        run = await pause_run(session, run_id, user_id=ctx.user.id, reason=body.reason if body else None)
+    except EngineError as exc:
+        raise api_error(exc.status_code, exc.code, str(exc)) from None
+    await session.flush()
+    await session.refresh(run)
+    return await run_out(session, run)
+
+
+@router.post("/{run_id}/resume", response_model=RunOut, dependencies=[rate_limited("critical")])
+async def resume(run_id: uuid.UUID, session: SessionDep, ctx: WorkspaceDep) -> RunOut:
+    ctx.require(Role.DEVELOPER)
+    await get_run_for(session, ctx, run_id)
+    try:
+        run = await resume_run(session, run_id, user_id=ctx.user.id)
     except EngineError as exc:
         raise api_error(exc.status_code, exc.code, str(exc)) from None
     await session.flush()

@@ -16,6 +16,10 @@ def get_provider(name: str) -> ModelProvider:
     provider: ModelProvider
     if name == "mock":
         provider = MockProvider()
+    elif name == "recorded":
+        from agentos_core.providers.recorded import RecordedProvider
+
+        provider = RecordedProvider()
     elif name == "fixture":
         from agentos_core.providers.fixtures import FixtureProvider
 

@@ -12,7 +12,7 @@ import {
   ReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Bot, GitMerge, ShieldCheck, Sparkles, Wrench } from "lucide-react";
+import { Bot, GitBranch, GitMerge, Network, ShieldCheck, Sparkles, Wrench } from "lucide-react";
 import { memo, useMemo, useSyncExternalStore } from "react";
 
 import { StatusBadge } from "@/components/ui/status";
@@ -36,6 +36,8 @@ const TYPE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   tool_task: Wrench,
   approval_gate: ShieldCheck,
   aggregation: GitMerge,
+  fan_out: Network,
+  sub_workflow: GitBranch,
   plan: Sparkles,
 };
 
@@ -45,6 +47,7 @@ const BORDER: Record<string, string> = {
   failed: "border-danger",
   waiting_approval: "border-warning",
   retry_wait: "border-warning",
+  waiting_child: "border-info",
   ready: "border-primary/60",
   cancelled: "border-border opacity-70",
   skipped: "border-border opacity-60",

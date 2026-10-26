@@ -29,7 +29,7 @@ import httpx2
 from agentos_core.config import get_settings
 from agentos_core.domain.errors import BudgetExceededError, PermanentError
 
-NETWORKLESS_PROVIDERS = frozenset({"mock", "fixture"})
+NETWORKLESS_PROVIDERS = frozenset({"mock", "fixture", "recorded"})
 REAL_PROVIDERS = frozenset({"anthropic", "openai"})
 
 

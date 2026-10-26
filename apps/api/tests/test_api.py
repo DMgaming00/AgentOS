@@ -383,3 +383,70 @@ def test_request_transaction_commits_before_the_response_is_sent():
     from agentos.dependencies import SessionDep
 
     assert get_args(SessionDep)[1].scope == "function"
+
+
+async def test_priority_pause_resume_and_branching_over_api(client, admin, viewer):
+    # priority is validated and exposed
+    wf = await workflow_id(client, admin, "research-report")
+    bad = await client.post(f"/api/v1/workflows/{wf}/runs", headers=admin, json={"priority": 10})
+    assert bad.status_code == 422
+    run = (await client.post(f"/api/v1/workflows/{wf}/runs", headers=admin, json={"priority": 7})).json()
+    assert run["priority"] == 7 and run["paused_at"] is None and run["depth"] == 0
+
+    # pause / resume: developer+, idempotent, reason recorded, terminal runs refused
+    denied = await client.post(f"/api/v1/runs/{run['id']}/pause", headers=viewer)
+    assert denied.status_code == 403
+    paused = await client.post(f"/api/v1/runs/{run['id']}/pause", headers=admin, json={"reason": "inspect"})
+    assert (
+        paused.status_code == 200
+        and paused.json()["paused_at"]
+        and paused.json()["pause_reason"] == "inspect"
+    )
+    again = await client.post(f"/api/v1/runs/{run['id']}/pause", headers=admin)
+    assert again.status_code == 200 and again.json()["paused_at"] == paused.json()["paused_at"]
+    resumed = await client.post(f"/api/v1/runs/{run['id']}/resume", headers=admin)
+    assert resumed.status_code == 200 and resumed.json()["paused_at"] is None
+    await client.post(f"/api/v1/runs/{run['id']}/cancel", headers=admin)
+    done = await client.post(f"/api/v1/runs/{run['id']}/pause", headers=admin)
+    assert done.status_code == 409 and done.json()["error"]["code"] == "run_terminal"
+
+    # the new node types validate through the normal endpoint, with per-node issues
+    bad_def = {
+        "nodes": [
+            {
+                "key": "f",
+                "type": "fan_out",
+                "over": "input.x",
+                "max_items": 99,
+                "template": {"type": "tool_task", "tool": "calculator"},
+            }
+        ]
+    }
+    v = await client.post("/api/v1/workflows/validate", headers=admin, json={"definition": bad_def})
+    assert v.status_code == 200 and v.json()["valid"] is False
+    ok_def = {
+        "nodes": [
+            {"key": "a", "type": "aggregation"},
+            {
+                "key": "f",
+                "type": "fan_out",
+                "depends_on": ["a"],
+                "over": "steps.a.output.items",
+                "max_items": 3,
+                "template": {
+                    "type": "tool_task",
+                    "tool": "calculator",
+                    "arguments": {"operation": "add", "values": [{"$ref": "item"}, 1]},
+                },
+            },
+            {
+                "key": "s",
+                "type": "sub_workflow",
+                "workflow": "child",
+                "depends_on": ["f"],
+                "when": {"ref": "steps.f.output.count", "op": "gt", "value": 0},
+            },
+        ]
+    }
+    v = await client.post("/api/v1/workflows/validate", headers=admin, json={"definition": ok_def})
+    assert v.json()["valid"] is True

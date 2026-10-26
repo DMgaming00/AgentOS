@@ -57,6 +57,18 @@ class InvalidInputError(PermanentError):
     error_type = "invalid_input"
 
 
+class FanOutError(PermanentError):
+    """A fan_out node could not expand (bad ``over`` value, too many items, unknown template agent)."""
+
+    error_type = "fan_out_error"
+
+
+class SubWorkflowError(PermanentError):
+    """A sub_workflow node could not start or its child failed (details.reason says which)."""
+
+    error_type = "sub_workflow_error"
+
+
 class PolicyViolationError(PermanentError):
     error_type = "policy_violation"
 

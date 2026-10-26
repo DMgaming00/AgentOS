@@ -29,6 +29,39 @@ class NodeType(StrEnum):
     TOOL_TASK = "tool_task"
     APPROVAL_GATE = "approval_gate"
     AGGREGATION = "aggregation"
+    # Engine-handled (never claimed by a worker): expand into bounded parallel children / start a child run.
+    FAN_OUT = "fan_out"
+    SUB_WORKFLOW = "sub_workflow"
+
+
+MAX_FAN_OUT = 20
+CONDITION_OPS = ("eq", "ne", "gt", "gte", "lt", "lte", "in", "not_in", "contains", "exists", "truthy")
+TEMPLATE_FIELDS = {
+    "type",
+    "name",
+    "agent",
+    "prompt",
+    "tools",
+    "tool",
+    "arguments",
+    "input",
+    "retry",
+    "timeout_seconds",
+    "output_contract",
+    "inject",
+}
+
+
+class Condition(BaseModel):
+    """Branch condition on a value from the run input or a declared dependency's output.
+
+    A condition whose ``ref`` cannot be resolved is false (except ``exists``, which reports it).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    ref: str = Field(min_length=3, max_length=200)
+    op: Literal["eq", "ne", "gt", "gte", "lt", "lte", "in", "not_in", "contains", "exists", "truthy"]
+    value: Any = None
 
 
 class RetryPolicy(BaseModel):
@@ -77,6 +110,16 @@ class NodeDefinition(BaseModel):
     reason: str | None = Field(default=None, max_length=2000)
     # aggregation
     mode: Literal["collect", "merge"] | None = None
+    # conditional execution / joins (any node type)
+    when: Condition | None = None
+    trigger: Literal["all_succeeded", "any_succeeded"] | None = None
+    # fan_out: run ``template`` once per item of the list at ``over`` (bounded by max_items)
+    over: str | None = Field(default=None, max_length=200)
+    template: dict[str, Any] | None = None
+    max_items: int | None = Field(default=None, ge=1, le=MAX_FAN_OUT)
+    on_overflow: Literal["fail", "truncate"] | None = None
+    # sub_workflow: start the latest version of this workflow as a child run (``input`` is its run input)
+    workflow: str | None = Field(default=None, max_length=200)
     # free-form input passed to the node (may contain {"$ref": "..."} values)
     input: dict[str, Any] = Field(default_factory=dict)
     # deterministic fault injection used by demos and tests
@@ -94,6 +137,24 @@ class NodeDefinition(BaseModel):
             raise ValueError(f"node {self.key!r}: only agent_task nodes may set 'agent' or 'tools'")
         if self.type != NodeType.TOOL_TASK and (self.tool or self.arguments):
             raise ValueError(f"node {self.key!r}: only tool_task nodes may set 'tool' or 'arguments'")
+        if self.type == NodeType.FAN_OUT:
+            if not self.over or not self.template:
+                raise ValueError(f"node {self.key!r}: fan_out requires 'over' and 'template'")
+            extra = set(self.template) - TEMPLATE_FIELDS
+            if extra:
+                raise ValueError(f"node {self.key!r}: template may not set {sorted(extra)}")
+            if self.template.get("type") not in ("agent_task", "tool_task"):
+                raise ValueError(f"node {self.key!r}: template type must be agent_task or tool_task")
+            NodeDefinition.model_validate({**self.template, "key": "template"})
+        elif self.over or self.template or self.max_items or self.on_overflow:
+            raise ValueError(
+                f"node {self.key!r}: only fan_out nodes may set over/template/max_items/on_overflow"
+            )
+        if self.type == NodeType.SUB_WORKFLOW:
+            if not self.workflow:
+                raise ValueError(f"node {self.key!r}: sub_workflow requires 'workflow'")
+        elif self.workflow:
+            raise ValueError(f"node {self.key!r}: only sub_workflow nodes may set 'workflow'")
         return self
 
 
@@ -227,6 +288,28 @@ def validate_definition(
         if node.retry.max_attempts > limits.max_attempts:
             issues.append(ValidationIssue("invalid_retry", "max_attempts exceeds limit", node.key))
         issues.extend(_check_tools(node, agents, tools))
+        if node.type == NodeType.FAN_OUT and node.template:
+            tmpl = NodeDefinition.model_validate({**node.template, "key": f"{node.key}_template"})
+            issues.extend(
+                ValidationIssue(i.code, f"fan_out template: {i.message}", node.key)
+                for i in _check_tools(tmpl, agents, tools)
+            )
+            if node.over and not _ref_allowed(node.over, node.depends_on, item=False):
+                issues.append(
+                    ValidationIssue(
+                        "invalid_reference",
+                        f"'over' {node.over!r} must start with input. or steps.<dependency>.",
+                        node.key,
+                    )
+                )
+        if node.when and not _ref_allowed(node.when.ref, node.depends_on, item=False):
+            issues.append(
+                ValidationIssue(
+                    "invalid_reference",
+                    f"condition ref {node.when.ref!r} must start with input. or steps.<dependency>.",
+                    node.key,
+                )
+            )
 
     order, cyclic = topological_sort(graph)
     if cyclic:
@@ -237,7 +320,15 @@ def validate_definition(
         )
 
     for node in spec.nodes:
-        for ref in _iter_refs(node.input) + _iter_refs(node.arguments or {}):
+        if node.type == NodeType.FAN_OUT and node.template:
+            # Template refs may also use the per-item context (``item`` / ``index``).
+            tmpl_refs = _iter_refs(node.template.get("input") or {}) + _iter_refs(
+                node.template.get("arguments") or {}
+            )
+            refs = [(r, True) for r in tmpl_refs]
+        else:
+            refs = [(r, False) for r in _iter_refs(node.input) + _iter_refs(node.arguments or {})]
+        for ref, item_ok in refs:
             parts = ref.split(".")
             if parts[0] == "steps" and (len(parts) < 2 or parts[1] not in node.depends_on):
                 issues.append(
@@ -245,7 +336,7 @@ def validate_definition(
                         "invalid_reference", f"$ref {ref!r} must point at a declared dependency", node.key
                     )
                 )
-            elif parts[0] not in ("steps", "input"):
+            elif parts[0] not in ("steps", "input") and not (item_ok and parts[0] in ("item", "index")):
                 issues.append(
                     ValidationIssue(
                         "invalid_reference", f"$ref {ref!r} must start with steps. or input.", node.key
@@ -287,6 +378,15 @@ def _check_tools(
         elif not tools[node.tool].enabled:
             issues.append(ValidationIssue("tool_disabled", f"tool {node.tool!r} is disabled", node.key))
     return issues
+
+
+def _ref_allowed(ref: str, depends_on: list[str], *, item: bool) -> bool:
+    parts = ref.split(".")
+    if parts[0] == "input":
+        return True
+    if parts[0] == "steps":
+        return len(parts) >= 2 and parts[1] in depends_on
+    return item and parts[0] in ("item", "index")
 
 
 # --------------------------------------------------------------------------- references
@@ -337,3 +437,45 @@ def resolve_refs(value: Any, context: dict[str, Any]) -> Any:
 
         return _TEMPLATE_RE.sub(sub, value)
     return value
+
+
+# --------------------------------------------------------------------------- conditions
+
+
+def evaluate_condition(cond: Condition | dict[str, Any], context: dict[str, Any]) -> bool:
+    """Deterministically evaluate a branch condition. Unresolvable refs and type errors are false."""
+    c = cond if isinstance(cond, Condition) else Condition.model_validate(cond)
+    try:
+        actual: Any = _lookup(c.ref, context)
+        found = True
+    except KeyError:
+        actual, found = None, False
+    if c.op == "exists":
+        return found and actual is not None
+    if not found:
+        return False
+    try:
+        match c.op:
+            case "eq":
+                return bool(actual == c.value)
+            case "ne":
+                return bool(actual != c.value)
+            case "gt":
+                return bool(actual > c.value)
+            case "gte":
+                return bool(actual >= c.value)
+            case "lt":
+                return bool(actual < c.value)
+            case "lte":
+                return bool(actual <= c.value)
+            case "in":
+                return bool(actual in c.value)
+            case "not_in":
+                return bool(actual not in c.value)
+            case "contains":
+                return bool(c.value in actual)
+            case "truthy":
+                return bool(actual)
+    except TypeError:
+        return False
+    return False

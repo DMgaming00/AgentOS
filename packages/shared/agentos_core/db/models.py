@@ -23,6 +23,7 @@ from sqlalchemy import (
     Index,
     Integer,
     Numeric,
+    SmallInteger,
     String,
     Text,
     UniqueConstraint,
@@ -163,6 +164,25 @@ class WorkflowRun(Base):
     purpose: Mapped[str] = mapped_column(
         String(16), nullable=False, default="workflow", server_default="workflow"
     )
+    # Scheduling: 0 (lowest) .. 9. Waiting steps gain effective priority over time (starvation protection).
+    priority: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0, server_default="0")
+    # Paused runs keep their state; no new step is claimed until resumed. Running steps finish.
+    paused_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    pause_reason: Mapped[str | None] = mapped_column(String(500))
+    # Nested workflows: the child run points at the parent run and the sub_workflow step that started it.
+    parent_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("workflow_runs.id", ondelete="CASCADE")
+    )
+    parent_step_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey(
+            "workflow_steps.id", ondelete="CASCADE", use_alter=True, name="fk_workflow_runs_parent_step"
+        )
+    )
+    depth: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0, server_default="0")
+    # Deterministic re-execution (Flight Recorder): the recorded run this run replays.
+    replay_of_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("workflow_runs.id", ondelete="SET NULL")
+    )
     created_at: Mapped[datetime] = created_at_col()
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -172,7 +192,10 @@ class WorkflowRun(Base):
             "status in ('pending','planning','running','waiting_approval','succeeded','failed','cancelled')",
             name="status_valid",
         ),
-        CheckConstraint("purpose in ('workflow','evaluation')", name="purpose_valid"),
+        CheckConstraint("purpose in ('workflow','evaluation','replay')", name="purpose_valid"),
+        CheckConstraint("priority between 0 and 9", name="priority_range"),
+        CheckConstraint("depth between 0 and 5", name="depth_range"),
+        Index("ix_workflow_runs_parent", "parent_run_id", postgresql_where=text("parent_run_id is not null")),
         Index("ix_workflow_runs_ws_created", "workspace_id", "created_at"),
         Index("ix_workflow_runs_status", "status"),
         Index("ix_workflow_runs_definition", "workflow_definition_id"),
@@ -218,7 +241,7 @@ class WorkflowStep(Base):
     __table_args__ = (
         UniqueConstraint("run_id", "node_key", name="uq_workflow_steps_run_node"),
         CheckConstraint(
-            "status in ('pending','ready','running','waiting_approval','retry_wait',"
+            "status in ('pending','ready','running','waiting_approval','retry_wait','waiting_child',"
             "'succeeded','failed','skipped','cancelled')",
             name="status_valid",
         ),
@@ -361,6 +384,7 @@ class Event(Base):
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default=EMPTY_OBJECT, nullable=False)
     trace_id: Mapped[str | None] = mapped_column(String(32))
+    span_id: Mapped[str | None] = mapped_column(String(16))
     __table_args__ = (
         UniqueConstraint("run_id", "sequence_number", name="uq_events_run_seq"),
         Index("ix_events_type_ts", "event_type", "timestamp"),
@@ -402,6 +426,46 @@ class ModelUsage(Base):
         Index("ix_model_usage_recorded", "recorded_at"),
         Index("ix_model_usage_agent", "agent_definition_id"),
         Index("ix_model_usage_ws_purpose", "workspace_id", "purpose"),
+    )
+
+
+class ModelCallRecord(Base):
+    """Immutable, sanitized record of one model request/response (the Flight Recorder's source of truth).
+
+    Secrets are redacted before storage, raw provider payloads (thinking blocks, signatures) are never stored,
+    and oversize requests are truncated with ``truncated`` set. Rows cannot be updated or deleted.
+    """
+
+    __tablename__ = "model_call_records"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
+    )
+    run_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workflow_runs.id", ondelete="CASCADE"), nullable=False
+    )
+    step_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("workflow_steps.id", ondelete="CASCADE"))
+    attempt_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("step_attempts.id", ondelete="CASCADE"))
+    node_key: Mapped[str] = mapped_column(String(100), nullable=False)
+    call_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    attempt_number: Mapped[int | None] = mapped_column(Integer)
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    model: Mapped[str] = mapped_column(String(200), nullable=False)
+    agent_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("agent_config_versions.id", ondelete="RESTRICT")
+    )
+    request_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    request: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    response: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    error: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    latency_ms: Mapped[int] = mapped_column(Integer, nullable=False)
+    truncated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    created_at: Mapped[datetime] = created_at_col()
+    __table_args__ = (
+        CheckConstraint("status in ('succeeded','failed')", name="status_valid"),
+        Index("ix_model_call_records_run", "run_id", "created_at"),
+        Index("ix_model_call_records_step", "step_id"),
     )
 
 

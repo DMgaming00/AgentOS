@@ -23,6 +23,7 @@ from agentos.api import (
     evaluations,
     events,
     experiments,
+    flight,
     metrics,
     runs,
     tools,
@@ -134,6 +135,7 @@ def create_app() -> FastAPI:
         evaluations,
         experiments,
         deployments,
+        flight,
     ):
         app.include_router(module.router)
 

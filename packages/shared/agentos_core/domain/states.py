@@ -25,6 +25,9 @@ class StepStatus(StrEnum):
     RUNNING = "running"
     WAITING_APPROVAL = "waiting_approval"
     RETRY_WAIT = "retry_wait"
+    # Engine-handled nodes (fan_out, sub_workflow) wait here for child steps / a child run.
+    # No lease is held: the wait is durable state, recovered by the coordinator.
+    WAITING_CHILD = "waiting_child"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
     SKIPPED = "skipped"
@@ -66,7 +69,7 @@ class Role(StrEnum):
 
 TERMINAL_RUN = frozenset({RunStatus.SUCCEEDED, RunStatus.FAILED, RunStatus.CANCELLED})
 TERMINAL_STEP = frozenset({StepStatus.SUCCEEDED, StepStatus.FAILED, StepStatus.SKIPPED, StepStatus.CANCELLED})
-ACTIVE_STEP = frozenset({StepStatus.RUNNING, StepStatus.WAITING_APPROVAL})
+ACTIVE_STEP = frozenset({StepStatus.RUNNING, StepStatus.WAITING_APPROVAL, StepStatus.WAITING_CHILD})
 
 RUN_TRANSITIONS: dict[RunStatus, frozenset[RunStatus]] = {
     RunStatus.PENDING: frozenset(
@@ -85,7 +88,19 @@ RUN_TRANSITIONS: dict[RunStatus, frozenset[RunStatus]] = {
 }
 
 STEP_TRANSITIONS: dict[StepStatus, frozenset[StepStatus]] = {
-    StepStatus.PENDING: frozenset({StepStatus.READY, StepStatus.SKIPPED, StepStatus.CANCELLED}),
+    # PENDING -> FAILED/SUCCEEDED/WAITING_CHILD are engine-internal: the engine itself decides engine-handled
+    # nodes (fan_out, sub_workflow) without a worker lease.
+    StepStatus.PENDING: frozenset(
+        {
+            StepStatus.READY,
+            StepStatus.SKIPPED,
+            StepStatus.CANCELLED,
+            StepStatus.FAILED,
+            StepStatus.SUCCEEDED,
+            StepStatus.WAITING_CHILD,
+        }
+    ),
+    StepStatus.WAITING_CHILD: frozenset({StepStatus.SUCCEEDED, StepStatus.FAILED, StepStatus.CANCELLED}),
     StepStatus.READY: frozenset({StepStatus.RUNNING, StepStatus.SKIPPED, StepStatus.CANCELLED}),
     StepStatus.RUNNING: frozenset(
         {
