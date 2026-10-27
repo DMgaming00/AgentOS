@@ -1,0 +1,608 @@
+{
+ "name": "arena-extraction",
+ "version": 1,
+ "split": "development",
+ "description": "Extract numeric facts (with citations, or null when absent) from the fictional platform documents.",
+ "cases": [
+  {
+   "case_id": "ext-22740918",
+   "task": "From the workspace documents, extract: Price per 1M input tokens (USD) of Helix Serve, Price per 1M input tokens (USD) of Nimbus Inference. Return a JSON object with the keys helix_serve_price_per_1m_input_tokens_usd, nimbus_inference_price_per_1m_input_tokens_usd and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+   "input": {
+    "family": "extraction",
+    "fields": [
+     {
+      "key": "helix_serve_price_per_1m_input_tokens_usd",
+      "label": "Price per 1M input tokens",
+      "unit": "USD",
+      "subject": "Helix Serve"
+     },
+     {
+      "key": "nimbus_inference_price_per_1m_input_tokens_usd",
+      "label": "Price per 1M input tokens",
+      "unit": "USD",
+      "subject": "Nimbus Inference"
+     }
+    ],
+    "documents": [
+     "platform-helix.md",
+     "platform-nimbus.md"
+    ]
+   },
+   "input_artifacts": [
+    "platform-helix.md",
+    "platform-nimbus.md"
+   ],
+   "expected_output": {
+    "helix_serve_price_per_1m_input_tokens_usd": 0.22,
+    "nimbus_inference_price_per_1m_input_tokens_usd": 0.3
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "source_citation_check",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "helix_serve_price_per_1m_input_tokens_usd": {
+       "abs": 0.001
+      },
+      "nimbus_inference_price_per_1m_input_tokens_usd": {
+       "abs": 0.001
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "helix_serve_price_per_1m_input_tokens_usd",
+      "nimbus_inference_price_per_1m_input_tokens_usd"
+     ]
+    },
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 8,
+     "max_identical_calls": 2
+    },
+    "task_completion": {
+     "required_fields": [
+      "helix_serve_price_per_1m_input_tokens_usd",
+      "nimbus_inference_price_per_1m_input_tokens_usd"
+     ]
+    }
+   },
+   "tags": [
+    "arena",
+    "extraction",
+    "multi_subject"
+   ]
+  },
+  {
+   "case_id": "ext-65a149f8",
+   "task": "From the workspace documents, extract: Median latency (p50) (ms) of Helix Serve. Return a JSON object with the keys median_latency_p50_ms and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+   "input": {
+    "family": "extraction",
+    "fields": [
+     {
+      "key": "median_latency_p50_ms",
+      "label": "Median latency (p50)",
+      "unit": "ms",
+      "subject": "Helix Serve"
+     }
+    ],
+    "documents": [
+     "platform-helix.md"
+    ],
+    "subject": "Helix Serve"
+   },
+   "input_artifacts": [
+    "platform-helix.md"
+   ],
+   "expected_output": {
+    "median_latency_p50_ms": 140
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "source_citation_check",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "median_latency_p50_ms": {
+       "abs": 0.5
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "median_latency_p50_ms"
+     ]
+    },
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 8,
+     "max_identical_calls": 2
+    },
+    "task_completion": {
+     "required_fields": [
+      "median_latency_p50_ms"
+     ]
+    }
+   },
+   "tags": [
+    "arena",
+    "extraction",
+    "single"
+   ]
+  },
+  {
+   "case_id": "ext-6b2e57cd",
+   "task": "From the workspace documents, extract: Max context window (tokens) of Nimbus Inference, Price per 1M output tokens (USD) of Nimbus Inference, Throughput per GPU (tokens/s) of Nimbus Inference. Return a JSON object with the keys max_context_window_tokens, price_per_1m_output_tokens_usd, throughput_per_gpu_tokens_s and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+   "input": {
+    "family": "extraction",
+    "fields": [
+     {
+      "key": "max_context_window_tokens",
+      "label": "Max context window",
+      "unit": "tokens",
+      "subject": "Nimbus Inference"
+     },
+     {
+      "key": "price_per_1m_output_tokens_usd",
+      "label": "Price per 1M output tokens",
+      "unit": "USD",
+      "subject": "Nimbus Inference"
+     },
+     {
+      "key": "throughput_per_gpu_tokens_s",
+      "label": "Throughput per GPU",
+      "unit": "tokens/s",
+      "subject": "Nimbus Inference"
+     }
+    ],
+    "documents": [
+     "platform-nimbus.md"
+    ],
+    "subject": "Nimbus Inference"
+   },
+   "input_artifacts": [
+    "platform-nimbus.md"
+   ],
+   "expected_output": {
+    "max_context_window_tokens": 128000,
+    "price_per_1m_output_tokens_usd": 1.2,
+    "throughput_per_gpu_tokens_s": 2400
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "source_citation_check",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "max_context_window_tokens": {
+       "abs": 0.5
+      },
+      "price_per_1m_output_tokens_usd": {
+       "abs": 0.001
+      },
+      "throughput_per_gpu_tokens_s": {
+       "abs": 0.5
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "max_context_window_tokens",
+      "price_per_1m_output_tokens_usd",
+      "throughput_per_gpu_tokens_s"
+     ]
+    },
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 8,
+     "max_identical_calls": 2
+    },
+    "task_completion": {
+     "required_fields": [
+      "max_context_window_tokens",
+      "price_per_1m_output_tokens_usd",
+      "throughput_per_gpu_tokens_s"
+     ]
+    }
+   },
+   "tags": [
+    "arena",
+    "extraction",
+    "multi_field"
+   ]
+  },
+  {
+   "case_id": "ext-9f48706d",
+   "task": "From the workspace documents, extract: p95 latency (ms) of Helix Serve. Return a JSON object with the keys p95_latency_ms and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+   "input": {
+    "family": "extraction",
+    "fields": [
+     {
+      "key": "p95_latency_ms",
+      "label": "p95 latency",
+      "unit": "ms",
+      "subject": "Helix Serve"
+     }
+    ],
+    "documents": [
+     "platform-helix.md"
+    ],
+    "subject": "Helix Serve"
+   },
+   "input_artifacts": [
+    "platform-helix.md"
+   ],
+   "expected_output": {
+    "p95_latency_ms": 300
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "source_citation_check",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "p95_latency_ms": {
+       "abs": 0.5
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "p95_latency_ms"
+     ]
+    },
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 8,
+     "max_identical_calls": 2
+    },
+    "task_completion": {
+     "required_fields": [
+      "p95_latency_ms"
+     ]
+    }
+   },
+   "tags": [
+    "arena",
+    "extraction",
+    "single"
+   ]
+  },
+  {
+   "case_id": "ext-a0cf035f",
+   "task": "From the workspace documents, extract: Free tier requests per month (requests) of Vector Forge. Return a JSON object with the keys free_tier_requests_per_month_requests and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+   "input": {
+    "family": "extraction",
+    "fields": [
+     {
+      "key": "free_tier_requests_per_month_requests",
+      "label": "Free tier requests per month",
+      "unit": "requests",
+      "subject": "Vector Forge"
+     }
+    ],
+    "documents": [
+     "platform-vectorforge.md"
+    ],
+    "subject": "Vector Forge"
+   },
+   "input_artifacts": [
+    "platform-vectorforge.md"
+   ],
+   "expected_output": {
+    "free_tier_requests_per_month_requests": null
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "source_citation_check",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "free_tier_requests_per_month_requests": {
+       "abs": 0.5
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": []
+    },
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 8,
+     "max_identical_calls": 2
+    },
+    "task_completion": {
+     "required_fields": [
+      "free_tier_requests_per_month_requests"
+     ]
+    }
+   },
+   "tags": [
+    "arena",
+    "extraction",
+    "unanswerable"
+   ]
+  },
+  {
+   "case_id": "ext-a8db0f98",
+   "task": "From the workspace documents, extract: Cold start time (s) of Vector Forge. Return a JSON object with the keys cold_start_time_s and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+   "input": {
+    "family": "extraction",
+    "fields": [
+     {
+      "key": "cold_start_time_s",
+      "label": "Cold start time",
+      "unit": "s",
+      "subject": "Vector Forge"
+     }
+    ],
+    "documents": [
+     "platform-vectorforge.md"
+    ],
+    "subject": "Vector Forge"
+   },
+   "input_artifacts": [
+    "platform-vectorforge.md"
+   ],
+   "expected_output": {
+    "cold_start_time_s": 25
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "source_citation_check",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "cold_start_time_s": {
+       "abs": 0.5
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "cold_start_time_s"
+     ]
+    },
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 8,
+     "max_identical_calls": 2
+    },
+    "task_completion": {
+     "required_fields": [
+      "cold_start_time_s"
+     ]
+    }
+   },
+   "tags": [
+    "arena",
+    "extraction",
+    "single"
+   ]
+  },
+  {
+   "case_id": "ext-dee86cd4",
+   "task": "From the workspace documents, extract: Data retention period (days) of Helix Serve. Return a JSON object with the keys data_retention_period_days and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+   "input": {
+    "family": "extraction",
+    "fields": [
+     {
+      "key": "data_retention_period_days",
+      "label": "Data retention period",
+      "unit": "days",
+      "subject": "Helix Serve"
+     }
+    ],
+    "documents": [
+     "platform-helix.md"
+    ],
+    "subject": "Helix Serve"
+   },
+   "input_artifacts": [
+    "platform-helix.md"
+   ],
+   "expected_output": {
+    "data_retention_period_days": null
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "source_citation_check",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "data_retention_period_days": {
+       "abs": 0.5
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": []
+    },
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 8,
+     "max_identical_calls": 2
+    },
+    "task_completion": {
+     "required_fields": [
+      "data_retention_period_days"
+     ]
+    }
+   },
+   "tags": [
+    "arena",
+    "extraction",
+    "unanswerable"
+   ]
+  },
+  {
+   "case_id": "ext-e3788323",
+   "task": "From the workspace documents, extract: Throughput per GPU (tokens/s) of Helix Serve. Return a JSON object with the keys throughput_per_gpu_tokens_s and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+   "input": {
+    "family": "extraction",
+    "fields": [
+     {
+      "key": "throughput_per_gpu_tokens_s",
+      "label": "Throughput per GPU",
+      "unit": "tokens/s",
+      "subject": "Helix Serve"
+     }
+    ],
+    "documents": [
+     "platform-helix.md"
+    ],
+    "subject": "Helix Serve"
+   },
+   "input_artifacts": [
+    "platform-helix.md"
+   ],
+   "expected_output": {
+    "throughput_per_gpu_tokens_s": 3100
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "source_citation_check",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "throughput_per_gpu_tokens_s": {
+       "abs": 0.5
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "throughput_per_gpu_tokens_s"
+     ]
+    },
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 8,
+     "max_identical_calls": 2
+    },
+    "task_completion": {
+     "required_fields": [
+      "throughput_per_gpu_tokens_s"
+     ]
+    }
+   },
+   "tags": [
+    "arena",
+    "extraction",
+    "single"
+   ]
+  },
+  {
+   "case_id": "ext-f8653ddf",
+   "task": "From the workspace documents, extract: Throughput per GPU (tokens/s) of Nimbus Inference. Return a JSON object with the keys throughput_per_gpu_tokens_s and a 'citations' object mapping each key to the document section you used. Use null for any value the documents do not state.",
+   "input": {
+    "family": "extraction",
+    "fields": [
+     {
+      "key": "throughput_per_gpu_tokens_s",
+      "label": "Throughput per GPU",
+      "unit": "tokens/s",
+      "subject": "Nimbus Inference"
+     }
+    ],
+    "documents": [
+     "platform-nimbus.md"
+    ],
+    "subject": "Nimbus Inference"
+   },
+   "input_artifacts": [
+    "platform-nimbus.md"
+   ],
+   "expected_output": {
+    "throughput_per_gpu_tokens_s": 2400
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "source_citation_check",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "throughput_per_gpu_tokens_s": {
+       "abs": 0.5
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "throughput_per_gpu_tokens_s"
+     ]
+    },
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 8,
+     "max_identical_calls": 2
+    },
+    "task_completion": {
+     "required_fields": [
+      "throughput_per_gpu_tokens_s"
+     ]
+    }
+   },
+   "tags": [
+    "arena",
+    "extraction",
+    "single"
+   ]
+  }
+ ]
+}

@@ -211,6 +211,11 @@ async def optimizer_context(
     policy: AutopilotPolicy,
 ) -> dict[str, Any]:
     """What the optimizer may see: baseline config, diagnosis, development-split examples only."""
+    evaluated_names = (
+        select(EvaluationDataset.name)
+        .join(EvaluationRun, EvaluationRun.dataset_id == EvaluationDataset.id)
+        .where(EvaluationRun.agent_id == agent_id)
+    )
     dev_rows = (
         await session.execute(
             select(EvaluationCase, EvaluationCaseResult)
@@ -220,6 +225,8 @@ async def optimizer_context(
             .where(
                 EvaluationDataset.workspace_id == workspace_id,
                 EvaluationDataset.split == "development",
+                # Only datasets this agent was evaluated on; never another task family's cases (e.g. the Arena corpus).
+                EvaluationDataset.name.in_(evaluated_names),
                 (EvaluationRun.agent_id == agent_id) | (EvaluationRun.id.is_(None)),
             )
             .order_by(EvaluationCase.case_key)

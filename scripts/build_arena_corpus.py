@@ -37,6 +37,15 @@ PLATFORM_FILE = {
     "Helix Serve": "platform-helix.md",
     "Vector Forge": "platform-vectorforge.md",
 }
+# Metrics no document states. Asking for them has the ground truth "not stated" by construction (asserted below).
+PHANTOM = {
+    "Egress bandwidth": "Gbps",
+    "Free tier requests per month": "requests",
+    "Maximum batch size": "requests",
+    "Data retention period": "days",
+    "Number of regions": "regions",
+    "GPU memory per instance": "GB",
+}
 LOWER_IS_BETTER = ("price", "cost", "latency", "cold start")
 NUMBER = re.compile(r"-?\d[\d,]*(?:\.\d+)?")
 
@@ -66,9 +75,7 @@ def parse_facts() -> dict[str, dict[str, dict[str, Any]]]:
             if not m:
                 continue
             value = float(m.group(0).replace(",", ""))
-            unit = (rest[m.end() :].replace("$", "").strip()) or (
-                "USD" if "$" in rest else ""
-            )
+            unit = (rest[m.end() :].replace("$", "").strip()) or ("USD" if "$" in rest else "")
             if "$" in rest[: m.start()]:
                 unit = rest[m.end() :].strip() or "USD"
             seen.setdefault(label.strip(), []).append((value, unit))
@@ -91,6 +98,20 @@ def number(value: float) -> int | float:
     return int(value) if float(value).is_integer() else value
 
 
+def unit_of(facts: dict[str, dict[str, dict[str, Any]]], label: str) -> str:
+    return next((d[label]["unit"] for d in facts.values() if label in d), PHANTOM.get(label, ""))
+
+
+def gaps_for(facts: dict[str, dict[str, dict[str, Any]]]) -> list[tuple[str, str]]:
+    """(platform, label) pairs the documents do not answer: natural gaps plus labels no document mentions."""
+    corpus = " ".join((DOCS / f).read_text().lower() for f in PLATFORM_FILE.values())
+    for label in PHANTOM:
+        assert label.lower() not in corpus, f"{label} is stated in a document"
+    all_labels = sorted({label for d in facts.values() for label in d})
+    natural = [(p, label) for p in sorted(facts) for label in all_labels if label not in facts[p]]
+    return natural + [(p, label) for p in sorted(facts) for label in sorted(PHANTOM)]
+
+
 def field_key(label: str, unit: str) -> str:
     return f"{slug(label)}_{slug(unit)}" if unit else slug(label)
 
@@ -103,10 +124,8 @@ def tolerance(unit: str) -> dict[str, float]:
 
 
 def extraction_cases(facts: dict[str, dict[str, dict[str, Any]]], rng: random.Random) -> list[dict[str, Any]]:
-    all_labels = sorted({label for d in facts.values() for label in d})
-
     def field(platform: str, label: str) -> dict[str, Any]:
-        unit = next(d[label]["unit"] for d in facts.values() if label in d)
+        unit = unit_of(facts, label)
         return {"key": field_key(label, unit), "label": label, "unit": unit, "subject": platform}
 
     def build(kind: str, fields: list[dict[str, Any]], tags: list[str]) -> dict[str, Any]:
@@ -163,20 +182,20 @@ def extraction_cases(facts: dict[str, dict[str, dict[str, Any]]], rng: random.Ra
     platforms = sorted(facts)
     singles = [(p, label) for p in platforms for label in sorted(facts[p])]
     rng.shuffle(singles)
-    cases = [build("single", [field(p, label)], ["retrieval"]) for p, label in singles[:14]]
+    cases = [build("single", [field(p, label)], ["retrieval"]) for p, label in singles[:18]]
     for p in platforms:  # multi-field, one subject
         labels = sorted(facts[p])
         for _ in range(3):
             pick = sorted(rng.sample(labels, rng.choice([2, 3])))
             cases.append(build("multi_field", [field(p, label) for label in pick], ["retrieval"]))
-    for _ in range(6):  # two subjects, one search each
+    for _ in range(8):  # two subjects, one search each
         pair = sorted(rng.sample(platforms, 2))
         shared = sorted(set(facts[pair[0]]) & set(facts[pair[1]]))
         label = rng.choice(shared)
         cases.append(build("multi_subject", [field(p, label) for p in pair], ["retrieval", "multi_search"]))
-    missing = [(p, label) for p in platforms for label in all_labels if label not in facts[p]]
+    missing = gaps_for(facts)
     rng.shuffle(missing)
-    for p, label in missing[:8]:
+    for p, label in missing[:12]:
         cases.append(build("unanswerable", [field(p, label)], ["abstention"]))
     return dedupe(cases)
 
@@ -204,7 +223,9 @@ def calc(op: str, values: list[float]) -> float:
     raise ValueError(op)
 
 
-def calculation_cases(facts: dict[str, dict[str, dict[str, Any]]], rng: random.Random) -> list[dict[str, Any]]:
+def calculation_cases(
+    facts: dict[str, dict[str, dict[str, Any]]], rng: random.Random
+) -> list[dict[str, Any]]:
     # Numbers come from the documents (so the arithmetic is about the same domain) plus a few synthetic ones.
     pool = sorted({d["value"] for p in facts.values() for d in p.values() if d["value"] > 0})
     cases: list[dict[str, Any]] = []
@@ -243,7 +264,12 @@ def calculation_cases(facts: dict[str, dict[str, dict[str, Any]]], rng: random.R
         values = sorted(rng.sample(pool, n)) if op not in ("percent_change", "ratio") else rng.sample(pool, 2)
         if op in ("percent_change", "ratio"):
             values = [float(v) for v in values]
-        add(op, {"operation": op, "values": [float(v) for v in values]}, calc(op, [float(v) for v in values]), f"{op}:{values}")
+        add(
+            op,
+            {"operation": op, "values": [float(v) for v in values]},
+            calc(op, [float(v) for v in values]),
+            f"{op}:{values}",
+        )
     for _ in range(8):
         a, b, c = (rng.choice(pool) for _ in range(3))
         expr = rng.choice(
@@ -263,13 +289,15 @@ def _eval(expr: str) -> float:
     # Independent reference evaluator: Python's own arithmetic on a whitelisted character set.
     if not re.fullmatch(r"[0-9.+\-*/^() ]+", expr):
         raise ValueError(expr)
-    return float(eval(expr.replace("^", "**"), {"__builtins__": {}}, {}))  # noqa: S307
+    return float(eval(expr.replace("^", "**"), {"__builtins__": {}}, {}))
 
 
 # ----------------------------------------------------------------------------- family 3: grounded question answering
 
 
-def qa_cases(facts: dict[str, dict[str, dict[str, Any]]], rng: random.Random) -> list[dict[str, Any]]:
+def qa_cases(
+    facts: dict[str, dict[str, dict[str, Any]]], rng: random.Random, ambiguous: set[str]
+) -> list[dict[str, Any]]:
     platforms = sorted(facts)
     cases: list[dict[str, Any]] = []
 
@@ -277,15 +305,30 @@ def qa_cases(facts: dict[str, dict[str, dict[str, Any]]], rng: random.Random) ->
         answerable = expected is not None and kind != "comparison"
         methods = ["schema_validation", "task_completion", "tool_correctness"]
         cfg: dict[str, Any] = {
-            "tool_correctness": {"required_tools": ["document_search"], "max_calls": 6, "max_identical_calls": 2}
+            "tool_correctness": {
+                "required_tools": ["document_search"],
+                "max_calls": 6,
+                "max_identical_calls": 2,
+            }
         }
         if kind == "comparison":
             methods.insert(1, "exact_match")
         else:
             methods.insert(1, "numeric_tolerance")
             cfg["numeric_tolerance"] = {"fields": {"answer": tolerance(input_.get("unit", ""))}}
-        methods.append("source_citation_check")
-        cfg["source_citation_check"] = {"fields": ["answer"] if answerable else []}
+        if answerable:
+            methods.append("source_citation_check")
+            cfg["source_citation_check"] = {"fields": ["answer"]}
+        # A wrong or invented answer must be scored as wrong, not as a malformed output: allow any scalar type here.
+        methods.remove("schema_validation")
+        methods.insert(0, "schema_validation")
+        cfg["schema_validation"] = {
+            "schema": {
+                "type": "object",
+                "required": ["answer"],
+                "properties": {"answer": {"type": ["number", "string", "null"]}},
+            }
+        }
         cases.append(
             {
                 "family": "grounded_qa",
@@ -307,7 +350,7 @@ def qa_cases(facts: dict[str, dict[str, dict[str, Any]]], rng: random.Random) ->
 
     lookups = [(p, label) for p in platforms for label in sorted(facts[p])]
     rng.shuffle(lookups)
-    for p, label in lookups[:14]:
+    for p, label in lookups[:16]:
         d = facts[p][label]
         add(
             "lookup",
@@ -317,10 +360,10 @@ def qa_cases(facts: dict[str, dict[str, dict[str, Any]]], rng: random.Random) ->
             f"What is the {label} of {p} (in {d['unit']})?",
         )
     all_labels = sorted({label for d in facts.values() for label in d})
-    gaps = [(p, label) for p in platforms for label in all_labels if label not in facts[p]]
+    gaps = gaps_for(facts)
     rng.shuffle(gaps)
-    for p, label in gaps[:10]:
-        unit = next(d[label]["unit"] for d in facts.values() if label in d)
+    for p, label in gaps[:12]:
+        unit = unit_of(facts, label)
         add(
             "unanswerable",
             {"subject": p, "label": label, "unit": unit},
@@ -328,7 +371,12 @@ def qa_cases(facts: dict[str, dict[str, dict[str, Any]]], rng: random.Random) ->
             [f"{p}|{label}"],
             f"What is the {label} of {p} (in {unit})?",
         )
-    shared = [label for label in all_labels if sum(label in facts[p] for p in platforms) >= 2]
+    # A comparison is only well-defined if no platform states the metric ambiguously (e.g. two different uptime SLAs).
+    shared = [
+        label
+        for label in all_labels
+        if sum(label in facts[p] for p in platforms) >= 2 and label not in ambiguous
+    ]
     for label in rng.sample(shared, min(10, len(shared))):
         holders = {p: facts[p][label]["value"] for p in platforms if label in facts[p]}
         lower = any(w in label.lower() for w in LOWER_IS_BETTER)
@@ -374,13 +422,19 @@ def assign_splits(entries: list[dict[str, Any]]) -> tuple[int, dict[str, list[di
             e["split"] = split
             buckets[split].append(e)
         if all(
-            sum(1 for e in buckets[s] if e["family"] == f) >= MIN_PER_SPLIT[s] for s in SPLITS for f in families
+            sum(1 for e in buckets[s] if e["family"] == f) >= MIN_PER_SPLIT[s]
+            for s in SPLITS
+            for f in families
         ):
             return salt, buckets
     raise SystemExit("no salt satisfies the minimum split sizes")
 
 
-DATASET_NAME = {"extraction": "arena-extraction", "calculation": "arena-calculation", "grounded_qa": "arena-grounded-qa"}
+DATASET_NAME = {
+    "extraction": "arena-extraction",
+    "calculation": "arena-calculation",
+    "grounded_qa": "arena-grounded-qa",
+}
 DESCRIPTION = {
     "extraction": "Extract numeric facts (with citations, or null when absent) from the fictional platform documents.",
     "calculation": "Exact arithmetic over numbers drawn from the same documents; tests whether the agent uses the calculator.",
@@ -400,19 +454,23 @@ def dataset_hash(ds: dict[str, Any]) -> str:
 
 
 def build() -> tuple[dict[str, str], dict[str, Any]]:
-    facts = clean(parse_facts())
+    raw = parse_facts()
+    facts = clean(raw)
+    ambiguous = {label for d in raw.values() for label, v in d.items() if v["ambiguous"]}
     rng = random.Random(20261026)
     entries = [
         *extraction_cases(facts, rng),
         *calculation_cases(facts, rng),
-        *qa_cases(facts, rng),
+        *qa_cases(facts, rng, ambiguous),
     ]
     salt, buckets = assign_splits(entries)
     files: dict[str, str] = {}
     manifest_ds: list[dict[str, Any]] = []
     for family, name in DATASET_NAME.items():
         for split in SPLITS:
-            members = sorted((e for e in buckets[split] if e["family"] == family), key=lambda e: e["case"]["task"])
+            members = sorted(
+                (e for e in buckets[split] if e["family"] == family), key=lambda e: e["case"]["task"]
+            )
             cases = []
             for e in members:
                 cid = f"{family[:3]}-{sha(json.dumps(e['case']['input'], sort_keys=True))[:8]}"
@@ -435,7 +493,10 @@ def build() -> tuple[dict[str, str], dict[str, Any]]:
                     "version": 1,
                     "cases": len(cases),
                     "hash": dataset_hash(ds),
-                    "kinds": {k: sum(1 for e in members if e["kind"] == k) for k in sorted({e["kind"] for e in members})},
+                    "kinds": {
+                        k: sum(1 for e in members if e["kind"] == k)
+                        for k in sorted({e["kind"] for e in members})
+                    },
                 }
             )
     # Leakage report: identical fact sets across splits must be zero; partial fact overlap is reported, not hidden.
@@ -445,18 +506,22 @@ def build() -> tuple[dict[str, str], dict[str, Any]]:
         by_split_facts[e["split"]].update(e["facts"])
         by_split_sets[e["split"]].add((e["family"], tuple(e["facts"])))
     pairs = [("development", "validation"), ("development", "test"), ("validation", "test")]
+    case_ids_by_split: dict[str, set[str]] = {s: set() for s in SPLITS}
+    for e in entries:
+        case_ids_by_split[e["split"]].add(sha(json.dumps([e["family"], e["case"]["input"]], sort_keys=True)))
+    identical_cases = sum(len(case_ids_by_split[a] & case_ids_by_split[b]) for a, b in pairs)
+    if identical_cases:
+        raise SystemExit("identical cases straddle splits")
     manifest = {
         "corpus": "agent-arena",
         "version": 1,
         "split_salt": salt,
         "split_share_target": SPLIT_SHARE,
-        "source_documents": {
-            f: sha((DOCS / f).read_text()) for f in sorted(PLATFORM_FILE.values())
-        },
+        "source_documents": {f: sha((DOCS / f).read_text()) for f in sorted(PLATFORM_FILE.values())},
         "total_cases": sum(d["cases"] for d in manifest_ds),
         "datasets": manifest_ds,
         "leakage": {
-            "identical_case_across_splits": 0,  # asserted below
+            "identical_case_across_splits": identical_cases,
             "identical_fact_set_across_splits": {
                 f"{a}/{b}": len(by_split_sets[a] & by_split_sets[b]) for a, b in pairs
             },
@@ -464,7 +529,8 @@ def build() -> tuple[dict[str, str], dict[str, Any]]:
             "facts_shared_between_splits": {
                 f"{a}/{b}": len(by_split_facts[a] & by_split_facts[b]) for a, b in pairs
             },
-            "note": "The documents contain about 26 distinct facts, so individual facts recur across splits in different "
+            "distinct_facts_in_documents": sum(len(d) for d in facts.values()),
+            "note": "The documents contain few distinct facts (see distinct_facts_in_documents), so individual facts recur across splits in different "
             "combinations. Splits prevent tuning against the exact cases used for selection and the final test; they "
             "do not make the underlying facts novel.",
         },

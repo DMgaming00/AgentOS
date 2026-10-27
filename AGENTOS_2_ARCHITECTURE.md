@@ -306,3 +306,27 @@ Runs with `purpose` in (`chaos`, `security`, `replay`) are excluded from the def
 platform's code-level enforcement, not any real model's resistance to prompt injection. The corpus is small and
 hand-written (a regression floor, not a guarantee). Only persisted traces are scanned for secrets; logs of other worker
 processes are not.
+
+## 6. OpenEval expansion and Agent Arena (Phase 6)
+
+Migration `0009` (`arena_runs`, `arena_entries`). The Arena reuses OpenEval datasets and the existing evaluation engine; each
+(contender, dataset) is an ordinary `EvaluationRun` whose cases execute as real workflow runs.
+
+```mermaid
+flowchart LR
+  B[scripts/build_arena_corpus.py<br/>answer keys from the documents] --> F[examples/arena/datasets + MANIFEST.json<br/>sha256 per dataset]
+  F -->|import verifies hash| D[(evaluation_datasets)]
+  C[contender versions<br/>offline providers only] --> A[arena run]
+  D --> A -->|development + validation| E[evaluation runs → workers]
+  A -.->|final-test: once, after selection completes| T[test evaluation runs]
+  E & T --> L[leaderboard: family scores, Wilson + stratified bootstrap,<br/>competition rank with statistical ties]
+```
+
+* **Corpus**: 3 families (numeric extraction, calculation, grounded Q&A with unanswerable and comparison questions), 111 cases, development / validation / test.
+  Splits are assigned by a salted hash of each case's fact set; the salt search guarantees minimum sizes and is recorded. Identical cases or fact sets never straddle splits
+  (asserted at build time and in tests). Individual facts do recur (the documents hold 25), which the manifest and UI state.
+* **Answer keys** are parsed from the source documents with a different method than the agents use, and calculation keys with Python arithmetic. Comparison questions exclude metrics a document states ambiguously (a real bug found while debugging: Helix states two uptime SLAs).
+* **Anti-leakage in code**: creating a run schedules only development and validation; `start_final_test` needs a completed selection, takes a row lock, sets `final_test_started_at` once, and entries are unique per (arena, version, dataset). The API does not publish test leaderboards or test cases until every test evaluation is complete; expected answers are shown only for development.
+* **Scoring**: a case passes only if every deterministic evaluator passes; family score = pass rate; overall = unweighted mean of families; 95% intervals; rank = 1 + number of contenders significantly better by paired bootstrap, so indistinguishable contenders share a rank.
+* **Contenders** are one scripted policy (`providers/arena_policy.py`, mock scenario `arena`) in six configurations (prompt flags, tools, step limit). Paid providers are rejected in code (`offline_only`).
+* **Side effects found and fixed**: the optimizer picked "development"/"validation" datasets by split only and the experiment dialog defaulted to the first validation dataset, so a second dataset family contaminated Autopilot; both are now scoped (optimizer: datasets the agent was evaluated on; dialog: visible default).

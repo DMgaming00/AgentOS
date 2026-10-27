@@ -85,3 +85,11 @@ Updated each phase. Items are things that are not done, not verified, or weaker 
   workspace and creates a throwaway workspace; both are removed at the end, but a crash between phases can leave them
   until the next run's cleanup or a manual removal.
 * Security-run agents appear in the Agents list (`Security Test Agent`, labeled as a fixture).
+
+## Phase 6 (Agent Arena)
+
+* Contenders are **scripted policies**, not models. Scores show the effect of configuration and the correctness of the harness; they say nothing about real-model quality. The best contender saturates the corpus (100%), so the corpus cannot rank near-perfect agents.
+* The corpus draws on **25 facts from 3 fictional documents**; facts recur across splits in different combinations. Splits protect against tuning on the cases used for selection, not against fact familiarity.
+* 111 cases with 7–20 per family-split give wide intervals; many adjacent contenders legitimately tie.
+* The test split can be scored once **per arena run**; nothing stops a user from creating a new arena run and scoring it again, so repeated peeking across runs is possible (each run records its own dataset hashes). Optimizers (Autopilot) never see validation or test answers.
+* Latency and cost columns come from the simulated mock provider.

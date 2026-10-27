@@ -19,6 +19,9 @@ async def main() -> None:
         raise SystemExit("refusing to seed development users in production")
     async with unit_of_work() as session:
         ws = await seed(session)
+        from agentos_core.arena.contenders import seed_arena
+
+        await seed_arena(session, ws, admin_id=None)
     await dispose_engine()
     print(f"seeded workspace {ws.name} ({ws.id})")
     for email, role, password in DEV_USERS:

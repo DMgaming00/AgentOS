@@ -158,22 +158,24 @@ function ExperimentDialog({ candidate, onClose }: { candidate: Candidate; onClos
   const datasets = useDatasets();
   const router = useRouter();
   const options = (datasets.data?.items ?? []).filter((d) => d.split !== "development");
-  const [datasetId, setDatasetId] = useState<string>("");
+  // The default is a visible choice, not a hidden one: the first validation dataset outside the Agent Arena corpus.
+  const preferred = options.find((d) => d.split === "validation" && !d.name.startsWith("arena-")) ?? options.find((d) => d.split === "validation") ?? options[0];
+  const [chosen, setChosen] = useState<string>("");
+  const datasetId = chosen || preferred?.id || "";
   const [trials, setTrials] = useState(1);
   const [confirm, setConfirm] = useState(false);
   const start = useMutation({
     mutationFn: async () => unwrap(await api.POST("/api/v1/experiments", {
       params: { header: { "Idempotency-Key": idempotencyKey() } },
       body: { agent_id: candidate.agent_id, candidate_id: candidate.id,
-              dataset_id: datasetId || options.find((d) => d.split === "validation")?.id || options[0]?.id, trials, confirm_cost: confirm } })),
+              dataset_id: datasetId, trials, confirm_cost: confirm } })),
     onSuccess: (e) => router.push(`/autopilot/experiments/${e.id}`),
   });
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent title="Run controlled experiment" description="Baseline and candidate run on the same cases, interleaved. Development data is not allowed (it was visible to the optimizer).">
         <Field label="Dataset (validation or held-out test)" htmlFor="exp-ds">
-          <Select id="exp-ds" value={datasetId} onChange={(e) => setDatasetId(e.target.value)}>
-            <option value="">Default: validation split</option>
+          <Select id="exp-ds" value={datasetId} onChange={(e) => setChosen(e.target.value)}>
             {options.map((d) => <option key={d.id} value={d.id}>{d.name} · {d.split} v{d.version} ({d.case_count} cases)</option>)}
           </Select>
         </Field>

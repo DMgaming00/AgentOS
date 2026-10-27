@@ -1,0 +1,180 @@
+{
+ "corpus": "agent-arena",
+ "version": 1,
+ "split_salt": 1,
+ "split_share_target": {
+  "development": 0.3,
+  "validation": 0.3,
+  "test": 0.4
+ },
+ "source_documents": {
+  "platform-helix.md": "c78c8dddd97f45b72578fbd43edc12d5ca1609a8cf34831d204395cd52689cc3",
+  "platform-nimbus.md": "d26e0dd4883373af7bdd3e973f358fa639e48b6f38260aec7d97149e5e3ba6d1",
+  "platform-vectorforge.md": "07b0f964bdc67709944698051679831698797efc4d25915c1336fa44c7f91480"
+ },
+ "total_cases": 111,
+ "datasets": [
+  {
+   "file": "arena-extraction.v1.development.json",
+   "name": "arena-extraction",
+   "family": "extraction",
+   "split": "development",
+   "version": 1,
+   "cases": 9,
+   "hash": "f8b14deedd328a7b99b1a062f8947e0a6157f31efa86e044734c82290c3df232",
+   "kinds": {
+    "multi_field": 1,
+    "multi_subject": 1,
+    "single": 5,
+    "unanswerable": 2
+   }
+  },
+  {
+   "file": "arena-extraction.v1.validation.json",
+   "name": "arena-extraction",
+   "family": "extraction",
+   "split": "validation",
+   "version": 1,
+   "cases": 16,
+   "hash": "db2ded429919a33b4b80e503b053980c37368459fe5a3eddb48bcdf53cfa7fd8",
+   "kinds": {
+    "multi_field": 5,
+    "multi_subject": 3,
+    "single": 5,
+    "unanswerable": 3
+   }
+  },
+  {
+   "file": "arena-extraction.v1.test.json",
+   "name": "arena-extraction",
+   "family": "extraction",
+   "split": "test",
+   "version": 1,
+   "cases": 20,
+   "hash": "f8c0dc100183676002c173ef0758a0f05bb6bfdd637b7f1e58ef8af8c2d93727",
+   "kinds": {
+    "multi_field": 3,
+    "multi_subject": 2,
+    "single": 8,
+    "unanswerable": 7
+   }
+  },
+  {
+   "file": "arena-calculation.v1.development.json",
+   "name": "arena-calculation",
+   "family": "calculation",
+   "split": "development",
+   "version": 1,
+   "cases": 7,
+   "hash": "fa38f5311cd56db5f5364e28f27819bc643435cbe4d2b7e0691ef565af39b410",
+   "kinds": {
+    "expression": 1,
+    "max": 1,
+    "median": 1,
+    "min": 1,
+    "percent_change": 1,
+    "sum": 2
+   }
+  },
+  {
+   "file": "arena-calculation.v1.validation.json",
+   "name": "arena-calculation",
+   "family": "calculation",
+   "split": "validation",
+   "version": 1,
+   "cases": 10,
+   "hash": "0c6957fce3a669b564bcf180570a0e898cb4fd0a1ee656c9cf25326c61c4a06b",
+   "kinds": {
+    "expression": 1,
+    "max": 2,
+    "mean": 2,
+    "median": 2,
+    "ratio": 1,
+    "stdev": 1,
+    "sum": 1
+   }
+  },
+  {
+   "file": "arena-calculation.v1.test.json",
+   "name": "arena-calculation",
+   "family": "calculation",
+   "split": "test",
+   "version": 1,
+   "cases": 13,
+   "hash": "55a4399aa92298b5792e3cffcc65978971691fa62137386b560812cde93a2da2",
+   "kinds": {
+    "expression": 6,
+    "mean": 1,
+    "min": 2,
+    "percent_change": 1,
+    "ratio": 1,
+    "stdev": 2
+   }
+  },
+  {
+   "file": "arena-grounded-qa.v1.development.json",
+   "name": "arena-grounded-qa",
+   "family": "grounded_qa",
+   "split": "development",
+   "version": 1,
+   "cases": 14,
+   "hash": "986059b73212118cbae03f814c9f0dd0146849c4f2cd06799980d9c288123f53",
+   "kinds": {
+    "comparison": 3,
+    "lookup": 5,
+    "unanswerable": 6
+   }
+  },
+  {
+   "file": "arena-grounded-qa.v1.validation.json",
+   "name": "arena-grounded-qa",
+   "family": "grounded_qa",
+   "split": "validation",
+   "version": 1,
+   "cases": 7,
+   "hash": "8288fe829d09dee6e9903d28121a15db8b6a037d9cec5d4115db14e72878bfac",
+   "kinds": {
+    "comparison": 2,
+    "lookup": 4,
+    "unanswerable": 1
+   }
+  },
+  {
+   "file": "arena-grounded-qa.v1.test.json",
+   "name": "arena-grounded-qa",
+   "family": "grounded_qa",
+   "split": "test",
+   "version": 1,
+   "cases": 15,
+   "hash": "b7ff83b2463475531422b8551c27e6f120e59fe2752d9ea0dfe83a043927b78e",
+   "kinds": {
+    "comparison": 3,
+    "lookup": 7,
+    "unanswerable": 5
+   }
+  }
+ ],
+ "leakage": {
+  "identical_case_across_splits": 0,
+  "identical_fact_set_across_splits": {
+   "development/validation": 0,
+   "development/test": 0,
+   "validation/test": 0
+  },
+  "distinct_facts_per_split": {
+   "development": 31,
+   "validation": 33,
+   "test": 39
+  },
+  "facts_shared_between_splits": {
+   "development/validation": 13,
+   "development/test": 12,
+   "validation/test": 13
+  },
+  "distinct_facts_in_documents": 25,
+  "note": "The documents contain few distinct facts (see distinct_facts_in_documents), so individual facts recur across splits in different combinations. Splits prevent tuning against the exact cases used for selection and the final test; they do not make the underlying facts novel."
+ },
+ "excluded_ambiguous_facts": [
+  "Helix Serve|Uptime SLA"
+ ]
+}

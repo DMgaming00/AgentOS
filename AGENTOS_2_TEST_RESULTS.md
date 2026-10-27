@@ -104,3 +104,9 @@ no re-execute or export controls.
 
 Notes: 3 skipped tests are the pre-existing opt-in/live-provider tests. Earlier in development one Autopilot Playwright
 spec failed once immediately after a rebuild and passed on rerun and in every later full run; the cause was not determined.
+
+## Phase 6 verification (2026-10-26)
+
+Full backend suite 363 passed, 3 skipped; ruff, `mypy --strict` (138 files) and `alembic check` (migration 0009) clean; Playwright 16/16; Autopilot demo passes.
+The Autopilot Playwright spec failed twice during this phase and the cause was real, not flakiness: the new Arena datasets were picked up by split-only dataset lookups
+(experiment dialog default, optimizer examples). Fixed and re-verified; the earlier unexplained single failure after a rebuild may have a similar cause but was never reproduced.

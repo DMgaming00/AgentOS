@@ -14,6 +14,7 @@ import {
   PlayCircle,
   Settings,
   ShieldAlert,
+  Swords,
   Sparkles,
   Sun,
 } from "lucide-react";
@@ -42,6 +43,7 @@ const NAV = [
   { href: "/flight", label: "Flight Recorder", icon: Clapperboard },
   { href: "/chaos", label: "Chaos Lab", icon: Flame },
   { href: "/security", label: "Security Center", icon: ShieldAlert },
+  { href: "/arena", label: "Agent Arena", icon: Swords },
   { href: "/artifacts", label: "Artifacts", icon: FileBox },
   { href: "/observability", label: "Observability", icon: Activity },
   { href: "/settings", label: "Settings", icon: Settings },

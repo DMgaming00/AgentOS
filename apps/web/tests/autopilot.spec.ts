@@ -14,7 +14,7 @@ async function flawedAgentWithFailures(request: APIRequestContext) {
     name, system_instructions: FLAWED, provider: "mock", model: "mock-extractor", model_configuration: { scenario: "extractor" },
     allowed_tool_ids: ["document_search", "structured_data_reader"], max_steps: 6, max_cost_usd: "0.5", timeout_seconds: 120 } })).json();
   const datasets = (await (await request.get(`${API}/api/v1/evaluations/datasets`, { headers: h })).json()).items;
-  const dev = datasets.find((d: { split: string }) => d.split === "development");
+  const dev = datasets.find((d: { split: string; name: string }) => d.split === "development" && d.name === "numeric-extraction");
   const run = await (await request.post(`${API}/api/v1/evaluations/run`, { headers: h, data: { agent_id: agent.id, dataset_id: dev.id, trials: 1, confirm_cost: false } })).json();
   await expect.poll(async () => (await (await request.get(`${API}/api/v1/evaluations/runs/${run.id}`, { headers: h })).json()).status,
                     { timeout: 60_000 }).toBe("completed");

@@ -15,6 +15,7 @@ from sqlalchemy import text
 from agentos.api import (
     agents,
     approvals,
+    arena,
     artifacts,
     auth,
     autopilot,
@@ -140,6 +141,7 @@ def create_app() -> FastAPI:
         flight,
         chaos,
         security,
+        arena,
     ):
         app.include_router(module.router)
 

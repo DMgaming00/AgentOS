@@ -140,3 +140,23 @@ async def seeded(db):  # type: ignore[no-untyped-def]
     from agentos_core.testing import seed_demo
 
     return await seed_demo()
+
+
+@pytest.fixture
+async def arena_seeded(seeded):
+    from sqlalchemy import select
+
+    from agentos_core.arena.contenders import seed_arena
+    from agentos_core.db.models import AgentDefinition, Workspace
+    from agentos_core.engine.tx import unit_of_work
+
+    async with unit_of_work() as s:
+        await seed_arena(s, await s.get(Workspace, seeded.workspace.id), admin_id=None)
+    async with unit_of_work() as s:
+        for a in (
+            await s.execute(
+                select(AgentDefinition).where(AgentDefinition.workspace_id == seeded.workspace.id)
+            )
+        ).scalars():
+            seeded.agents[a.name] = a
+    return seeded

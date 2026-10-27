@@ -1,0 +1,429 @@
+{
+ "name": "arena-grounded-qa",
+ "version": 1,
+ "split": "validation",
+ "description": "Answer questions from the documents with citations; includes unanswerable and comparison questions.",
+ "cases": [
+  {
+   "case_id": "gro-469917b6",
+   "task": "What is the Price per 1M input tokens of Helix Serve (in USD)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "lookup",
+    "subject": "Helix Serve",
+    "label": "Price per 1M input tokens",
+    "unit": "USD"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": 0.22
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness",
+    "source_citation_check"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.001
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "answer"
+     ]
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "lookup"
+   ]
+  },
+  {
+   "case_id": "gro-752313d2",
+   "task": "What is the Egress bandwidth of Nimbus Inference (in Gbps)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "unanswerable",
+    "subject": "Nimbus Inference",
+    "label": "Egress bandwidth",
+    "unit": "Gbps"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": null
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.5
+      }
+     }
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "unanswerable"
+   ]
+  },
+  {
+   "case_id": "gro-8df19965",
+   "task": "Which platform has the highest Max context window? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "comparison",
+    "label": "Max context window",
+    "direction": "higher_is_better"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": "Helix Serve"
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "exact_match",
+    "task_completion",
+    "tool_correctness"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "comparison"
+   ]
+  },
+  {
+   "case_id": "gro-9c0672b1",
+   "task": "What is the Uptime SLA of Vector Forge (in %)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "lookup",
+    "subject": "Vector Forge",
+    "label": "Uptime SLA",
+    "unit": "%"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": 99.5
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness",
+    "source_citation_check"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.001
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "answer"
+     ]
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "lookup"
+   ]
+  },
+  {
+   "case_id": "gro-a424624d",
+   "task": "Which platform has the lowest Median latency (p50)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "comparison",
+    "label": "Median latency (p50)",
+    "direction": "lower_is_better"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": "Helix Serve"
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "exact_match",
+    "task_completion",
+    "tool_correctness"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "comparison"
+   ]
+  },
+  {
+   "case_id": "gro-cd065adb",
+   "task": "What is the Cold start time of Vector Forge (in s)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "lookup",
+    "subject": "Vector Forge",
+    "label": "Cold start time",
+    "unit": "s"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": 25
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness",
+    "source_citation_check"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.5
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "answer"
+     ]
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "lookup"
+   ]
+  },
+  {
+   "case_id": "gro-e5053d43",
+   "task": "What is the Price per 1M output tokens of Vector Forge (in USD)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "lookup",
+    "subject": "Vector Forge",
+    "label": "Price per 1M output tokens",
+    "unit": "USD"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": 0.6
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness",
+    "source_citation_check"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.001
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "answer"
+     ]
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "lookup"
+   ]
+  }
+ ]
+}

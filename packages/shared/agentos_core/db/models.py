@@ -923,6 +923,56 @@ class EvaluationCaseResult(Base):
     )
 
 
+class ArenaRun(Base):
+    """One Agent Arena competition: the contenders, the corpus hashes they were scored against, the test-split lock."""
+
+    __tablename__ = "arena_runs"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="RESTRICT"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    config: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=EMPTY_OBJECT)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = created_at_col()
+    # Set exactly once, when the test split is first scheduled. Selection results are frozen from then on.
+    final_test_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    final_test_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    __table_args__ = (Index("ix_arena_runs_ws_created", "workspace_id", "created_at"),)
+
+
+class ArenaEntry(Base):
+    """One (contender version, dataset) evaluation inside an arena run."""
+
+    __tablename__ = "arena_entries"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    arena_run_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("arena_runs.id", ondelete="RESTRICT"), nullable=False
+    )
+    agent_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("agent_definitions.id", ondelete="RESTRICT"), nullable=False
+    )
+    agent_version_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("agent_config_versions.id", ondelete="RESTRICT"), nullable=False
+    )
+    dataset_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("evaluation_datasets.id", ondelete="RESTRICT"), nullable=False
+    )
+    family: Mapped[str] = mapped_column(String(32), nullable=False)
+    split: Mapped[str] = mapped_column(String(16), nullable=False)
+    evaluation_run_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("evaluation_runs.id", ondelete="RESTRICT"), nullable=False
+    )
+    created_at: Mapped[datetime] = created_at_col()
+    __table_args__ = (
+        # The test split is scored once per contender: a second request cannot create a second entry.
+        UniqueConstraint("arena_run_id", "agent_version_id", "dataset_id", name="uq_arena_entries_identity"),
+        CheckConstraint("split in ('development','validation','test')", name="split_valid"),
+        Index("ix_arena_entries_run", "arena_run_id"),
+        Index("ix_arena_entries_eval", "evaluation_run_id"),
+    )
+
+
 class FailureSignal(Base):
     """One deterministic detection (error or anomaly) with links to its evidence."""
 

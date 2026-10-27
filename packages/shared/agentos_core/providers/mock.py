@@ -7,7 +7,7 @@ outputs, which makes CI and demos reproducible. Usage is reported as simulated.
 
 Scenarios (``model_configuration.scenario`` or model name ``mock-<scenario>``):
 research, analysis, writer, planner, invalid_plan, invalid_then_valid, echo,
-rate_limit, timeout, forbidden_tool.
+rate_limit, timeout, forbidden_tool, extractor, arena.
 """
 
 from __future__ import annotations
@@ -383,6 +383,14 @@ class MockProvider:
                 messages,
             )
         ]
+
+    def _arena(
+        self, messages: list[Message], tools: list[ToolDefinition], config: ModelConfig
+    ) -> tuple[str, list[ToolCall]]:
+        """Agent Arena policy (three task families); see ``arena_policy``."""
+        from agentos_core.providers.arena_policy import arena
+
+        return arena(self, messages, tools, config)
 
     def _extractor(
         self, messages: list[Message], tools: list[ToolDefinition], config: ModelConfig

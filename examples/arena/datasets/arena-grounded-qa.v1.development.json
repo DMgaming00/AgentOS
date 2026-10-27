@@ -1,0 +1,840 @@
+{
+ "name": "arena-grounded-qa",
+ "version": 1,
+ "split": "development",
+ "description": "Answer questions from the documents with citations; includes unanswerable and comparison questions.",
+ "cases": [
+  {
+   "case_id": "gro-1e5f71bb",
+   "task": "Which platform has the lowest Cold start time? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "comparison",
+    "label": "Cold start time",
+    "direction": "lower_is_better"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": "Nimbus Inference"
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "exact_match",
+    "task_completion",
+    "tool_correctness"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "comparison"
+   ]
+  },
+  {
+   "case_id": "gro-2139ed0f",
+   "task": "What is the Dedicated GPU hour of Vector Forge (in USD)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "lookup",
+    "subject": "Vector Forge",
+    "label": "Dedicated GPU hour",
+    "unit": "USD"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": 1.9
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness",
+    "source_citation_check"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.001
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "answer"
+     ]
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "lookup"
+   ]
+  },
+  {
+   "case_id": "gro-368eb55c",
+   "task": "What is the Maximum batch size of Nimbus Inference (in requests)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "unanswerable",
+    "subject": "Nimbus Inference",
+    "label": "Maximum batch size",
+    "unit": "requests"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": null
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.5
+      }
+     }
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "unanswerable"
+   ]
+  },
+  {
+   "case_id": "gro-3c8de0b8",
+   "task": "What is the p95 latency of Vector Forge (in ms)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "lookup",
+    "subject": "Vector Forge",
+    "label": "p95 latency",
+    "unit": "ms"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": 900
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness",
+    "source_citation_check"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.5
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "answer"
+     ]
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "lookup"
+   ]
+  },
+  {
+   "case_id": "gro-4868ee5d",
+   "task": "Which platform has the lowest Price per 1M output tokens? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "comparison",
+    "label": "Price per 1M output tokens",
+    "direction": "lower_is_better"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": "Vector Forge"
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "exact_match",
+    "task_completion",
+    "tool_correctness"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "comparison"
+   ]
+  },
+  {
+   "case_id": "gro-71705110",
+   "task": "Which platform has the highest Throughput per GPU? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "comparison",
+    "label": "Throughput per GPU",
+    "direction": "higher_is_better"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": "Vector Forge"
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "exact_match",
+    "task_completion",
+    "tool_correctness"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "comparison"
+   ]
+  },
+  {
+   "case_id": "gro-8bdba95f",
+   "task": "What is the Egress bandwidth of Helix Serve (in Gbps)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "unanswerable",
+    "subject": "Helix Serve",
+    "label": "Egress bandwidth",
+    "unit": "Gbps"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": null
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.5
+      }
+     }
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "unanswerable"
+   ]
+  },
+  {
+   "case_id": "gro-92c4c608",
+   "task": "What is the Free tier requests per month of Helix Serve (in requests)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "unanswerable",
+    "subject": "Helix Serve",
+    "label": "Free tier requests per month",
+    "unit": "requests"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": null
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.5
+      }
+     }
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "unanswerable"
+   ]
+  },
+  {
+   "case_id": "gro-9af01402",
+   "task": "What is the Cold start time of Helix Serve (in s)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "unanswerable",
+    "subject": "Helix Serve",
+    "label": "Cold start time",
+    "unit": "s"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": null
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.5
+      }
+     }
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "unanswerable"
+   ]
+  },
+  {
+   "case_id": "gro-a1687d7f",
+   "task": "What is the Median latency (p50) of Helix Serve (in ms)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "lookup",
+    "subject": "Helix Serve",
+    "label": "Median latency (p50)",
+    "unit": "ms"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": 140
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness",
+    "source_citation_check"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.5
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "answer"
+     ]
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "lookup"
+   ]
+  },
+  {
+   "case_id": "gro-b4e43f9c",
+   "task": "What is the Price per 1M output tokens of Nimbus Inference (in USD)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "lookup",
+    "subject": "Nimbus Inference",
+    "label": "Price per 1M output tokens",
+    "unit": "USD"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": 1.2
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness",
+    "source_citation_check"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.001
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "answer"
+     ]
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "lookup"
+   ]
+  },
+  {
+   "case_id": "gro-ce254ea7",
+   "task": "What is the Data retention period of Nimbus Inference (in days)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "unanswerable",
+    "subject": "Nimbus Inference",
+    "label": "Data retention period",
+    "unit": "days"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": null
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.5
+      }
+     }
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "unanswerable"
+   ]
+  },
+  {
+   "case_id": "gro-da3aa2de",
+   "task": "What is the Max context window of Vector Forge (in tokens)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "lookup",
+    "subject": "Vector Forge",
+    "label": "Max context window",
+    "unit": "tokens"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": 64000
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness",
+    "source_citation_check"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.5
+      }
+     }
+    },
+    "source_citation_check": {
+     "fields": [
+      "answer"
+     ]
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "lookup"
+   ]
+  },
+  {
+   "case_id": "gro-e29223eb",
+   "task": "What is the Data retention period of Vector Forge (in days)? Answer only from the workspace documents and return {'answer': <value or null>, 'citations': {'answer': <section>}}. If the documents do not state the answer, the answer is null.",
+   "input": {
+    "family": "grounded_qa",
+    "kind": "unanswerable",
+    "subject": "Vector Forge",
+    "label": "Data retention period",
+    "unit": "days"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "answer": null
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "task_completion",
+    "tool_correctness"
+   ],
+   "evaluator_config": {
+    "tool_correctness": {
+     "required_tools": [
+      "document_search"
+     ],
+     "max_calls": 6,
+     "max_identical_calls": 2
+    },
+    "numeric_tolerance": {
+     "fields": {
+      "answer": {
+       "abs": 0.5
+      }
+     }
+    },
+    "schema_validation": {
+     "schema": {
+      "type": "object",
+      "required": [
+       "answer"
+      ],
+      "properties": {
+       "answer": {
+        "type": [
+         "number",
+         "string",
+         "null"
+        ]
+       }
+      }
+     }
+    }
+   },
+   "tags": [
+    "arena",
+    "grounded_qa",
+    "unanswerable"
+   ]
+  }
+ ]
+}

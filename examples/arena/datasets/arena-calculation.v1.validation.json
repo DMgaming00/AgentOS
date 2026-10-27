@@ -1,0 +1,431 @@
+{
+ "name": "arena-calculation",
+ "version": 1,
+ "split": "validation",
+ "description": "Exact arithmetic over numbers drawn from the same documents; tests whether the agent uses the calculator.",
+ "cases": [
+  {
+   "case_id": "cal-037057fb",
+   "task": "Compute the requested quantity using exact arithmetic and return {'result': <number>}. Request: {\"operation\": \"sum\", \"values\": [0.3, 0.95, 25.0]}",
+   "input": {
+    "family": "calculation",
+    "operation": "sum",
+    "values": [
+     0.3,
+     0.95,
+     25.0
+    ]
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "result": 26.25
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "result": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      }
+     }
+    },
+    "tool_correctness": {
+     "max_calls": 4,
+     "max_identical_calls": 2
+    }
+   },
+   "tags": [
+    "arena",
+    "calculation",
+    "sum"
+   ]
+  },
+  {
+   "case_id": "cal-271edca6",
+   "task": "Compute the requested quantity using exact arithmetic and return {'result': <number>}. Request: {\"operation\": \"ratio\", \"values\": [180.0, 200000.0]}",
+   "input": {
+    "family": "calculation",
+    "operation": "ratio",
+    "values": [
+     180.0,
+     200000.0
+    ]
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "result": 0.0009
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "result": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      }
+     }
+    },
+    "tool_correctness": {
+     "max_calls": 4,
+     "max_identical_calls": 2
+    }
+   },
+   "tags": [
+    "arena",
+    "calculation",
+    "ratio"
+   ]
+  },
+  {
+   "case_id": "cal-28d32a36",
+   "task": "Compute the requested quantity using exact arithmetic and return {'result': <number>}. Request: {\"operation\": \"stdev\", \"values\": [1.2, 3.4, 3100.0]}",
+   "input": {
+    "family": "calculation",
+    "operation": "stdev",
+    "values": [
+     1.2,
+     3.4,
+     3100.0
+    ]
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "result": 1788.458267149
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "result": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      }
+     }
+    },
+    "tool_correctness": {
+     "max_calls": 4,
+     "max_identical_calls": 2
+    }
+   },
+   "tags": [
+    "arena",
+    "calculation",
+    "stdev"
+   ]
+  },
+  {
+   "case_id": "cal-3bd0b8d8",
+   "task": "Compute the requested quantity using exact arithmetic and return {'result': <number>}. Request: {\"expression\": \"(3600 + 3600) / 200000\", \"operation\": \"evaluate\"}",
+   "input": {
+    "family": "calculation",
+    "operation": "evaluate",
+    "expression": "(3600 + 3600) / 200000"
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "result": 0.036
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "result": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      }
+     }
+    },
+    "tool_correctness": {
+     "max_calls": 4,
+     "max_identical_calls": 2
+    }
+   },
+   "tags": [
+    "arena",
+    "calculation",
+    "expression"
+   ]
+  },
+  {
+   "case_id": "cal-4fa8bc40",
+   "task": "Compute the requested quantity using exact arithmetic and return {'result': <number>}. Request: {\"operation\": \"median\", \"values\": [0.95, 99.5, 140.0, 180.0, 420.0]}",
+   "input": {
+    "family": "calculation",
+    "operation": "median",
+    "values": [
+     0.95,
+     99.5,
+     140.0,
+     180.0,
+     420.0
+    ]
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "result": 140.0
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "result": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      }
+     }
+    },
+    "tool_correctness": {
+     "max_calls": 4,
+     "max_identical_calls": 2
+    }
+   },
+   "tags": [
+    "arena",
+    "calculation",
+    "median"
+   ]
+  },
+  {
+   "case_id": "cal-8991bcd6",
+   "task": "Compute the requested quantity using exact arithmetic and return {'result': <number>}. Request: {\"operation\": \"max\", \"values\": [25.0, 99.9, 300.0, 64000.0]}",
+   "input": {
+    "family": "calculation",
+    "operation": "max",
+    "values": [
+     25.0,
+     99.9,
+     300.0,
+     64000.0
+    ]
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "result": 64000.0
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "result": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      }
+     }
+    },
+    "tool_correctness": {
+     "max_calls": 4,
+     "max_identical_calls": 2
+    }
+   },
+   "tags": [
+    "arena",
+    "calculation",
+    "max"
+   ]
+  },
+  {
+   "case_id": "cal-904c7639",
+   "task": "Compute the requested quantity using exact arithmetic and return {'result': <number>}. Request: {\"operation\": \"max\", \"values\": [2.9, 140.0, 900.0, 3100.0, 64000.0]}",
+   "input": {
+    "family": "calculation",
+    "operation": "max",
+    "values": [
+     2.9,
+     140.0,
+     900.0,
+     3100.0,
+     64000.0
+    ]
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "result": 64000.0
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "result": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      }
+     }
+    },
+    "tool_correctness": {
+     "max_calls": 4,
+     "max_identical_calls": 2
+    }
+   },
+   "tags": [
+    "arena",
+    "calculation",
+    "max"
+   ]
+  },
+  {
+   "case_id": "cal-930fa1d0",
+   "task": "Compute the requested quantity using exact arithmetic and return {'result': <number>}. Request: {\"operation\": \"mean\", \"values\": [1.9, 99.9, 200000.0]}",
+   "input": {
+    "family": "calculation",
+    "operation": "mean",
+    "values": [
+     1.9,
+     99.9,
+     200000.0
+    ]
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "result": 66700.6
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "result": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      }
+     }
+    },
+    "tool_correctness": {
+     "max_calls": 4,
+     "max_identical_calls": 2
+    }
+   },
+   "tags": [
+    "arena",
+    "calculation",
+    "mean"
+   ]
+  },
+  {
+   "case_id": "cal-fd338cf2",
+   "task": "Compute the requested quantity using exact arithmetic and return {'result': <number>}. Request: {\"operation\": \"median\", \"values\": [1.9, 9.0, 420.0, 128000.0]}",
+   "input": {
+    "family": "calculation",
+    "operation": "median",
+    "values": [
+     1.9,
+     9.0,
+     420.0,
+     128000.0
+    ]
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "result": 214.5
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "result": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      }
+     }
+    },
+    "tool_correctness": {
+     "max_calls": 4,
+     "max_identical_calls": 2
+    }
+   },
+   "tags": [
+    "arena",
+    "calculation",
+    "median"
+   ]
+  },
+  {
+   "case_id": "cal-ff5faec2",
+   "task": "Compute the requested quantity using exact arithmetic and return {'result': <number>}. Request: {\"operation\": \"mean\", \"values\": [0.22, 99.5, 260.0, 64000.0, 200000.0]}",
+   "input": {
+    "family": "calculation",
+    "operation": "mean",
+    "values": [
+     0.22,
+     99.5,
+     260.0,
+     64000.0,
+     200000.0
+    ]
+   },
+   "input_artifacts": [],
+   "expected_output": {
+    "result": 52871.944
+   },
+   "evaluation_methods": [
+    "schema_validation",
+    "numeric_tolerance",
+    "tool_correctness",
+    "task_completion"
+   ],
+   "evaluator_config": {
+    "numeric_tolerance": {
+     "fields": {
+      "result": {
+       "rel": 1e-06,
+       "abs": 1e-09
+      }
+     }
+    },
+    "tool_correctness": {
+     "max_calls": 4,
+     "max_identical_calls": 2
+    }
+   },
+   "tags": [
+    "arena",
+    "calculation",
+    "mean"
+   ]
+  }
+ ]
+}
