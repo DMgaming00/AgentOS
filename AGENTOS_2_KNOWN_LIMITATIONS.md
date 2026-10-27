@@ -142,3 +142,12 @@ Updated each phase. Items are things that are not done, not verified, or weaker 
 * The Workers page shows heartbeat-based health only: there is no remote control (drain, restart) from the UI.
 * Telemetry reads at most 50,000 rows per metric family per request; very busy workspaces should use shorter windows.
 * Keyboard navigation relies on native elements and Radix primitives; a full screen-reader audit was not performed.
+
+## Added at completion (Phases 12-13)
+
+* **Intermittent chaos test.** `test_infrastructure_faults_do_not_corrupt_state` (Redis interruption plus delayed notifications at probability 1.0) failed in 2 of ~20 observed runs with 3/4 trials completing; the cause is not identified (the failing assertion now prints the experiment results for the next occurrence). Treat a failure as a possible real recovery gap, not noise. Two other engine tests (`test_a_dropped_postgres_connection_is_retried_not_fatal`, `test_engine_budget` reservation release) have failed once each under load.
+* **Arena** has no dedicated tool-use-conflict family (calculation and grounded QA stand in) and its leaderboard is not sortable. Arena scores are scripted offline contenders and carry no claim about real models.
+* **Metrics queries degrade on large databases** (about 7,000 runs made the UI e2e suite time out). No pagination or rollup tables for telemetry yet.
+* **Rollback rules** use alpha 0.05 one-sided tests; the stated false-rollback rates come from seeded synthetic arms, not real workloads.
+* **Demo timing varies**: demos B and E depend on fault timing, the clock and run ids; A, C and D are deterministic on the mock provider.
+* The platform has not been load-tested, security-reviewed by a third party or run against any real provider; it is not production-ready.

@@ -14,7 +14,8 @@ test("grouped navigation reaches every area", async ({ page }) => {
     ["Operations", ["Observability", "FinOps", "Workers", "Settings"]],
   ] as const) {
     const g = nav.getByRole("group", { name: group });
-    for (const l of links) await expect(g.getByRole("link", { name: l, exact: true })).toBeVisible();
+    // the Approvals link carries a pending-count badge, so match the label as a prefix
+    for (const l of links) await expect(g.getByRole("link", { name: new RegExp(`^${l}( \\d+ pending)?$`) })).toBeVisible();
   }
   await nav.getByRole("link", { name: "Failure Intelligence" }).click();
   await expect(page).toHaveURL(/\/autopilot\/failures/);

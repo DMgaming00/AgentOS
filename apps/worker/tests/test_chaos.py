@@ -515,7 +515,7 @@ async def test_infrastructure_faults_do_not_corrupt_state(seeded):
     assert (
         metric(exp, "task_completion_rate")["value"] == 1.0
         and metric(exp, "state_consistency")["value"] == 1.0
-    )
+    ), exp.results
     assert exp.results["injections_by_type"].keys() >= {"redis_interruption", "delayed_notifications"}
 
 

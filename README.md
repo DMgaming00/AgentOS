@@ -1,10 +1,18 @@
 # AgentOS
 
-**Durable execution for AI agent workflows.** Multi-step agent DAGs run across
-multiple workers and survive worker crashes. Tool permissions are enforced in code,
-sensitive actions pause for human approval, and every attempt, model call, tool
-call and dollar is inspectable.
+**An agent-engineering platform: durable execution, flight recording, chaos testing, security enforcement,
+evaluation, memory, cost control and gated releases for AI agent workflows. It runs entirely offline.**
 
+Multi-step agent DAGs run across multiple workers and survive worker crashes. Tool permissions are enforced in
+code, sensitive actions pause for human approval, and every attempt, model call, tool call and dollar is
+inspectable. Autopilot (2.0) proposes agent improvements from trace evidence, measures them on held-out cases,
+and ships them through gated canary releases with automatic rollback.
+
+> **Zero-cost, offline by default.** No paid model is ever called unless four settings are all changed
+> deliberately, enforced in code at two layers (not just documented). No API keys are needed to run the app,
+> the demos, the benchmarks or CI. Every quality number in this repository comes from deterministic mock or
+> fixture providers and describes *platform behavior*, not the intelligence of any real model.
+>
 > A production-inspired portfolio project, not a production system. See
 > [Known limitations](#known-limitations) for what is hardened and what is not.
 
@@ -86,7 +94,68 @@ back. These are measurements of a **scripted mock agent**, not of a real model. 
 [test results](AUTOPILOT_TEST_RESULTS.md) · [limitations](AUTOPILOT_KNOWN_LIMITATIONS.md) ·
 [benchmark](docs/autopilot-benchmarks.md).
 
-## Screenshots
+## AgentOS 2.0: engineering labs
+
+Each lab is built on the same stored records (PostgreSQL rows, not logs) and the same offline execution policy.
+
+| Lab | What it does | Evidence it was verified |
+|---|---|---|
+| **Engine v2** | Conditional branches and joins, bounded `fan_out`, nested `sub_workflow` with a durable parent wait, priority with aging, pause/resume, cancellation propagation | Real worker processes killed mid-step, incl. inside a child run; old-vs-new scheduler control experiment (ratio 0.90-1.07) |
+| **Flight Recorder** | Immutable sanitized model-call records, frames with status deltas and integrity checks, playback UI, recorded replay vs deterministic re-execution, structured run diff, fail-closed export | Gap-free event check on every demo run |
+| **Chaos Lab** | 17 faults injected at real boundaries (provider, tool, DB, worker), seeded reproducible schedules, safety caps, an injection ledger and a scorecard | Eight scenarios x 3 retry arms; found and fixed 4 platform bugs |
+| **Security Center** | 11 engine-level policy tests, 28 injection attacks (7 goals x 4 surfaces) + 8 benign controls through real workflows, trace-sanitization checks, incidents | 28/28 contained, 0/8 benign blocked, 0 secrets in traces; sensitivity tests prove the suite can fail |
+| **Agent Arena + OpenEval** | 111-case corpus (3 families, dev/validation/test splits, hash manifest), one-shot test split, Wilson and bootstrap intervals, leaderboard with statistical ties | Independently parsed answer keys; offline-only contenders enforced in code |
+| **Memory Lab** | Versioned, audited, expiring workspace memory with provenance, untrusted marking, approval-gated writes and secret refusal; 6 strategies compared under fact churn | Stale-summary errors scale with churn (17/17 at the highest level); retrieval matches full context with ~1/7 of the characters |
+| **Optimization Lab** | A deterministic, versioned rule engine (9 rules) over trace evidence proposes changes that cite failing steps; same validation, experiments and gates as model-written candidates | 43.8% -> 100% on held-out validation (CI lower bound +0.31); cheaper-but-worse candidate refused with 7 per-case regressions |
+| **FinOps** | Analytics by agent/workflow/model/tool, budgets enforced *before* a call under an advisory lock, anomaly detectors, suggestions labeled measured / projected / none | Everything labeled "Estimated cost, simulated pricing" |
+| **Release Center** | Development / staging / production-style environments, gated plans, seeded canary routing (5/10/25/50/100), admin-advanced stages, rollback rules with minimum evidence and significance tests, append-only audit | 5/5 automatic rollbacks, 0/160 mis-pinned runs; a benchmark found a 28-37% false-rollback bug that is now fixed |
+| **Observability** | Agent Run Inspector (9 views of one run), telemetry distributions, worker health, end-to-end trace correlation (request -> run -> attempt -> model/tool call) | 22 pages checked for overflow at 390 px |
+
+| | |
+|---|---|
+| ![Security Center](docs/screenshots/security.png) | ![Agent Arena](docs/screenshots/arena.png) |
+| ![Memory Lab](docs/screenshots/memory-lab.png) | ![FinOps](docs/screenshots/finops.png) |
+| ![Release Center](docs/screenshots/release-center.png) | ![Run inspector, trace view](docs/screenshots/run-inspector.png) |
+| ![Chaos scorecard](docs/screenshots/chaos-scorecard.png) | ![Flight Recorder playback](docs/screenshots/flight-playback.png) |
+
+### Five demonstrations
+
+All five run through the public API against the Docker stack, print PASS/FAIL checks against stored records, and
+exit non-zero on the first failure (`make showcase` runs them all; details in [docs/demos/](docs/demos/README.md)).
+
+| Demo | Shows | Run |
+|---|---|---|
+| **A** Self-improving agent | A flawed agent fails 5/9 -> diagnosis with evidence ids -> rule-engine fix -> paired held-out experiment (43.8% -> 100%) -> a cheaper-but-worse candidate refused -> admin approval -> promotion | `make showcase-a` |
+| **B** Chaos recovery | Seeded worker crashes and provider faults; all runs recover, state consistent, gap-free recording, generated [recovery report](docs/demos/demo_b_recovery_report.md) | `make showcase-b` |
+| **C** Security enforcement | An obedient agent is told by a document to write a file; AgentOS denies it in code, records the denial and an incident; full 51-case evaluation | `make showcase-c` |
+| **D** Cost optimization | Redundant tool calls found from the trace, a duplicate-call fix evaluated on held-out cases: correctness preserved, model-requested tool calls 32 -> 16, estimated cost per success -29% (simulated pricing) | `make showcase-d` |
+| **E** Canary and rollback | A candidate that passes offline gates but fails live traffic; 50% seeded canary; the failure-rate rule fires with its evidence and rolls back automatically | `make showcase-e` |
+
+### Zero-cost offline operation
+
+```bash
+make up && make showcase        # no keys, no network model calls
+curl localhost:8000/api/v1/system   # execution.paid_requests_allowed: false, with the blockers listed
+```
+
+Paid requests are refused unless `AGENTOS_EXECUTION_MODE=live`, `AGENTOS_ALLOW_PAID_PROVIDERS=true`,
+`AGENTOS_ENABLE_NETWORK_MODEL_REQUESTS=true` and a positive `AGENTOS_MAX_REAL_API_SPEND_USD` are all set. A key in
+the environment is never enough. The check runs at the start of every adapter call *and* under the SDK's HTTP
+transport; the test suite additionally installs a session-wide guard that fails any test opening an outbound
+connection. A refused call fails the run visibly; the platform never substitutes mock output for a real-provider
+failure. To enable real Claude later, see [docs/ENABLE_REAL_CLAUDE.md](docs/ENABLE_REAL_CLAUDE.md).
+
+### How the offline results should be read
+
+* Mock and fixture providers are **scripted**: an agent's score measures how its configuration interacts with the
+  scripted policy, not what a real model would do. The leaderboard and experiment pages label this.
+* Costs are **simulated** from a versioned price table and labeled as estimates, never invoices.
+* The benchmarks run from a frozen `git worktree`, with the app containers stopped, an isolated database and real
+  worker processes; where a claim compares versions, a control experiment (same harness, only code differs) is run.
+* Several benchmark findings changed the code (a rollback rule with a 28-37% false-positive rate, 4 Chaos Lab bugs,
+  tracing that started new traces in workers). They are recorded rather than hidden.
+
+## Screenshots (AgentOS 1.x)
 
 | | |
 |---|---|
@@ -107,7 +176,29 @@ flowchart LR
     RD[(Redis: wake-ups only)] -.-> W1 & W2 & API
 ```
 
-Details, sequence diagrams and lock ordering: [docs/architecture.md](docs/architecture.md).
+```mermaid
+flowchart TB
+    subgraph Core[Durable execution]
+      E[Engine v2: leases, fencing, branches, fan-out, sub-workflows]
+      FR[Flight Recorder]
+    end
+    subgraph Labs[Engineering labs, offline]
+      CH[Chaos Lab] --> E
+      SEC[Security Center] --> E
+      ARENA[Arena / OpenEval] --> E
+      MEM[Memory Lab] --> E
+    end
+    subgraph Loop[Autopilot]
+      FI[Failure Intelligence] --> RE[Rule engine + optimizer] --> EXP[Paired experiments] --> GATE[Gates + admin] --> REL[Release Center: canary, rollback]
+    end
+    E --> FR --> FI
+    FIN[FinOps budgets] -. checked before every model call .-> E
+    POL[Offline execution policy] -. guards every provider call .-> E
+    REL -. pins versions for new runs .-> E
+```
+
+Details, sequence diagrams and lock ordering: [docs/architecture.md](docs/architecture.md) (1.x) and
+[AGENTOS_2_ARCHITECTURE.md](AGENTOS_2_ARCHITECTURE.md) (2.0).
 
 ## Features
 
@@ -232,7 +323,7 @@ computed from persisted timestamps. Full methodology and tables:
 
 ```bash
 docker compose up -d postgres redis
-make test        # 193 backend tests on real PostgreSQL: 190 pass, 3 opt-in live provider tests skip
+make test        # backend tests on real PostgreSQL; 3 opt-in live provider tests skip (no keys)
 make lint typecheck web-check
 make up && make e2e   # Playwright against the running stack
 ```
@@ -244,7 +335,23 @@ cancellation, budgets, approvals, event ordering, idempotency, authorization, SS
 replay, Redis outage, and **real worker processes killed mid-step**. Results:
 [TEST_RESULTS.md](TEST_RESULTS.md) and [AUTOPILOT_TEST_RESULTS.md](AUTOPILOT_TEST_RESULTS.md)
 (Autopilot: OpenEval graders and statistics, optimizer restrictions, versioning triggers,
-the full cycle on real workers, and 2 more Playwright specs, 7/7 in total).
+the full cycle on real workers) and [AGENTOS_2_TEST_RESULTS.md](AGENTOS_2_TEST_RESULTS.md) (every 2.0 phase, with the
+bugs that tests and benchmarks found).
+
+### AgentOS 2.0 benchmark highlights
+
+Full tables, methodology and caveats: [AGENTOS_2_BENCHMARKS.md](AGENTOS_2_BENCHMARKS.md). Apple M1, 8 GB; offline.
+
+| Measurement | Result |
+|---|---|
+| Engine v2 vs previous engine (control, frozen checkouts) | throughput ratio 0.90-1.07; no meaningful slowdown |
+| Crash inside a nested workflow, lease TTL 2 / 5 / 10 s | 18/18 recovered, 0 duplicate attempts |
+| Chaos: provider-brownout / worker-crash-loop completion, retries off -> on | 0% -> 100% (paired CI excludes 0); infrastructure-hiccups 33% -> 100% |
+| Security: gullible-model attack corpus | 28/28 contained, 0/8 false positives, 0 trace leaks (5 repetitions) |
+| Memory: stale summaries at 12 updated / 5 expired facts | 17/17 stale answers vs 0/17 for refreshed or retrieval |
+| Canary routing, 50k run ids x 8 targets x 4 seeds | max error 0.74 pp; nested sets in 32/32 cells |
+| Rollback rules on synthetic arms | false rollback <= 5% for a healthy canary; `insufficient_evidence` at small n |
+| Live canary rollback, 5 repetitions | 5/5 automatic, 77/77 failing canary runs, 0/160 mis-pinned runs |
 
 ## Engineering tradeoffs
 
@@ -262,7 +369,35 @@ the full cycle on real workers, and 2 more Playwright specs, 7/7 in total).
   they consume real tool output, so the pipeline (search, calculator, citations) is
   genuinely exercised.
 
+## Engineering lessons from building 2.0
+
+* **A benchmark is a test of your rules.** The deployment benchmark showed the first rollback rule rolled back a
+  healthy canary 28-37% of the time at the SLO boundary. Adding one-sided Fisher and binomial tests fixed it.
+* **Invisible work cannot be optimized.** Identical tool calls are replayed from the record, so redundant calls left no
+  rows and the cost analysis could not see them. A per-attempt replay counter made them measurable.
+* **Observability gaps hide in the joins.** Run ids were never linked to a trace id and worker spans started new
+  traces until a root span and a stored `traceparent` were added.
+* **Audit rows need their own transaction** (a refusal that rolls back with the failing request leaves no trail), and
+  writing them while holding a parent-row lock needs `FOR NO KEY UPDATE` to avoid self-deadlock.
+* **Enforce policy where it cannot be skipped.** Offline mode is checked inside the adapter and again under the HTTP
+  transport; a documented flag would not have caught a direct client call.
+
 ## Known limitations
+
+Highlights (full lists: [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md),
+[AGENTOS_2_KNOWN_LIMITATIONS.md](AGENTOS_2_KNOWN_LIMITATIONS.md)):
+
+* **No real model was ever called.** Every score, including Arena, Memory Lab and Autopilot results, is from scripted
+  offline providers. Nothing here is evidence that a real model is robust, accurate or injection-resistant.
+* **"Production" in the Release Center is a production-style local simulation**, not a hosted service. Do not read
+  this repository as production-ready; it has not been load-tested or externally reviewed.
+* The Arena corpus has no dedicated tool-use-conflict family (calculation and grounded QA are used); the leaderboard is
+  not sortable.
+* Optimization proposes 9 rule types; tool-routing, memory-policy and topology candidates are not implemented.
+  FinOps has no workspace-wide concurrency limits.
+* Demo B and E timing varies with the clock and run ids; two engine tests (`test_chaos` dropped-connection retry,
+  `test_engine_budget` reservation release) have failed once each under heavy load in full runs and pass in isolation.
+
 
 See [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md). Highlights:
 
@@ -279,7 +414,7 @@ See [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md). Highlights:
 
 ## Roadmap
 
-OIDC authentication and per-user rate limits · an SSRF-safe HTTP fetch tool ·
+Real-model evaluation of Arena, Autopilot and Memory Lab under spend caps (see the enabling guide) · OIDC authentication and per-user rate limits · an SSRF-safe HTTP fetch tool ·
 embedding search (pgvector) · a drag-and-drop DAG editor · per-tool approval
 policies (auto-approve rules, deny lists) · `LISTEN/NOTIFY` wake-ups · partitioned
 event tables and retention · a Kubernetes manifest with worker autoscaling on queue

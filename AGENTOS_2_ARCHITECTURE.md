@@ -422,3 +422,14 @@ Migration `0014` (`workflow_runs.traceparent`).
 * **Telemetry** (`GET /api/v1/metrics/telemetry`, shown on Observability): workflow duration, queue latency, model-call and tool latency distributions (percentiles and histograms), retry and failure rates, tokens, estimated cost (labeled), approval wait, lease-expiry recovery duration, worker utilization, an agent × error failure heatmap, the agent → tool dependency graph and evaluation summaries. Database latency is a **labeled live probe** (round trips of `SELECT 1` and an indexed read from the API process), not a distribution of workload queries. Workers have their own page from heartbeats and recent attempts.
 * **Distributed tracing**: `materialize_run` opens a `run.create` span (a child of the HTTP request span when there is one) and stores its W3C `traceparent` on the run. Worker attempts (`step.execute`) continue that trace across the process boundary, so model-call and tool-call spans nest under attempts and share the trace id; events recorded outside any span (for example while a step is claimed) inherit the run's trace; approval resolution and deployment decisions run in their own trace and carry a **span link** to the run's trace. (Previously `workflow_runs.trace_id` was never populated and worker spans started unrelated traces; found by the correlation test.) Export remains opt-in OTLP/HTTP; spans carry identifiers and counts, never content.
 * **Event integrity** (tested under three contending workers with an approval): gap-free monotonic per-run sequences, replay from any `Last-Event-ID` returns exactly the missed suffix, the client deduplicates by sequence number, and another workspace or an anonymous caller gets 404/401 on events, stream and inspector.
+
+## 12. Integration, demos and guards (Phase 12)
+
+* `scripts/showcase.py` drives demos A–E through the public API (retrying on 429) and checks stored records only; demo B writes a recovery report generated from the database.
+* `tool_executions.replay_count` (migration 0015) counts same-attempt duplicate tool calls answered from the recorded result, so rules, FinOps suggestions, anomaly detectors and failure analysis can see redundant calls that create no new row.
+* A root `conftest.py` fixture fails any test that opens an outbound connection to a non-local host, a third layer behind the adapter and transport guards.
+* `benchmarks/platform_bench.py` measures memory, security, deployment and optimization from a frozen worktree with real workers; the deployment benchmark's finding led to the Fisher/binomial significance requirement in the rollback rules.
+
+## 13. Documentation (Phase 13)
+
+README, the five `AGENTOS_2_*` documents, `docs/AGENTOS_2_AUDIT.md`, `docs/demos/` and `docs/ENABLE_REAL_CLAUDE.md`. Screenshots come from `apps/web/tests/capture-*.mjs` against a live stack.
