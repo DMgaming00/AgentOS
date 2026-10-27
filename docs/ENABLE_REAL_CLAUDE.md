@@ -78,6 +78,20 @@ The header banner shows `Offline: paid providers blocked` or `LIVE: paid provide
 9. **Raise limits only deliberately**, one setting at a time, and re-check the banner and the console.
 10. **To go back offline**, set `AGENTOS_EXECUTION_MODE=offline` (or remove the flags) and restart.
 
+## AgentOS 2.0 modules and real providers
+
+* **Set a FinOps budget first.** Before step 3, create an enforcing workspace budget (FinOps, Budgets, admin) smaller than your
+  `AGENTOS_MAX_REAL_API_SPEND_USD`. It stops a model call *before* it is made when recorded spend plus in-flight reservations
+  would exceed it; it is a second, independent guard (the spend cap above is global, the budget is per workspace or agent and
+  per day or month). Amounts remain estimates.
+* **Stays offline by design:** the Agent Arena refuses any contender that is not an offline provider (`offline_only`), Memory
+  Lab experiments and the Security Center's injection tests use scripted mock models, and the Chaos Lab injects faults around
+  mock/fixture calls. None of them will spend money even in live mode.
+* **Deterministic checks apply to Claude output too:** Claude-proposed Autopilot candidates go through the same policy
+  validation, paired held-out experiments, promotion gates (including the Security Center evaluation), canary stages and
+  rollback rules as rule-generated ones. A higher model-written score never promotes anything.
+* **Release Center first run:** keep `auto_rollback` on and `min_stage_samples` at or above 10 for the first real canary.
+
 ## Known caveats
 
 * The real adapters were verified only against the official SDKs with a mocked HTTP transport.
