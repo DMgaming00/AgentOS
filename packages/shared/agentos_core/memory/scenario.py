@@ -89,7 +89,7 @@ class Scenario:
         return next((f for f in self.facts if f.entity == entity and f.attribute == attribute), None)
 
 
-def build_scenario(seed: int = 7) -> Scenario:
+def build_scenario(seed: int = 7, *, updated: int = 8, expired: int = 3) -> Scenario:
     rng = random.Random(seed)
     facts: list[Fact] = []
     for entity in BASE_ENTITIES:
@@ -101,11 +101,13 @@ def build_scenario(seed: int = 7) -> Scenario:
     base = [f for f in facts if f.entity in BASE_ENTITIES]
     order = list(range(len(base)))
     rng.shuffle(order)
-    updated, expired = order[:8], order[8:11]
-    for i in updated:
+    if updated + expired > len(order):
+        raise ValueError(f"updated + expired must be at most {len(order)}")
+    to_update, to_expire = order[:updated], order[updated : updated + expired]
+    for i in to_update:
         f = base[i]
         f.updated_value = rng.choice([v for v in VALUES[f.attribute] if v != f.value])
-    for i in expired:
+    for i in to_expire:
         base[i].expires = True
 
     tasks: list[Task] = []

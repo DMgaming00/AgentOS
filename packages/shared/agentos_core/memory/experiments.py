@@ -259,7 +259,13 @@ def _case(task: Task, strategy: str, snippets: list[dict[str, Any]]) -> dict[str
 
 
 async def start_experiment(
-    session: AsyncSession, *, workspace_id: uuid.UUID, user_id: uuid.UUID | None, seed: int = 7
+    session: AsyncSession,
+    *,
+    workspace_id: uuid.UUID,
+    user_id: uuid.UUID | None,
+    seed: int = 7,
+    updated: int = 8,
+    expired: int = 3,
 ) -> MemoryExperiment:
     running = (
         await session.execute(
@@ -272,7 +278,7 @@ async def start_experiment(
         raise MemoryExperimentError(
             "a memory experiment is already running in this workspace", "already_running"
         )
-    scenario = build_scenario(seed)
+    scenario = build_scenario(seed, updated=updated, expired=expired)
     exp = MemoryExperiment(
         id=uuid.uuid4(), workspace_id=workspace_id, status="running", created_by=user_id, config={}
     )
@@ -326,6 +332,8 @@ async def start_experiment(
         runs[strategy] = str(ev.id)
     exp.config = {
         "seed": seed,
+        "updated_facts": updated,
+        "expired_facts": expired,
         "strategies": STRATEGIES,
         "definitions": DEFINITIONS,
         "namespaces": namespaces,

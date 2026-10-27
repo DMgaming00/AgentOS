@@ -160,3 +160,38 @@ async def arena_seeded(seeded):
         ).scalars():
             seeded.agents[a.name] = a
     return seeded
+
+
+# ----------------------------------------------------------------------------- offline proof for the whole suite
+_OUTBOUND: list[str] = []
+
+
+@pytest.fixture(autouse=True, scope="session")
+def no_outbound_connections():  # type: ignore[no-untyped-def]
+    """Every test in the session runs with outbound (non-loopback) socket connections blocked and recorded.
+
+    The suite needs only local PostgreSQL and Redis. A connection to any other host (a model provider, a telemetry
+    backend, anything) raises immediately, and the attempt is also remembered so a test that swallowed the error still
+    fails the session. This is what lets CI run with no paid-provider credentials and proves that nothing in the product's
+    tested paths contacts an external service."""
+    import socket
+
+    real_connect = socket.socket.connect
+
+    def guarded(self, address):  # type: ignore[no-untyped-def]
+        host = address[0] if isinstance(address, tuple) else str(address)
+        if (
+            isinstance(host, str)
+            and host not in ("127.0.0.1", "::1", "localhost")
+            and not host.startswith("/")
+        ):
+            _OUTBOUND.append(f"{host}")
+            raise ConnectionRefusedError(
+                f"outbound connection to {host!r} blocked by the test suite (offline guarantee)"
+            )
+        return real_connect(self, address)
+
+    socket.socket.connect = guarded  # type: ignore[method-assign]
+    yield
+    socket.socket.connect = real_connect  # type: ignore[method-assign]
+    assert not _OUTBOUND, f"the suite attempted outbound connections to: {sorted(set(_OUTBOUND))}"
