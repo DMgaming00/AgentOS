@@ -286,18 +286,21 @@ async def detect(
     for te in tes:
         groups[(te.step_id, te.tool_name, te.arguments_hash)].append(te)
     for (sid, tool, h), calls in groups.items():
-        if len(calls) > thresholds.repeated_tool_calls:
+        total_calls = len(calls) + sum(
+            t.replay_count for t in calls
+        )  # replays: asked again, answered from the record
+        if total_calls > thresholds.repeated_tool_calls:
             step = steps[sid]
             signals.append(
                 Signal(
                     FailureCategory.REPETITIVE_TOOL_LOOP,
                     "anomaly",
                     "repeated_tool_calls",
-                    summary=f"{tool} called {len(calls)} times with identical arguments in {step.node_key}",
+                    summary=f"{tool} called {total_calls} times with identical arguments in {step.node_key}",
                     evidence=[ref("tool_execution", t.id, tool=tool) for t in calls[:6]],
                     occurred_at=max(t.created_at for t in calls),
                     measurements={
-                        "count": len(calls),
+                        "count": total_calls,
                         "threshold": thresholds.repeated_tool_calls,
                         "arguments_hash": h,
                     },

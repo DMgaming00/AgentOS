@@ -7,7 +7,7 @@ outputs, which makes CI and demos reproducible. Usage is reported as simulated.
 
 Scenarios (``model_configuration.scenario`` or model name ``mock-<scenario>``):
 research, analysis, writer, planner, invalid_plan, invalid_then_valid, echo,
-rate_limit, timeout, forbidden_tool, extractor, arena, memory_qa.
+rate_limit, timeout, forbidden_tool, extractor, redundant_extractor, arena, memory_qa.
 """
 
 from __future__ import annotations
@@ -383,6 +383,24 @@ class MockProvider:
                 messages,
             )
         ]
+
+    def _redundant_extractor(
+        self, messages: list[Message], tools: list[ToolDefinition], config: ModelConfig
+    ) -> tuple[str, list[ToolCall]]:
+        """The extractor with a wasteful habit: each search is issued twice with identical arguments ("to be safe")
+        unless the agent's instructions or tool strategy say not to repeat tool calls. The answers are unchanged;
+        the duplicate results only inflate the context. Used by the FinOps cost demonstration."""
+        text, calls = self._extractor(messages, tools, config)
+        if re.search(
+            r"never repeat|do not repeat|reuse the earlier result", getattr(self, "_system", ""), re.I
+        ):
+            return text, calls
+        doubled: list[ToolCall] = []
+        for c in calls:
+            doubled.append(c)
+            if c.name == "document_search":
+                doubled.append(self._call(c.name, dict(c.arguments), messages))
+        return text, doubled
 
     def _arena(
         self, messages: list[Message], tools: list[ToolDefinition], config: ModelConfig

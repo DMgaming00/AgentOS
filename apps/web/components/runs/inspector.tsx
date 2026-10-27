@@ -96,8 +96,8 @@ export function ToolsTab({ id }: { id: string }) {
     <Gate q={q}>
       {(d) => d.tools.length === 0 ? <EmptyState title="No tool calls" description="This run made no tool calls." /> : (
         <Table data-testid="tools-tab">
-          <THead><tr><TH>Tool</TH><TH>Status</TH><TH>Duration</TH><TH>Approval</TH><TH>Args hash</TH><TH>Error</TH></tr></THead>
-          <TBody>{d.tools.map((t) => <TR key={t.id}><TD>{t.tool}</TD><TD><Badge tone={t.status === "succeeded" ? "success" : t.status === "denied" || t.status === "failed" ? "danger" : "neutral"}>{t.status}</Badge></TD><TD>{ms(t.duration_ms)}</TD><TD>{t.requires_approval ? "required" : "—"}</TD><TD className="font-mono text-[11px]">{t.arguments_hash}</TD><TD className="text-xs">{t.error ?? "—"}</TD></TR>)}</TBody>
+          <THead><tr><TH>Tool</TH><TH>Status</TH><TH>Duration</TH><TH>Approval</TH><TH>Repeats</TH><TH>Args hash</TH><TH>Error</TH></tr></THead>
+          <TBody>{d.tools.map((t) => <TR key={t.id}><TD>{t.tool}</TD><TD><Badge tone={t.status === "succeeded" ? "success" : t.status === "denied" || t.status === "failed" ? "danger" : "neutral"}>{t.status}</Badge></TD><TD>{ms(t.duration_ms)}</TD><TD>{t.requires_approval ? "required" : "—"}</TD><TD>{t.replays ? `${t.replays} replayed` : "—"}</TD><TD className="font-mono text-[11px]">{t.arguments_hash}</TD><TD className="text-xs">{t.error ?? "—"}</TD></TR>)}</TBody>
         </Table>)}
     </Gate>
   );

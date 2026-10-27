@@ -1,4 +1,4 @@
-.PHONY: help install up down logs dev migrate seed test test-unit lint typecheck check web-check e2e demo demo-research demo-recovery demo-permissions autopilot-demo autopilot-demo-repair autopilot-demo-fake autopilot-demo-rollback autopilot-bench bench bench-quick bench-plot openapi screenshots
+.PHONY: showcase showcase-a showcase-b showcase-c showcase-d showcase-e help install up down logs dev migrate seed test test-unit lint typecheck check web-check e2e demo demo-research demo-recovery demo-permissions autopilot-demo autopilot-demo-repair autopilot-demo-fake autopilot-demo-rollback autopilot-bench bench bench-quick bench-plot openapi screenshots
 
 help:            ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-18s %s\n", $$1, $$2}'
@@ -82,6 +82,20 @@ bench-plot:      ## render benchmark charts into docs/benchmarks
 openapi:         ## regenerate openapi.json and the typed TS client
 	uv run python scripts/export_openapi.py
 	cd apps/web && npm run gen:api
+
+showcase:        ## run all five showcase demos (A self-improving, B chaos recovery, C security, D cost, E canary+rollback) against the stack
+	cd scripts && uv run python showcase.py all
+
+showcase-a:      ## demo A: self-improving agent
+	cd scripts && uv run python showcase.py a
+showcase-b:      ## demo B: chaos recovery (writes docs/demos/demo_b_recovery_report.md)
+	cd scripts && uv run python showcase.py b
+showcase-c:      ## demo C: security enforcement
+	cd scripts && uv run python showcase.py c
+showcase-d:      ## demo D: cost optimization
+	cd scripts && uv run python showcase.py d
+showcase-e:      ## demo E: canary and rollback
+	cd scripts && uv run python showcase.py e
 
 screenshots:     ## capture UI screenshots from the running stack (run autopilot-demo first for Autopilot pages)
 	cd apps/web && node tests/capture-screenshots.mjs

@@ -741,6 +741,7 @@ async def run_inspector(session: AsyncSession, run: WorkflowRun) -> dict[str, An
                 "status": t.status,
                 "duration_ms": _ms(t.started_at, t.completed_at),
                 "requires_approval": t.requires_approval,
+                "replays": t.replay_count,
                 "error": (t.error or {}).get("type"),
                 "arguments_hash": t.arguments_hash[:12],
                 "step_id": str(t.step_id),

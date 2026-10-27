@@ -236,6 +236,29 @@ def test_suggestions_label_measured_projected_and_none_honestly():
     assert all(s["savings"]["basis"] in ("measured", "projected", "none") for s in items.values())
 
 
+def test_replayed_calls_count_as_redundant_and_as_loops():
+    run = uuid.uuid4()
+    inp = Inputs(
+        usage=[use() for _ in range(5)],
+        tools=[ToolRow(run, AGENT_A, "document_search", "succeeded", f"h{i}", replays=1) for i in range(6)],
+    )
+    items = {
+        s["id"]: s
+        for s in suggestions.suggest(
+            inp, analytics.summarize(inp, now=NOW, days=7), approved_models=[], pricing=PRICING
+        )
+    }
+    assert items["reduce_redundant_tool_calls"]["evidence"] == {
+        "redundant_calls": 6,
+        "executed_twice": 0,
+        "replayed_from_record": 6,
+    }
+    looped = Inputs(
+        usage=[use()], tools=[ToolRow(run, AGENT_A, "document_search", "succeeded", "same", replays=4)]
+    )
+    assert "repetitive_tool_loop" in kinds(looped)  # 1 execution + 4 replays = 5 identical calls
+
+
 def test_no_suggestions_without_evidence():
     inp = Inputs(usage=[use() for _ in range(5)])
     assert (

@@ -40,8 +40,12 @@ def step(status="succeeded", etype=None, msg="", attempts=1, failures=0, run=Non
     return rules.StepFact(uuid.uuid4(), run or uuid.uuid4(), status, etype, msg, attempts, failures)
 
 
-def tool(name="document_search", status="succeeded", etype=None, msg="", h="h", run=None, count=None):
-    return rules.ToolFact(uuid.uuid4(), run or uuid.uuid4(), uuid.uuid4(), name, status, etype, msg, h, count)
+def tool(
+    name="document_search", status="succeeded", etype=None, msg="", h="h", run=None, count=None, replays=0
+):
+    return rules.ToolFact(
+        uuid.uuid4(), run or uuid.uuid4(), uuid.uuid4(), name, status, etype, msg, h, count, replays
+    )
 
 
 def evidence(steps=(), tools=()):
@@ -132,6 +136,17 @@ def test_redundant_calls_must_span_runs():
     assert "redundant_tool_calls" in by_id(evidence(tools=dup))
     one_run = [tool(h="same", run=runs[0]) for _ in range(6)]
     assert "redundant_tool_calls" not in by_id(evidence(tools=one_run))
+
+
+def test_redundancy_the_platform_answered_from_the_record_still_counts_as_evidence():
+    # A repeated identical call is replayed (no duplicate side effect) and leaves no second execution row; the replay
+    # counter is the only trace that the model asked again, and the rule must read it.
+    asked_twice = [tool(h=f"h{i}", replays=1) for i in range(3)]
+    p = by_id(evidence(tools=asked_twice))["redundant_tool_calls"]
+    assert p.strength == 3 and p.evidence[0]["replays"] == 1
+    assert "redundant_tool_calls" not in by_id(
+        evidence(tools=[tool(h=f"h{i}") for i in range(3)])
+    )  # no repeats, no rule
 
 
 def test_step_limit_respects_the_workspace_limit():

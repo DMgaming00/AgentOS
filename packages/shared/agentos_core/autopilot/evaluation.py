@@ -533,6 +533,8 @@ async def observe_run(
         "input_tokens": usage[1],
         "output_tokens": usage[2],
         "tool_calls": len(tes),
+        # identical calls asked again by the same attempt and answered from the recorded result (not re-executed)
+        "tool_replays": sum(te.replay_count for te in tes),
         "retries": obs.retries,
     }
 

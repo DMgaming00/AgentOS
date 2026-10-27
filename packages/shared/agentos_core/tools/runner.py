@@ -218,6 +218,10 @@ async def _execute_once(call: ToolCallRequest, scope: StepScope, registry: ToolR
     # the step permanently with an internal error.)
     cached = await _succeeded_execution(idem)
     if cached is not None:
+        if (
+            cached.attempt_id == scope.attempt_id
+        ):  # the same attempt asked again: redundancy, not crash recovery
+            await _count_replay(cached.id)
         return ToolOutcome("result", {**(cached.result or {}), "idempotent_replay": True}, cached.id)
 
     # 4. approval gate
@@ -408,6 +412,19 @@ async def _finish(
                 "error": error,
                 "summary": _summarize(result) if result else None,
             },
+        )
+
+    await run_in_transaction(_do)
+
+
+async def _count_replay(execution_id: uuid.UUID) -> None:
+    from agentos_core.engine.tx import run_in_transaction
+
+    async def _do(session: AsyncSession) -> None:
+        await session.execute(
+            update(ToolExecution)
+            .where(ToolExecution.id == execution_id)
+            .values(replay_count=ToolExecution.replay_count + 1)
         )
 
     await run_in_transaction(_do)

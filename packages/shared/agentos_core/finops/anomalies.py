@@ -194,7 +194,7 @@ def repetitive_tool_loop(inp: Inputs, now: datetime, t: dict[str, Any] = THRESHO
     groups: dict[tuple[uuid.UUID, str, str], int] = defaultdict(int)
     for tl in inp.tools:
         if tl.status == "succeeded":
-            groups[(tl.run_id, tl.tool, tl.args_hash)] += 1
+            groups[(tl.run_id, tl.tool, tl.args_hash)] += 1 + tl.replays
     out = []
     for (run_id, tool, h), n in sorted(groups.items(), key=lambda kv: (-kv[1], str(kv[0]))):
         if n >= t["loop_identical_calls"]:

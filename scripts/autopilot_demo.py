@@ -50,6 +50,11 @@ class Client:
 
     def req(self, method: str, path: str, body: Any = None, expect: int | None = None, **kw: Any) -> Any:
         r = self.http.request(method, path, json=body, **kw)
+        for _ in range(8):  # the API rate-limits bursts of state-changing calls: back off and retry
+            if r.status_code != 429:
+                break
+            time.sleep(float(r.headers.get("Retry-After", "2")))
+            r = self.http.request(method, path, json=body, **kw)
         if expect is not None:
             return r
         if r.status_code >= 400:

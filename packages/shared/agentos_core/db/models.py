@@ -346,6 +346,10 @@ class ToolExecution(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     error: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    # How many times the same attempt asked for this identical call again after it had succeeded. The platform replays the
+    # recorded result instead of executing twice (so no duplicate side effect), and this counter keeps the evidence that
+    # the model was being redundant. Replays after a crash, in a later attempt, are recovery and are not counted.
+    replay_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     created_at: Mapped[datetime] = created_at_col()
     __table_args__ = (
         Index("ix_tool_executions_run", "run_id"),

@@ -89,6 +89,7 @@ class ToolRow:
     status: str
     args_hash: str
     read_only: bool = True
+    replays: int = 0
 
 
 @dataclass
@@ -362,6 +363,7 @@ async def load_inputs(session: AsyncSession, workspace_id: uuid.UUID, *, since: 
                 ToolExecution.tool_name,
                 ToolExecution.status,
                 ToolExecution.arguments_hash,
+                ToolExecution.replay_count,
             )
             .join(WorkflowStep, WorkflowStep.id == ToolExecution.step_id)
             .join(WorkflowRun, WorkflowRun.id == ToolExecution.run_id)
@@ -369,8 +371,8 @@ async def load_inputs(session: AsyncSession, workspace_id: uuid.UUID, *, since: 
         )
     ).all()
     inp.tools = [
-        ToolRow(r, a, t, st, h, read_only=(reg.get(t) is None or reg.get(t).permission == "read"))  # type: ignore[union-attr]
-        for r, a, t, st, h in tool_rows
+        ToolRow(r, a, t, st, h, read_only=(reg.get(t) is None or reg.get(t).permission == "read"), replays=rp)  # type: ignore[union-attr]
+        for r, a, t, st, h, rp in tool_rows
     ]
     return inp
 

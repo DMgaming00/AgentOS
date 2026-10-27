@@ -55,10 +55,12 @@ def suggest(
 
     # 1. redundant tool calls within a run
     groups: dict[tuple[uuid.UUID, str, str], int] = defaultdict(int)
+    replayed = 0
     for t in inp.tools:
         if t.status == "succeeded":
             groups[(t.run_id, t.tool, t.args_hash)] += 1
-    redundant = sum(n - 1 for n in groups.values() if n > 1)
+            replayed += t.replays  # asked again by the same attempt; answered from the recorded result
+    redundant = sum(n - 1 for n in groups.values() if n > 1) + replayed
     if redundant >= 5:
         out.append(
             _s(
@@ -66,7 +68,8 @@ def suggest(
                 "Reduce redundant tool calls",
                 {
                     "redundant_calls": redundant,
-                    "distinct_repeated_calls": sum(1 for n in groups.values() if n > 1),
+                    "executed_twice": sum(n - 1 for n in groups.values() if n > 1),
+                    "replayed_from_record": replayed,
                 },
                 "Add duplicate-call protection to the agent's tool strategy (Autopilot rule `redundant_tool_calls`) and evaluate it.",
                 "none",

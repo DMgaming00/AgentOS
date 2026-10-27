@@ -87,6 +87,9 @@ class ToolFact:
     error_message: str
     args_hash: str
     result_count: int | None
+    replays: int = (
+        0  # times the same attempt asked again after success (the platform replayed the recorded result)
+    )
 
 
 @dataclass
@@ -333,10 +336,13 @@ def redundant_tool_calls(
     for t in ev.tools:
         if t.status == "succeeded":
             groups[(t.run_id, t.tool, t.args_hash)].append(t)
-    dup = {k: v for k, v in groups.items() if len(v) >= 2}
+    # redundant: executed more than once, or asked again by the same attempt and answered from the recorded result
+    dup = {k: v for k, v in groups.items() if len(v) >= 2 or sum(t.replays for t in v) >= 1}
     if len({k[0] for k in dup}) < 3 or NO_REPEAT_PRESENT.search(cfg.tool_strategy):
         return None
-    evidence = [ref("tool_execution", t.id, tool=t.tool) for v in dup.values() for t in v[:2]]
+    evidence = [
+        ref("tool_execution", t.id, tool=t.tool, replays=t.replays) for v in dup.values() for t in v[:2]
+    ]
     return _proposal(
         RULES["redundant_tool_calls"],
         "Protect against duplicate tool calls",
@@ -601,6 +607,7 @@ async def collect_evidence(
                     str(err.get("message", "")),
                     t.arguments_hash,
                     count,
+                    t.replay_count,
                 )
             )
     return ev
