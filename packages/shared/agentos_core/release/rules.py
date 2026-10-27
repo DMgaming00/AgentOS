@@ -14,6 +14,7 @@ is consulted, and the same samples always give the same verdicts.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
@@ -50,6 +51,8 @@ class FailureRate(BaseModel):
     max_increase: float = Field(default=0.15, ge=0, le=1)
     min_samples: int = Field(default=10, ge=1)
     min_failures: int = Field(default=2, ge=1)
+    # one-sided Fisher exact test: the excess must also be unlikely under "the two arms fail at the same rate"
+    alpha: float = Field(default=0.05, gt=0, lt=1)
 
 
 class ErrorBudget(BaseModel):
@@ -57,6 +60,8 @@ class ErrorBudget(BaseModel):
     enabled: bool = True
     slo_success: float = Field(default=0.95, gt=0, lt=1)
     min_samples: int = Field(default=20, ge=1)
+    # one-sided binomial test: the failures must be unlikely if the arm were exactly at the SLO boundary
+    alpha: float = Field(default=0.05, gt=0, lt=1)
 
 
 class Latency(BaseModel):
@@ -83,6 +88,26 @@ class RollbackRules(BaseModel):
     error_budget_exhausted: ErrorBudget = Field(default_factory=ErrorBudget)
     sustained_latency_regression: Latency = Field(default_factory=Latency)
     excessive_spending: Spending = Field(default_factory=Spending)
+
+
+def binomial_tail(k: int, n: int, p: float) -> float:
+    """P(X >= k) for X ~ Binomial(n, p), exactly."""
+    return min(1.0, sum(math.comb(n, i) * p**i * (1 - p) ** (n - i) for i in range(k, n + 1)))
+
+
+def fisher_tail(canary_fail: int, canary_n: int, base_fail: int, base_n: int) -> float:
+    """One-sided Fisher exact p-value: probability of at least ``canary_fail`` failures in the canary arm if both arms share one failure rate."""
+    total_fail, total_n = canary_fail + base_fail, canary_n + base_n
+    denom = math.comb(total_n, canary_n)
+    hi = min(canary_n, total_fail)
+    return min(
+        1.0,
+        sum(
+            math.comb(total_fail, i) * math.comb(total_n - total_fail, canary_n - i)
+            for i in range(canary_fail, hi + 1)
+        )
+        / denom,
+    )
 
 
 def _result(rule: str, status: str, reason: str, **measured: Any) -> dict[str, Any]:
@@ -134,10 +159,20 @@ def failure_rate_increase(cfg: FailureRate, canary: Arm, base: Arm) -> dict[str,
         "baseline_n": len(b),
     }
     if diff >= cfg.max_increase and failures >= cfg.min_failures:
+        p = fisher_tail(failures, len(c), sum(not x.ok for x in b), len(b))
+        measured["fisher_p"] = round(p, 5)
+        if p >= cfg.alpha:
+            return _result(
+                name,
+                "insufficient_evidence",
+                f"canary {cr:.0%} vs baseline {br:.0%} exceeds +{cfg.max_increase:.0%}, but the excess is within what noise "
+                f"would produce (Fisher p={p:.3f} >= {cfg.alpha}); more steps needed",
+                **measured,
+            )
         return _result(
             name,
             "triggered",
-            f"canary failure rate {cr:.0%} vs baseline {br:.0%} (+{diff:.0%}, limit +{cfg.max_increase:.0%})",
+            f"canary failure rate {cr:.0%} vs baseline {br:.0%} (+{diff:.0%}, limit +{cfg.max_increase:.0%}; Fisher p={p:.4f})",
             **measured,
         )
     return _result(
@@ -165,10 +200,20 @@ def error_budget_exhausted(cfg: ErrorBudget, canary: Arm, base: Arm) -> dict[str
         "slo_success": cfg.slo_success,
     }
     if failures > allowed:
+        p = binomial_tail(failures, n, 1 - cfg.slo_success)
+        measured["binomial_p"] = round(p, 5)
+        if p >= cfg.alpha:
+            return _result(
+                name,
+                "insufficient_evidence",
+                f"{failures} failures exceed the error budget of {allowed:.2f}, but that is within noise for an arm exactly at the "
+                f"{cfg.slo_success:.0%} SLO (p={p:.3f} >= {cfg.alpha}); more steps needed",
+                **measured,
+            )
         return _result(
             name,
             "triggered",
-            f"{failures} failures exceed the error budget of {allowed:.2f} for a {cfg.slo_success:.0%} success SLO over {n} steps",
+            f"{failures} failures exceed the error budget of {allowed:.2f} for a {cfg.slo_success:.0%} success SLO over {n} steps (binomial p={p:.4f})",
             **measured,
         )
     return _result(name, "ok", f"{consumed:.0%} of the error budget consumed", **measured)

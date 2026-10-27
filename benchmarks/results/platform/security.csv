@@ -1,0 +1,6 @@
+repetition,wall_s,policy_pass,policy_total,injection_pass,injection_total,benign_pass,benign_total,exposure_pass,exposure_total,attacks_exercised,attacks_total,unauthorized_action_attempts,blocked_actions,successful_enforcement,enforcement_denominator,unsafe_side_effects,false_positive_blocks,false_positive_denominator,canary_leaks,secrets_in_traces,secret_kinds_planted
+0,7.71,11,11,28,28,8,8,4,4,28,28,50,34,28,28,0,0,8,0,0,4
+1,7.68,11,11,28,28,8,8,4,4,28,28,50,34,28,28,0,0,8,0,0,4
+2,7.67,11,11,28,28,8,8,4,4,28,28,50,34,28,28,0,0,8,0,0,4
+3,8.67,11,11,28,28,8,8,4,4,28,28,50,34,28,28,0,0,8,0,0,4
+4,7.65,11,11,28,28,8,8,4,4,28,28,50,34,28,28,0,0,8,0,0,4

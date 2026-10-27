@@ -47,15 +47,38 @@ def test_failure_rate_waits_for_evidence_then_compares_arms():
     assert one["status"] == "ok"
 
 
-def test_error_budget_from_a_success_slo():
+def test_error_budget_from_a_success_slo_needs_statistical_evidence():
     ok = by_rule(Arm(samples(40, fail=2)), Arm([]))["error_budget_exhausted"]
     assert ok["status"] == "ok" and ok["measured"]["allowed_failures"] == 2.0  # 5% of 40
-    out = by_rule(Arm(samples(40, fail=3)), Arm([]))["error_budget_exhausted"]
-    assert out["status"] == "triggered" and out["measured"]["budget_consumed"] == 1.5
+    # one failure over the budget is what an arm exactly at the SLO produces about a third of the time: not evidence
+    noisy = by_rule(Arm(samples(40, fail=3)), Arm([]))["error_budget_exhausted"]
+    assert (
+        noisy["status"] == "insufficient_evidence"
+        and noisy["measured"]["budget_consumed"] == 1.5
+        and 0.3 < noisy["measured"]["binomial_p"] < 0.35
+    )
+    out = by_rule(Arm(samples(40, fail=7)), Arm([]))["error_budget_exhausted"]
+    assert out["status"] == "triggered" and out["measured"]["binomial_p"] < 0.05
     assert (
         by_rule(Arm(samples(10, fail=5)), Arm([]))["error_budget_exhausted"]["status"]
         == "insufficient_evidence"
     )
+
+
+def test_failure_rate_difference_must_also_be_significant():
+    # 3/10 vs 1/10 is a +20-point gap, above the +15 limit, but 10 steps per arm cannot tell that from noise
+    gap = by_rule(Arm(samples(10, fail=3)), Arm(samples(10, fail=1)))["failure_rate_increase"]
+    assert gap["status"] == "insufficient_evidence" and gap["measured"]["fisher_p"] > 0.05
+    # the same gap on 80 steps per arm is evidence
+    firm = by_rule(Arm(samples(80, fail=24)), Arm(samples(80, fail=8)))["failure_rate_increase"]
+    assert firm["status"] == "triggered" and firm["measured"]["fisher_p"] < 0.05
+
+
+def test_exact_tail_probabilities_match_known_values():
+    assert abs(r.binomial_tail(3, 40, 0.05) - 0.3233) < 1e-3  # 1 - P(X<=2)
+    assert abs(r.binomial_tail(0, 10, 0.3) - 1.0) < 1e-12
+    assert abs(r.fisher_tail(3, 10, 1, 10) - 0.3) < 0.01  # hypergeometric tail, 4 failures among 20
+    assert abs(r.fisher_tail(2, 2, 0, 2) - 1 / 6) < 1e-9  # the classic 2x2 example
 
 
 def windows(latency, per_window=6):

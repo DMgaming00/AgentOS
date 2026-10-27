@@ -1,0 +1,50 @@
+{
+  "sections": {
+    "memory": {
+      "seconds": 223.2,
+      "quick": false
+    },
+    "security": {
+      "seconds": 42.1,
+      "quick": false
+    },
+    "deployment": {
+      "seconds": 105.7,
+      "quick": false
+    },
+    "optimization": {
+      "seconds": 86.7,
+      "quick": false
+    }
+  },
+  "label": "platform",
+  "machine": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "python": "3.13.7",
+    "cpu_count": 8,
+    "memory_gb": 8.0,
+    "cpu": "Apple M1",
+    "postgres": "postgres (PostgreSQL) 16.15"
+  },
+  "started_at": "2026-10-26T23:25:36-0700",
+  "providers": "mock (deterministic, simulated pricing); no model calls",
+  "memory_churn_levels": [
+    [
+      0,
+      0
+    ],
+    [
+      4,
+      2
+    ],
+    [
+      8,
+      3
+    ],
+    [
+      12,
+      5
+    ]
+  ]
+}
