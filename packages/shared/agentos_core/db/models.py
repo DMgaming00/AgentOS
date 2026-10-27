@@ -1185,6 +1185,13 @@ class OptimizationCandidate(Base):
     provider: Mapped[str | None] = mapped_column(String(32))
     model: Mapped[str | None] = mapped_column(String(200))
     simulated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Set when a deterministic rule produced the candidate (generator = 'rule_engine'): which rule and version,
+    # what kind of change, and the trace evidence (step / tool-execution ids) that triggered it.
+    rule_id: Mapped[str | None] = mapped_column(String(64))
+    rule_version: Mapped[str | None] = mapped_column(String(16))
+    candidate_type: Mapped[str | None] = mapped_column(String(32))
+    evidence: Mapped[list[Any]] = mapped_column(JSONB, nullable=False, server_default="[]")
+    projected: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false", default=False)
     created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     created_at: Mapped[datetime] = created_at_col()
     __table_args__ = (

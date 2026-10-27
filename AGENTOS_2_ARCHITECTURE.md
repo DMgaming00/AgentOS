@@ -354,3 +354,27 @@ flowchart LR
 * **Retrieval**: PostgreSQL full-text relevance (`ts_rank_cd`) with namespace, kind and tag filters; each hit carries provenance (origin, run, step, tool execution, version, hash) and `untrusted: true`. Agent reads are audited with a hash of the query.
 * **Experiments**: a two-session scenario with known answers (current, updated, expired, in-conversation, missing and look-alike facts) is written through the real store; each strategy builds its context through real store calls; every (strategy, question) is graded as an evaluation case. Reported per strategy: accuracy, stale-memory answers, wrong-entity reuse, retrieval precision and answer recall (with denominators), context size, latency, simulated cost, and paired comparisons.
 * **Side effect fixed**: the browser could not call `PUT`/`DELETE` (CORS allow-list); updates use `PATCH` and `DELETE` is now allowed.
+
+## 8. Optimization Lab 2.0 (Phase 8)
+
+Migration `0011` (candidate provenance columns). The existing optimizer (a model proposes, code validates) is kept; a second, model-free generator is added.
+
+* **Rule engine** (`autopilot/rules.py`, ruleset `rules-v1`): nine versioned, deterministic rules, each a pure function of a **trace evidence snapshot** (step outcomes and errors, tool executions with arguments hashes and result counts, retries) and the baseline configuration.
+  A rule proposes a concrete change with the ids of the steps/tool executions that triggered it, or stays silent. Same evidence and configuration give byte-identical candidates; proposals are ordered by evidence strength.
+
+  | rule | symptom in traces | proposal | type |
+  |---|---|---|---|
+  | `numeric_as_string` | ≥2 steps failed `'…' is not of type 'number'` | add a JSON-number instruction | prompt revision |
+  | `missing_required_fields` | ≥2 steps failed `'x' is a required property` | name the required fields in the prompt | prompt revision |
+  | `invalid_tool_arguments` | ≥2 calls to one tool rejected | append the tool's argument schema (types, enums, ISO dates) to its description | tool-description revision |
+  | `empty_retrieval` | ≥3 empty searches and ≥25% of searches | explicit empty-result strategy | tool strategy |
+  | `redundant_tool_calls` | identical successful calls repeated in ≥3 runs | duplicate-call protection | tool strategy |
+  | `excessive_retries` | ≥3 steps with ≥2 failures | bound `retry_max_attempts` at 2 | retry policy |
+  | `step_limit_exceeded` | ≥2 steps hit `max_steps` | raise `max_steps` by 2 within the workspace limit | step limit |
+  | `unused_tool` | tool never called in ≥10 steps | remove the tool (removal only) | tool selection |
+  | `cheaper_model` | success ≥90% over ≥10 steps and a policy-approved model ≥20% cheaper | propose it, labeled *projected, quality unverified* | model configuration |
+
+* **Same gates as every candidate**: proposals go through `validate_candidate` (field allow-list, tools may only shrink, approved models, safety-weakening text, hidden-answer leakage), become immutable versions only if they pass, and must still win a paired experiment on held-out cases (hard and soft gates, CI excluding 0 for "improved"). A triggered rule is a hypothesis, never evidence of improvement.
+* **Provenance**: candidates store `rule_id`, `rule_version`, `candidate_type`, the evidence refs and a `projected` flag; the UI shows them and serves the full rule catalog (`GET /api/v1/autopilot/rules`). Re-running generation does not duplicate an open identical proposal.
+* The experiment runner and statistics were already in place from the Autopilot phase (pinned versions, interleaved baseline/candidate, paired bootstrap, McNemar, per-case regressions, critical-tag gate, cost and latency comparison, explicit `inconclusive`); this phase did not change them.
+* **Bugs found**: the experiment dialog could post an empty dataset id if the dataset list had not loaded yet (the Start button is now disabled until a dataset is selected). This may also have caused the earlier, unexplained single Autopilot e2e failure after a rebuild.

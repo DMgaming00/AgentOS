@@ -1,7 +1,7 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FlaskConical, Wand2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FlaskConical, ListChecks, Wand2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { EmptyState, ErrorState, InlineError, LoadingBlock } from "@/components/ui/feedback";
 import { Field, Input, Select } from "@/components/ui/inputs";
+import { TBody, TD, TH, THead, TR, Table } from "@/components/ui/table";
 import { api, idempotencyKey, unwrap } from "@/lib/api";
 import { useCandidates, useDatasets, useFailures, useVersions } from "@/lib/autopilot";
 import { canWrite, useAuth } from "@/lib/auth";
@@ -49,9 +50,17 @@ export function Improvements() {
   const generate = useMutation({
     mutationFn: async () => unwrap(await api.POST("/api/v1/autopilot/candidates/generate", {
       params: { header: { "Idempotency-Key": idempotencyKey() } },
-      body: { agent_id: agentId!, diagnosis_id: diagnosisId || diagnoses[0]?.id || null } })),
+      body: { agent_id: agentId!, diagnosis_id: diagnosisId || diagnoses[0]?.id || null, generator: "model", window_days: 30 } })),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["autopilot"] }),
   });
+
+  const generateRules = useMutation({
+    mutationFn: async () => unwrap(await api.POST("/api/v1/autopilot/candidates/generate", {
+      params: { header: { "Idempotency-Key": idempotencyKey() } },
+      body: { agent_id: agentId!, diagnosis_id: diagnosisId || null, generator: "rules", window_days: 30 } })),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["autopilot"] }),
+  });
+  const rules = useQuery({ queryKey: ["autopilot", "rules"], queryFn: async () => unwrap(await api.GET("/api/v1/autopilot/rules")) as unknown as { version: string; rules: { id: string; version: string; candidate_type: string; symptom: string; action: string; threshold: string }[] } });
 
   if (agents.isLoading) return <LoadingBlock rows={6} />;
   if (agents.error) return <ErrorState error={agents.error} />;
@@ -81,10 +90,23 @@ export function Improvements() {
             <Button onClick={() => generate.mutate()} disabled={!agentId || generate.isPending} data-testid="generate-candidates">
               <Wand2 aria-hidden /> {generate.isPending ? "Generating…" : "Generate candidates"}
             </Button>
+            <Button variant="outline" onClick={() => generateRules.mutate()} disabled={!agentId || generateRules.isPending} data-testid="generate-rule-candidates">
+              <ListChecks aria-hidden /> {generateRules.isPending ? "Reading traces…" : "Generate from trace rules"}
+            </Button>
           </div>
         ) : null}
       </div>
-      <InlineError error={generate.error} />
+      <InlineError error={generate.error ?? generateRules.error} />
+      {generateRules.isSuccess && (generateRules.data as unknown as unknown[]).length === 0 ? (
+        <p className="text-sm text-muted-foreground" data-testid="no-rule-match">No rule matched this agent&apos;s recent traces (or the matching proposals are already open). Rules stay silent without evidence.</p>
+      ) : null}
+      {rules.data ? (
+        <details className="rounded-md border p-3 text-sm" data-testid="rule-catalog">
+          <summary className="cursor-pointer font-medium">Rule set {rules.data.version}: {rules.data.rules.length} deterministic rules</summary>
+          <Table className="mt-2"><THead><tr><TH>Rule</TH><TH>Type</TH><TH>Symptom</TH><TH>Action</TH><TH>Trigger</TH></tr></THead>
+            <TBody>{rules.data.rules.map((r) => <TR key={r.id}><TD className="font-mono text-xs">{r.id} v{r.version}</TD><TD className="text-xs">{r.candidate_type}</TD><TD className="text-xs">{r.symptom}</TD><TD className="text-xs">{r.action}</TD><TD className="text-xs">{r.threshold}</TD></TR>)}</TBody></Table>
+        </details>
+      ) : null}
 
       <div className="grid gap-4 xl:grid-cols-3">
         <div className="flex flex-col gap-3 xl:col-span-2">
@@ -97,6 +119,7 @@ export function Improvements() {
                   <CardDescription>
                     v{c.baseline_version} → {c.candidate_version ? `v${c.candidate_version}` : "no version (rejected)"} · {c.generator}
                     {c.simulated ? " · simulated optimizer" : c.provider ? ` · ${c.provider}/${c.model}` : ""} · {relativeTime(c.created_at)}
+                    {c.rule_id ? <span data-testid="rule-badge"> · rule {c.rule_id} v{c.rule_version} ({c.candidate_type?.replace(/_/g, " ")}){c.projected ? " · projected saving, unverified" : ""}</span> : null}
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
@@ -123,6 +146,7 @@ export function Improvements() {
                     <ul className="list-disc pl-5 text-xs">{c.risk_assessment.map((b, i) => <li key={i}>{String(b)}</li>)}</ul></div>
                 </div>
                 <p className="text-xs text-muted-foreground">Reason: {c.reason || "—"}</p>
+                {c.evidence?.length ? <p className="text-xs text-muted-foreground" data-testid="rule-evidence">Evidence: {c.evidence.length} trace records ({Array.from(new Set(c.evidence.map((e) => String((e as { type?: string }).type)))).join(", ")}), e.g. {String((c.evidence[0] as { id?: string }).id).slice(0, 8)}…</p> : null}
                 {c.diff.length ? <details><summary className="cursor-pointer text-xs text-muted-foreground">Configuration diff</summary>
                   <div className="mt-2"><DiffView diff={c.diff as Diff[]} /></div></details> : null}
               </CardContent>
@@ -188,7 +212,7 @@ function ExperimentDialog({ candidate, onClose }: { candidate: Candidate; onClos
         </label>
         <InlineError error={start.error} />
         <div className="flex justify-end">
-          <Button onClick={() => start.mutate()} disabled={start.isPending} data-testid="confirm-experiment">{start.isPending ? "Starting…" : "Start experiment"}</Button>
+          <Button onClick={() => start.mutate()} disabled={start.isPending || !datasetId} data-testid="confirm-experiment">{start.isPending ? "Starting…" : datasetId ? "Start experiment" : "Loading datasets…"}</Button>
         </div>
       </DialogContent>
     </Dialog>

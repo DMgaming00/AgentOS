@@ -43,7 +43,17 @@ test("diagnose, propose, experiment, approve, roll back - all from the Autopilot
   await expect(page.getByTestId("candidate-card")).toHaveCount(3, { timeout: 30_000 });
   await expect(page.locator('[data-testid="candidate-card"][data-status="rejected_policy"]')).toContainText("adds tools");
   await expect(page.getByTestId("version-history")).toContainText("v2");
-  const fix = page.getByTestId("candidate-card").filter({ hasText: "Return numeric values as JSON numbers" });
+
+  // Deterministic rules over the same traces: the rule set is public, and the numeric-format rule cites real failed steps.
+  await expect(page.getByTestId("rule-catalog")).toContainText("rules-v1");
+  await page.getByTestId("generate-rule-candidates").click();
+  const ruleCard = page.locator('[data-testid="candidate-card"]').filter({ has: page.getByTestId("rule-badge") }).first();
+  await expect(ruleCard).toContainText("numeric_as_string", { timeout: 30_000 });
+  await expect(ruleCard.getByTestId("rule-evidence")).toContainText("step");
+  await page.getByTestId("generate-rule-candidates").click();
+  await expect(page.getByTestId("no-rule-match")).toBeVisible({ timeout: 30_000 });
+  // The model-proposed and the rule-proposed fix are the same configuration (same content hash, same version).
+  const fix = page.getByTestId("candidate-card").filter({ hasText: "Return numeric values as JSON numbers" }).first();
   await fix.getByTestId("run-experiment").click();
   await page.getByTestId("confirm-experiment").click();
 

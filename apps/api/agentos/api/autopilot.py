@@ -39,6 +39,8 @@ from agentos_core.autopilot.optimizer import (
     propose_manual_candidate,
 )
 from agentos_core.autopilot.policy import AutopilotPolicy, load_policy
+from agentos_core.autopilot.rules import catalog as rules_catalog
+from agentos_core.autopilot.rules import generate_rule_candidates
 from agentos_core.db.models import (
     AgentConfigVersion,
     AgentDefinition,
@@ -435,15 +437,26 @@ async def generate(
 
     async def run() -> CandidateList:
         try:
-            cands = await generate_candidates(
-                session,
-                workspace_id=ctx.workspace_id,
-                agent_id=body.agent_id,
-                diagnosis_id=body.diagnosis_id,
-                user_id=ctx.user.id,
-                count=body.count,
-                provider=body.provider,
-            )
+            if body.generator == "rules":
+                cands = await generate_rule_candidates(
+                    session,
+                    workspace_id=ctx.workspace_id,
+                    agent_id=body.agent_id,
+                    diagnosis_id=body.diagnosis_id,
+                    user_id=ctx.user.id,
+                    window_days=body.window_days,
+                    count=body.count,
+                )
+            else:
+                cands = await generate_candidates(
+                    session,
+                    workspace_id=ctx.workspace_id,
+                    agent_id=body.agent_id,
+                    diagnosis_id=body.diagnosis_id,
+                    user_id=ctx.user.id,
+                    count=body.count,
+                    provider=body.provider,
+                )
         except (AgentOSError, ValueError) as exc:
             raise _domain_error(exc) from None
         return CandidateList([await candidate_out(session, c) for c in cands])
@@ -451,6 +464,12 @@ async def generate(
     return await idempotent(
         session, ctx, scope="candidates", key=idempotency_key, body=body.model_dump(mode="json"), fn=run
     )
+
+
+@router.get("/rules")
+async def rules() -> dict[str, Any]:
+    """The versioned rule set behind rule-generated candidates: symptom, action and trigger threshold of every rule."""
+    return rules_catalog()
 
 
 @router.post("/candidates", response_model=CandidateOut, status_code=201)

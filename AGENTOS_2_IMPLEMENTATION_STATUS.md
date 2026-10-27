@@ -12,7 +12,7 @@ Legend: ✅ done and tested · 🟡 partly done · ⏭️ not started. Updated a
 | 5 | Security Center: 11 engine-level policy tests, 28-attack + 8-control injection corpus run through real workflows, trace-sanitization checks, metrics with denominators, derived incidents, API + UI + tests; sensitivity tests prove the suite can fail | ✅ |
 | 6 | OpenEval expansion and Agent Arena: 111-case corpus (3 families, 3 splits, hash manifest), arena runs with a one-shot test split, statistical leaderboard, API + UI + tests | ✅ |
 | 7 | Memory Lab: versioned, audited, expiring workspace memory in PostgreSQL; keyword retrieval with provenance and untrusted marking; approval-gated agent write tool; secret refusal; 6-strategy experiment with measured stale/reuse/precision/context metrics; API + UI + tests | ✅ |
-| 8 | Optimization Lab 2.0 | ⏭️ |
+| 8 | Optimization Lab 2.0: deterministic versioned rule engine (9 rules) over trace evidence with provenance, same policy/gates/experiments as model proposals, API + UI + tests. Tool routing, memory policy and topology proposals NOT implemented | ✅ (partial: see limitations) |
 | 9 | FinOps | ⏭️ |
 | 10 | Release Center | ⏭️ |
 | 11 | Unified UX and observability | ⏭️ |

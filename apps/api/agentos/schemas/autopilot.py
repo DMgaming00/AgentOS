@@ -84,6 +84,9 @@ class GenerateCandidatesRequest(BaseModel):
     diagnosis_id: uuid.UUID | None = None
     count: int | None = Field(default=None, ge=1, le=5)
     provider: Literal["mock", "anthropic", "openai"] | None = None
+    # "model": the (mock or paid) Optimizer Agent proposes; "rules": deterministic rules over trace evidence, no model call.
+    generator: Literal["model", "rules"] = "model"
+    window_days: int = Field(default=30, ge=1, le=365)
 
 
 class ChangeIn(BaseModel):
@@ -122,6 +125,11 @@ class CandidateOut(ORM):
     provider: str | None
     model: str | None
     simulated: bool
+    rule_id: str | None = None
+    rule_version: str | None = None
+    candidate_type: str | None = None
+    evidence: list[Any] = Field(default_factory=list)
+    projected: bool = False
     created_at: datetime
     latest_experiment_id: uuid.UUID | None = None
 

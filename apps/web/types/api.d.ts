@@ -554,6 +554,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/autopilot/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Rules
+         * @description The versioned rule set behind rule-generated candidates: symptom, action and trigger threshold of every rule.
+         */
+        get: operations["rules_api_v1_autopilot_rules_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/autopilot/stream": {
         parameters: {
             query?: never;
@@ -2254,6 +2274,8 @@ export interface components {
              * Format: uuid
              */
             baseline_version_id: string;
+            /** Candidate Type */
+            candidate_type: string | null;
             /** Candidate Version */
             candidate_version: number | null;
             /** Candidate Version Id */
@@ -2269,6 +2291,8 @@ export interface components {
             diagnosis_id: string | null;
             /** Diff */
             diff: unknown[];
+            /** Evidence */
+            evidence: unknown[];
             /** Expected Benefits */
             expected_benefits: unknown[];
             /** Generator */
@@ -2284,12 +2308,21 @@ export interface components {
             model: string | null;
             /** Policy Violations */
             policy_violations: unknown[];
+            /**
+             * Projected
+             * @default false
+             */
+            projected: boolean;
             /** Provider */
             provider: string | null;
             /** Reason */
             reason: string;
             /** Risk Assessment */
             risk_assessment: unknown[];
+            /** Rule Id */
+            rule_id: string | null;
+            /** Rule Version */
+            rule_version: string | null;
             /** Simulated */
             simulated: boolean;
             /** Status */
@@ -3134,8 +3167,19 @@ export interface components {
             count?: number | null;
             /** Diagnosis Id */
             diagnosis_id?: string | null;
+            /**
+             * Generator
+             * @default model
+             * @enum {string}
+             */
+            generator: "model" | "rules";
             /** Provider */
             provider?: ("mock" | "anthropic" | "openai") | null;
+            /**
+             * Window Days
+             * @default 30
+             */
+            window_days: number;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -5391,6 +5435,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rules_api_v1_autopilot_rules_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

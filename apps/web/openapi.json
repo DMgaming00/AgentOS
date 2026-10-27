@@ -1084,6 +1084,17 @@
             "title": "Baseline Version Id",
             "type": "string"
           },
+          "candidate_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Type"
+          },
           "candidate_version": {
             "anyOf": [
               {
@@ -1134,6 +1145,11 @@
             "title": "Diff",
             "type": "array"
           },
+          "evidence": {
+            "items": {},
+            "title": "Evidence",
+            "type": "array"
+          },
           "expected_benefits": {
             "items": {},
             "title": "Expected Benefits",
@@ -1176,6 +1192,11 @@
             "title": "Policy Violations",
             "type": "array"
           },
+          "projected": {
+            "default": false,
+            "title": "Projected",
+            "type": "boolean"
+          },
           "provider": {
             "anyOf": [
               {
@@ -1195,6 +1216,28 @@
             "items": {},
             "title": "Risk Assessment",
             "type": "array"
+          },
+          "rule_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Id"
+          },
+          "rule_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Version"
           },
           "simulated": {
             "title": "Simulated",
@@ -1230,6 +1273,11 @@
           "provider",
           "model",
           "simulated",
+          "rule_id",
+          "rule_version",
+          "candidate_type",
+          "evidence",
+          "projected",
           "created_at",
           "latest_experiment_id"
         ],
@@ -3272,6 +3320,15 @@
             ],
             "title": "Diagnosis Id"
           },
+          "generator": {
+            "default": "model",
+            "enum": [
+              "model",
+              "rules"
+            ],
+            "title": "Generator",
+            "type": "string"
+          },
           "provider": {
             "anyOf": [
               {
@@ -3287,6 +3344,13 @@
               }
             ],
             "title": "Provider"
+          },
+          "window_days": {
+            "default": 30,
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Window Days",
+            "type": "integer"
           }
         },
         "required": [
@@ -8700,6 +8764,30 @@
           }
         ],
         "summary": "Put Policy",
+        "tags": [
+          "autopilot"
+        ]
+      }
+    },
+    "/api/v1/autopilot/rules": {
+      "get": {
+        "description": "The versioned rule set behind rule-generated candidates: symptom, action and trigger threshold of every rule.",
+        "operationId": "rules_api_v1_autopilot_rules_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Rules Api V1 Autopilot Rules Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Rules",
         "tags": [
           "autopilot"
         ]

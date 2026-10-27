@@ -103,3 +103,12 @@ Updated each phase. Items are things that are not done, not verified, or weaker 
 * Delete is soft: content stays in `memory_versions` for audit. There is no admin purge, so a user who needs content erased must be handled out of band.
 * Experiments create `mlab-…` namespaces, `memory-lab-…` datasets and the Memory Lab Agent in the workspace; they are not cleaned up automatically (they are the experiment's evidence).
 * Expiry is enforced on read immediately and recorded by the coordinator tick (every worker runs it); the experiment fast-forwards expiry for specific records instead of waiting.
+
+## Phase 8 (Optimization Lab 2.0)
+
+* Not implemented: **tool routing, memory policies and workflow-topology proposals** from the spec's candidate list. Topology changes would need workflow versioning and DAG/permission validation of proposed definitions.
+* Rules read **error text and counts** from traces; they are only as good as those signals. `numeric_as_string` and `missing_required_fields` match `jsonschema` messages and will not fire for other wording.
+* Thresholds (e.g. "≥2 failed steps") are fixed per rule version; they are conservative defaults, not tuned.
+* `cheaper_model` uses list prices from the price table (simulated for mock models) and is explicitly a projection; it has no measured evidence until an experiment runs.
+* The latency comparison is reported but is **not a deployment gate**: offline latencies are wall-clock times of a mock provider on a shared machine and too noisy to gate on.
+* The model-proposed and rule-proposed optimizers can produce the same configuration (same content hash, one version, two candidate records).

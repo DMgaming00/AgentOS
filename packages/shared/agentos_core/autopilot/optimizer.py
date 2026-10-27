@@ -312,6 +312,7 @@ async def _store_candidate(
     generator: str,
     meta: dict[str, Any],
     user_id: uuid.UUID | None,
+    rule: dict[str, Any] | None = None,
 ) -> OptimizationCandidate:
     base_cfg = AgentConfig.model_validate(baseline.config_snapshot)
     cfg, violations = validate_candidate(base_cfg, proposal.changes, policy, hidden=hidden)
@@ -322,7 +323,7 @@ async def _store_candidate(
             session,
             agent,
             cfg,
-            source="optimizer" if generator == "optimizer" else "manual_candidate",
+            source="optimizer" if generator in ("optimizer", "rule_engine") else "manual_candidate",
             parent_version_id=baseline.id,
             created_by=user_id,
             summary=proposal.title,
@@ -346,6 +347,11 @@ async def _store_candidate(
         provider=meta.get("provider"),
         model=meta.get("model"),
         simulated=bool(meta.get("simulated")),
+        rule_id=(rule or {}).get("rule_id"),
+        rule_version=(rule or {}).get("rule_version"),
+        candidate_type=(rule or {}).get("candidate_type"),
+        evidence=(rule or {}).get("evidence", []),
+        projected=bool((rule or {}).get("projected")),
         created_by=user_id,
     )
     session.add(cand)
@@ -360,6 +366,7 @@ async def _store_candidate(
             "version": version.version if version else None,
             "violations": violations,
             "generator": generator,
+            "rule": (rule or {}).get("rule_id"),
         },
     )
     return cand

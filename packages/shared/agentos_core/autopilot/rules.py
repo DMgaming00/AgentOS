@@ -21,18 +21,33 @@ import uuid
 from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from agentos_core.autopilot.config import AgentConfig
-from agentos_core.autopilot.optimizer import ProposedCandidate, ProposedChange
-from agentos_core.autopilot.policy import AutopilotPolicy
-from agentos_core.db.models import ToolExecution, WorkflowRun, WorkflowStep
+from agentos_core.autopilot.optimizer import (
+    ProposedCandidate,
+    ProposedChange,
+    _hidden_cases,
+    _store_candidate,
+)
+from agentos_core.autopilot.policy import AutopilotPolicy, load_policy
+from agentos_core.db.models import (
+    AgentConfigVersion,
+    AgentDefinition,
+    FailureDiagnosis,
+    OptimizationCandidate,
+    ToolExecution,
+    WorkflowRun,
+    WorkflowStep,
+    Workspace,
+)
 from agentos_core.pricing import PricingTable, get_pricing
 from agentos_core.tools.registry import get_registry
+from agentos_core.util import utcnow
 
 RULESET_VERSION = "rules-v1"
 EXCLUDED_PURPOSES = ("chaos", "security", "replay")
@@ -589,3 +604,79 @@ async def collect_evidence(
                 )
             )
     return ev
+
+
+LIVE_STATUSES = ("proposed", "evaluating", "eligible", "not_eligible", "inconclusive")
+
+
+async def generate_rule_candidates(
+    session: AsyncSession,
+    *,
+    workspace_id: uuid.UUID,
+    agent_id: uuid.UUID,
+    diagnosis_id: uuid.UUID | None,
+    user_id: uuid.UUID | None,
+    window_days: int = 30,
+    count: int | None = None,
+) -> list[OptimizationCandidate]:
+    """Run the rule set over the agent's recent traces and store the proposals through the normal policy checks."""
+    ws = await session.get(Workspace, workspace_id)
+    assert ws is not None
+    policy = load_policy(ws.settings)
+    agent = await session.get(AgentDefinition, agent_id)
+    if agent is None or agent.workspace_id != workspace_id or agent.active_version_id is None:
+        raise ValueError("agent not found or not versioned")
+    baseline = await session.get(AgentConfigVersion, agent.active_version_id)
+    assert baseline is not None
+    if diagnosis_id is not None:
+        d = await session.get(FailureDiagnosis, diagnosis_id)
+        if d is None or d.agent_id != agent_id:
+            raise ValueError("diagnosis must belong to this agent")
+    cfg = AgentConfig.model_validate(baseline.config_snapshot)
+    evidence = await collect_evidence(
+        session, workspace_id, agent_id, since=utcnow() - timedelta(days=window_days)
+    )
+    proposals = propose(evidence, cfg, policy)[
+        : min(count or policy.max_candidates, policy.max_candidates, 5)
+    ]
+    hidden = await _hidden_cases(session, workspace_id)
+    existing = list(
+        (
+            await session.execute(
+                select(OptimizationCandidate).where(
+                    OptimizationCandidate.agent_id == agent_id,
+                    OptimizationCandidate.baseline_version_id == baseline.id,
+                    OptimizationCandidate.generator == "rule_engine",
+                    OptimizationCandidate.status.in_(LIVE_STATUSES),
+                )
+            )
+        ).scalars()
+    )
+    out: list[OptimizationCandidate] = []
+    for p in proposals:
+        changes = [c.model_dump(mode="json") for c in p.candidate.changes]
+        if any(e.rule_id == p.rule_id and e.changes == changes for e in existing):
+            continue  # this exact proposal is already open against this baseline
+        out.append(
+            await _store_candidate(
+                session,
+                workspace_id=workspace_id,
+                agent_id=agent_id,
+                baseline=baseline,
+                proposal=p.candidate,
+                policy=policy,
+                hidden=hidden,
+                diagnosis_id=diagnosis_id,
+                generator="rule_engine",
+                meta={"simulated": False},
+                user_id=user_id,
+                rule={
+                    "rule_id": p.rule_id,
+                    "rule_version": p.rule_version,
+                    "candidate_type": p.candidate_type,
+                    "evidence": p.evidence,
+                    "projected": p.projected,
+                },
+            )
+        )
+    return out
