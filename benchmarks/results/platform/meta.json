@@ -9,7 +9,7 @@
       "quick": false
     },
     "deployment": {
-      "seconds": 105.7,
+      "seconds": 108.1,
       "quick": false
     },
     "optimization": {
@@ -46,5 +46,6 @@
       12,
       5
     ]
-  ]
+  ],
+  "deployment_rerun_after_rule_fix_at": "2026-10-26T23:40:07-0700"
 }

@@ -93,7 +93,7 @@ def memory() -> str:
         "## Memory Lab: strategies under fact churn\n\n![memory](platform_memory_accuracy.png)\n\n"
         f"Each cell is {len(seeds)} seeded scenarios (seeds {', '.join(seeds)}); every (strategy, question) is a graded workflow run on real workers. "
         "The reader is a scripted policy with fixed matching rules, so this measures how each strategy's *context* affects it, not how a real model uses memory. "
-        "Churn levels (facts updated, facts expired): "
+        "In the chart the persistent, refreshed-summary and retrieval lines overlap exactly (same accuracy at every churn level); no-memory and short-term rise with churn only because more questions have the correct answer *unknown*. Churn levels (facts updated, facts expired): "
         + ", ".join(f"({u},{e})" for u, e in churn)
         + ". Reproduce: `cd benchmarks && uv run --group bench python platform_bench.py memory --label platform`."
     ]
@@ -281,18 +281,32 @@ def deployment() -> str:
         "**Rollback rules: operating characteristics.** The real `failure_rate_increase` and `error_budget_exhausted` rule code (default thresholds) run on seeded synthetic arms "
         f"({rc[0]['trials']} trials per cell); this characterizes the configured rules, not any real workload. 'either' = a rollback is triggered by either rule.\n\n"
         + table(
-            ["steps per arm", "canary failure rate", "rollback rate", "insufficient evidence", "case"],
+            [
+                "steps per arm",
+                "canary failure rate",
+                "rollback (either rule)",
+                "failure-rate rule",
+                "error-budget rule (95% SLO)",
+                "insufficient evidence",
+                "case",
+            ],
             [
                 [
                     r["samples_per_arm"],
                     pct(float(r["canary_failure_rate"])),
                     pct(float(r["either_rule_trigger"])),
+                    pct(float(r["failure_rate_rule_trigger"])),
+                    pct(float(r["error_budget_rule_trigger"])),
                     pct(float(r["insufficient_evidence_share"])),
                     "healthy (false rollback)" if r["is_healthy_case"] == "True" else "regression",
                 ]
                 for r in rc
             ],
         )
+        + "\n\nThe baseline fails 5%, which is also the SLO boundary of the error-budget rule, so a canary at 5% is *healthy*. "
+        '**A first version of this benchmark exposed a flaw**: with a plain "failures exceed the budget" test, a healthy canary was rolled back 28-37% of the time at 20+ steps per arm. '
+        "Both rules now also require statistical evidence (one-sided Fisher exact test for the difference between arms, one-sided binomial test against the SLO boundary, alpha 0.05); "
+        "the table above is from the fixed code, where false rollbacks stay at about the alpha level or below and small samples report `insufficient evidence` instead of acting on noise."
         + f"\n\n**Live releases** ({len(live)} repetitions: gates, admin approval, 50% seeded canary, 30 live runs through 3 real workers, automatic rollback by the coordinator, then 10 post-rollback runs):\n\n"
         + table(
             ["measure", "result"],

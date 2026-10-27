@@ -1,6 +1,6 @@
 repetition,status,automatic,canary_runs,baseline_runs,canary_failures,detect_after_traffic_s,traffic_s,pin_mismatches,restored_version_consistent,post_rollback_runs_ok_on_restored
-0,rolled_back,True,16,14,16,0.562,1.66,0,True,10/10
-1,rolled_back,True,13,17,13,0.768,1.52,0,True,10/10
-2,rolled_back,True,21,9,21,0.993,1.23,0,True,10/10
-3,rolled_back,True,16,14,16,0.666,1.64,0,True,10/10
-4,rolled_back,True,13,17,13,0.009,1.53,0,True,10/10
+0,rolled_back,True,17,13,17,0.438,2.06,0,True,10/10
+1,rolled_back,True,16,14,16,0.55,1.98,0,True,10/10
+2,rolled_back,True,15,25,15,0.004,3.11,0,True,10/10
+3,rolled_back,True,14,16,14,0.546,1.97,0,True,10/10
+4,rolled_back,True,15,15,15,0.328,2.34,0,True,10/10

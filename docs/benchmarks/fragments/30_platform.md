@@ -1,12 +1,12 @@
 ## Platform benchmarks (Phases 5-10)
 
-Machine: Apple M1, 8 cores, 8.0 GB, macOS-26.5.2-arm64-arm-64bit-Mach-O, Python 3.13.7, postgres (PostgreSQL) 16.15 in Docker. Started 2026-10-26T23:25:36-0700; sections took memory 223 s, security 42 s, deployment 106 s, optimization 87 s. Real worker processes and an isolated database; run from a frozen `git worktree` with the app containers stopped; deterministic offline providers (no model calls). Raw CSVs: `benchmarks/results/platform/`.
+Machine: Apple M1, 8 cores, 8.0 GB, macOS-26.5.2-arm64-arm-64bit-Mach-O, Python 3.13.7, postgres (PostgreSQL) 16.15 in Docker. Started 2026-10-26T23:25:36-0700; sections took memory 223 s, security 42 s, deployment 108 s, optimization 87 s. Real worker processes and an isolated database; run from a frozen `git worktree` with the app containers stopped; deterministic offline providers (no model calls). Raw CSVs: `benchmarks/results/platform/`.
 
 ## Memory Lab: strategies under fact churn
 
 ![memory](platform_memory_accuracy.png)
 
-Each cell is 3 seeded scenarios (seeds 1, 2, 3); every (strategy, question) is a graded workflow run on real workers. The reader is a scripted policy with fixed matching rules, so this measures how each strategy's *context* affects it, not how a real model uses memory. Churn levels (facts updated, facts expired): (0,0), (4,2), (8,3), (12,5). Reproduce: `cd benchmarks && uv run --group bench python platform_bench.py memory --label platform`.
+Each cell is 3 seeded scenarios (seeds 1, 2, 3); every (strategy, question) is a graded workflow run on real workers. The reader is a scripted policy with fixed matching rules, so this measures how each strategy's *context* affects it, not how a real model uses memory. In the chart the persistent, refreshed-summary and retrieval lines overlap exactly (same accuracy at every churn level); no-memory and short-term rise with churn only because more questions have the correct answer *unknown*. Churn levels (facts updated, facts expired): (0,0), (4,2), (8,3), (12,5). Reproduce: `cd benchmarks && uv run --group bench python platform_bench.py memory --label platform`.
 
 ### Churn: 0 updated, 0 expired
 
@@ -88,37 +88,39 @@ This measures the platform's code-level enforcement against a fixed corpus of 28
 
 **Rollback rules: operating characteristics.** The real `failure_rate_increase` and `error_budget_exhausted` rule code (default thresholds) run on seeded synthetic arms (2000 trials per cell); this characterizes the configured rules, not any real workload. 'either' = a rollback is triggered by either rule.
 
-| steps per arm | canary failure rate | rollback rate | insufficient evidence | case |
-|---|---|---|---|---|
-| 10 | 5% | 6% | 0% | healthy (false rollback) |
-| 10 | 10% | 19% | 0% | regression |
-| 10 | 20% | 48% | 0% | regression |
-| 10 | 40% | 88% | 0% | regression |
-| 10 | 80% | 100% | 0% | regression |
-| 20 | 5% | 28% | 0% | healthy (false rollback) |
-| 20 | 10% | 58% | 0% | regression |
-| 20 | 20% | 93% | 0% | regression |
-| 20 | 40% | 100% | 0% | regression |
-| 20 | 80% | 100% | 0% | regression |
-| 40 | 5% | 33% | 0% | healthy (false rollback) |
-| 40 | 10% | 78% | 0% | regression |
-| 40 | 20% | 99% | 0% | regression |
-| 40 | 40% | 100% | 0% | regression |
-| 40 | 80% | 100% | 0% | regression |
-| 80 | 5% | 37% | 0% | healthy (false rollback) |
-| 80 | 10% | 92% | 0% | regression |
-| 80 | 20% | 100% | 0% | regression |
-| 80 | 40% | 100% | 0% | regression |
-| 80 | 80% | 100% | 0% | regression |
+| steps per arm | canary failure rate | rollback (either rule) | failure-rate rule | error-budget rule (95% SLO) | insufficient evidence | case |
+|---|---|---|---|---|---|---|
+| 10 | 5% | 0% | 0% | 0% | 6% | healthy (false rollback) |
+| 10 | 10% | 1% | 1% | 0% | 18% | regression |
+| 10 | 20% | 8% | 8% | 0% | 40% | regression |
+| 10 | 40% | 43% | 43% | 0% | 45% | regression |
+| 10 | 80% | 97% | 97% | 0% | 3% | regression |
+| 20 | 5% | 2% | 0% | 2% | 3% | healthy (false rollback) |
+| 20 | 10% | 13% | 2% | 13% | 15% | regression |
+| 20 | 20% | 58% | 21% | 58% | 36% | regression |
+| 20 | 40% | 98% | 82% | 98% | 15% | regression |
+| 20 | 80% | 100% | 100% | 100% | 0% | regression |
+| 40 | 5% | 4% | 0% | 4% | 0% | healthy (false rollback) |
+| 40 | 10% | 37% | 7% | 37% | 0% | regression |
+| 40 | 20% | 92% | 53% | 92% | 4% | regression |
+| 40 | 40% | 100% | 98% | 100% | 1% | regression |
+| 40 | 80% | 100% | 100% | 100% | 0% | regression |
+| 80 | 5% | 5% | 0% | 5% | 0% | healthy (false rollback) |
+| 80 | 10% | 57% | 1% | 57% | 0% | regression |
+| 80 | 20% | 99% | 54% | 99% | 0% | regression |
+| 80 | 40% | 100% | 100% | 100% | 0% | regression |
+| 80 | 80% | 100% | 100% | 100% | 0% | regression |
+
+The baseline fails 5%, which is also the SLO boundary of the error-budget rule, so a canary at 5% is *healthy*. **A first version of this benchmark exposed a flaw**: with a plain "failures exceed the budget" test, a healthy canary was rolled back 28-37% of the time at 20+ steps per arm. Both rules now also require statistical evidence (one-sided Fisher exact test for the difference between arms, one-sided binomial test against the SLO boundary, alpha 0.05); the table above is from the fixed code, where false rollbacks stay at about the alpha level or below and small samples report `insufficient evidence` instead of acting on noise.
 
 **Live releases** (5 repetitions: gates, admin approval, 50% seeded canary, 30 live runs through 3 real workers, automatic rollback by the coordinator, then 10 post-rollback runs):
 
 | measure | result |
 |---|---|
 | automatic rollback triggered | 5/5 |
-| canary-arm failures (at the step limit) | 79/79 canary runs |
-| rollback decided after last live run finished (median / min-max) | 0.67 (0.01-0.99) s |
-| runs pinned to a version different from the seeded routing decision | 0/150 |
+| canary-arm failures (at the step limit) | 77/77 canary runs |
+| rollback decided after last live run finished (median / min-max) | 0.44 (0.00-0.55) s |
+| runs pinned to a version different from the seeded routing decision | 0/160 |
 | active/canary pointers consistent after rollback | 5/5 |
 | post-rollback runs succeeded on the restored version | 10/10, 10/10, 10/10, 10/10, 10/10 |
 
