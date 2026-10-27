@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { HBarChart, SeriesLineChart, StackedBarChart } from "@/components/charts/charts";
-import { Badge } from "@/components/ui/badge";
+import { TelemetrySection } from "@/components/observability/telemetry-section";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/feedback";
 import { Select } from "@/components/ui/inputs";
@@ -147,13 +147,10 @@ export default function ObservabilityPage() {
 
       <div className="grid gap-4 xl:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle>Workers</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Workers</CardTitle><CardDescription>{o.workers.filter((w) => w.healthy).length} healthy of {o.workers.length} seen</CardDescription></CardHeader>
           <CardContent>
-            <Table><THead><tr><TH>Worker</TH><TH>Status</TH><TH>In flight</TH><TH>Completed</TH><TH>Heartbeat</TH></tr></THead>
-              <TBody>{o.workers.map((w) => (
-                <TR key={w.id}><TD className="font-mono text-xs">{w.id}</TD>
-                  <TD>{w.healthy ? <Badge tone="success">healthy</Badge> : <Badge tone={w.status === "stopped" ? "neutral" : "danger"}>{w.status === "active" ? "missed heartbeats" : w.status}</Badge>}</TD>
-                  <TD>{w.in_flight}/{w.concurrency}</TD><TD>{w.steps_completed}</TD><TD className="text-muted-foreground">{relativeTime(w.last_heartbeat_at)}</TD></TR>))}</TBody></Table>
+            <p className="text-sm text-muted-foreground">Heartbeats, utilization and recent attempts per worker have their own page.</p>
+            <Link className="mt-2 inline-block text-sm text-primary hover:underline" href="/workers" data-testid="open-workers">Open Workers →</Link>
           </CardContent>
         </Card>
         <Card>
@@ -166,6 +163,7 @@ export default function ObservabilityPage() {
           </CardContent>
         </Card>
       </div>
+      <TelemetrySection days={days} />
     </div>
   );
 }

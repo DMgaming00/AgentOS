@@ -14,6 +14,7 @@ import uuid
 from datetime import timedelta
 from typing import Any
 
+from opentelemetry import trace
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,6 +35,8 @@ from agentos_core.db.models import (
 )
 from agentos_core.engine.tx import run_in_transaction
 from agentos_core.util import utcnow
+
+tracer = trace.get_tracer("agentos.deployment")
 
 
 class DeploymentError(Exception):
@@ -123,7 +126,7 @@ async def request_promotion(
     return req
 
 
-async def decide_request(
+async def _decide_request(
     session: AsyncSession,
     *,
     workspace_id: uuid.UUID,
@@ -244,6 +247,30 @@ async def decide_request(
         },
     )
     return req
+
+
+async def decide_request(
+    session: AsyncSession,
+    *,
+    workspace_id: uuid.UUID,
+    request_id: uuid.UUID,
+    approve: bool,
+    user_id: uuid.UUID,
+    reason: str | None,
+) -> DeploymentRequest:
+    """Decide a promotion request inside a ``deployment.decide`` span (the version being deployed is an attribute)."""
+    with tracer.start_as_current_span(
+        "deployment.decide",
+        attributes={"agentos.request_id": str(request_id), "agentos.approve": approve},
+    ):
+        return await _decide_request(
+            session,
+            workspace_id=workspace_id,
+            request_id=request_id,
+            approve=approve,
+            user_id=user_id,
+            reason=reason,
+        )
 
 
 async def rollback(

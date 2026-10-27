@@ -103,3 +103,10 @@ body {
 .react-flow__attribution {
   display: none;
 }
+
+
+/* Grid children may shrink below their content width, so wide tables scroll inside their own wrapper instead of
+   stretching the page (checked at 390px by tests/inspector.spec.ts). */
+main .grid > * {
+  min-width: 0;
+}

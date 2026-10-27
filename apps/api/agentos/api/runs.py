@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 
 from fastapi import APIRouter, Query
 from sqlalchemy import func, select
@@ -260,3 +261,12 @@ async def run_usage(run_id: uuid.UUID, session: SessionDep, ctx: WorkspaceDep) -
         )
     ).scalars()
     return [ModelUsageOut.model_validate(u) for u in rows]
+
+
+@router.get("/{run_id}/inspector")
+async def inspector(run_id: uuid.UUID, session: SessionDep, ctx: WorkspaceDep) -> dict[str, Any]:
+    """Everything stored about one run, joined by run id and trace id (spans, tools, cost, versions, evaluation, diagnosis)."""
+    from agentos_core.observability import run_inspector
+
+    run = await get_run_for(session, ctx, run_id)
+    return await run_inspector(session, run)

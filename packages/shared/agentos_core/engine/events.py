@@ -125,16 +125,21 @@ async def flush_events(session: AsyncSession) -> None:
     for e in pending:
         by_run.setdefault(e.run_id, []).append(e)
     for run_id, events in by_run.items():
-        end = (
+        end, run_trace, traceparent = (
             await session.execute(
                 update(WorkflowRun)
                 .where(WorkflowRun.id == run_id)
                 .values(event_seq=WorkflowRun.event_seq + len(events))
-                .returning(WorkflowRun.event_seq)
+                .returning(WorkflowRun.event_seq, WorkflowRun.trace_id, WorkflowRun.traceparent)
             )
-        ).scalar_one()
+        ).one()
+        root_span = traceparent.split("-")[2] if traceparent and traceparent.count("-") == 3 else None
         for i, e in enumerate(events):
             e.sequence_number = end - len(events) + i + 1
+            if (
+                e.trace_id is None
+            ):  # recorded outside any span (e.g. while claiming a step): attach to the run's trace
+                e.trace_id, e.span_id = run_trace, root_span
         notify_run(session, run_id, end)
     session.add_all(pending)
     await session.flush()

@@ -33,6 +33,7 @@ from agentos.api import (
     runs,
     security,
     tools,
+    workers,
     workflows,
     workspace,
 )
@@ -152,6 +153,7 @@ def create_app() -> FastAPI:
         memory,
         finops,
         releases,
+        workers,
     ):
         app.include_router(module.router)
 

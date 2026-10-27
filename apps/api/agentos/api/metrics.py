@@ -474,3 +474,14 @@ async def observability(
             for w in workers
         ],
     }
+
+
+@router.get("/telemetry")
+async def telemetry_view(
+    session: SessionDep, ctx: WorkspaceDep, days: int = Query(7, ge=1, le=90)
+) -> dict[str, Any]:
+    """Unified telemetry from stored records: durations, queue/model/tool/database latency, rates, tokens, cost,
+    approval wait, recovery, worker utilization, failure heatmap, agent-tool dependencies, evaluation summaries."""
+    from agentos_core.observability import telemetry
+
+    return await telemetry(session, ctx.workspace_id, days=days)

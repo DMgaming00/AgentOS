@@ -132,3 +132,13 @@ Updated each phase. Items are things that are not done, not verified, or weaker 
 * The seeded bucket is a hash, so small samples can deviate noticeably from the target percentage (the 5% stage may see no canary traffic for a while); the stage gates require a minimum number of canary steps for that reason.
 * Environment pins exist for development and staging only; they are routing pins, not separate databases or deployments.
 * The older `monitoring_tick` failure-rate check (policy-level, off by default for auto-rollback) still runs alongside release rules; a release's rules are the configurable path.
+
+## Phase 11 (UX and observability)
+
+* Spans are exported only if OTLP export is enabled; the Trace tab is built from stored records, not from an OpenTelemetry backend. Runs created before migration 0014 have no `traceparent` (their trace tab shows "none recorded").
+* The HTTP request span exists only when FastAPI instrumentation is installed and enabled; `run.create` still starts a trace without it.
+* Database latency is a probe from the API process, not query-level workload telemetry (no `pg_stat_statements`).
+* Worker "utilization" is in-flight steps over configured concurrency at the last heartbeat (a 3-second-resolution snapshot, not an average).
+* The Workers page shows heartbeat-based health only: there is no remote control (drain, restart) from the UI.
+* Telemetry reads at most 50,000 rows per metric family per request; very busy workspaces should use shorter windows.
+* Keyboard navigation relies on native elements and Radix primitives; a full screen-reader audit was not performed.

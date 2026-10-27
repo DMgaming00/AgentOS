@@ -147,12 +147,13 @@ export function useArtifacts() {
   });
 }
 
-type MetricKind = "overview" | "usage" | "cost" | "observability";
+type MetricKind = "overview" | "usage" | "cost" | "observability" | "telemetry";
 const metricPath = {
   overview: "/api/v1/metrics/overview",
   usage: "/api/v1/metrics/usage",
   cost: "/api/v1/metrics/cost",
   observability: "/api/v1/metrics/observability",
+  telemetry: "/api/v1/metrics/telemetry",
 } as const;
 
 export function useMetrics<T = Record<string, unknown>>(kind: MetricKind, days = 30, refetchInterval = 10_000) {

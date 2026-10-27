@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
+from opentelemetry import trace
 from sqlalchemy import DateTime, func, literal, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -71,6 +72,7 @@ from agentos_core.redaction import strip_nul
 from agentos_core.util import utcnow
 
 log = get_logger(__name__)
+tracer = trace.get_tracer("agentos.engine")
 
 PLANNER_NODE_KEY = "__planner__"
 
@@ -636,6 +638,24 @@ async def materialize_run(
     so later edits, promotions or rollbacks never change a run that already started.
     """
     now = utcnow()
+    run_id = uuid.uuid4()
+    # The run's root span: a child of the HTTP request (or of the parent run's step) when there is one. Its context is
+    # stored on the run so worker processes can continue the same trace.
+    with tracer.start_as_current_span(
+        "run.create",
+        attributes={
+            "agentos.run_id": str(run_id),
+            "agentos.workflow": workflow.name,
+            "agentos.environment": environment,
+            "agentos.purpose": purpose,
+        },
+    ) as root:
+        root_ctx = root.get_span_context()
+    traceparent = (
+        f"00-{format(root_ctx.trace_id, '032x')}-{format(root_ctx.span_id, '016x')}-01"
+        if root_ctx.is_valid
+        else None
+    )
     budget = {**spec.budget.model_dump(), **(budget_override or {})}
     if budget_cap_usd is not None:
         budget["max_cost_usd"] = min(float(budget["max_cost_usd"]), budget_cap_usd)
@@ -643,7 +663,9 @@ async def materialize_run(
     if deadline_cap is not None:
         deadline = min(deadline, deadline_cap)
     run = WorkflowRun(
-        id=uuid.uuid4(),
+        id=run_id,
+        trace_id=format(root_ctx.trace_id, "032x") if root_ctx.is_valid else None,
+        traceparent=traceparent,
         workspace_id=workflow.workspace_id,
         workflow_definition_id=workflow.id,
         workflow_version=workflow.version,
@@ -790,6 +812,7 @@ class ClaimedStep:
     lease_expires_at: datetime
     max_attempts: int
     failure_count: int
+    traceparent: str | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
 
@@ -937,6 +960,7 @@ async def _claim_one(
         lease_expires_at=step.lease_expires_at or now,
         max_attempts=step.max_attempts,
         failure_count=step.failure_count,
+        traceparent=run.traceparent,
     )
 
 
@@ -1270,7 +1294,36 @@ async def resolve_approval(
     user_id: uuid.UUID | None,
     reason: str | None,
 ) -> ApprovalRequest:
-    """Approve, reject or expire. Single-use: only a pending, unexpired request can be decided."""
+    """Approve, reject or expire. Single-use: only a pending, unexpired request can be decided.
+
+    The decision happens in its own trace (an HTTP request or the coordinator); a span link ties it to the run's trace."""
+    from agentos_core.telemetry import link_to
+
+    traceparent = (
+        await session.execute(
+            select(WorkflowRun.traceparent)
+            .join(ApprovalRequest, ApprovalRequest.run_id == WorkflowRun.id)
+            .where(ApprovalRequest.id == approval_id)
+        )
+    ).scalar_one_or_none()
+    with tracer.start_as_current_span(
+        "approval.resolve",
+        links=link_to(traceparent),
+        attributes={"agentos.approval_id": str(approval_id), "agentos.decision": decision.value},
+    ):
+        return await _resolve_approval(
+            session, approval_id, decision=decision, user_id=user_id, reason=reason
+        )
+
+
+async def _resolve_approval(
+    session: AsyncSession,
+    approval_id: uuid.UUID,
+    *,
+    decision: ApprovalStatus,
+    user_id: uuid.UUID | None,
+    reason: str | None,
+) -> ApprovalRequest:
     run_id = (
         await session.execute(select(ApprovalRequest.run_id).where(ApprovalRequest.id == approval_id))
     ).scalar_one_or_none()

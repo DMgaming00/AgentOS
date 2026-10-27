@@ -79,7 +79,7 @@ export function Improvements() {
         </div>
         {writer ? (
           <div className="flex flex-wrap items-end gap-2">
-            <div className="w-96">
+            <div className="w-full sm:w-96">
               <Field label="From diagnosis" htmlFor="diag-pick">
                 <Select id="diag-pick" value={diagnosisId} onChange={(e) => setDiagnosisId(e.target.value)}>
                   <option value="">{diagnoses.length ? "Latest hypothesis" : "No diagnosis (generic proposals)"}</option>

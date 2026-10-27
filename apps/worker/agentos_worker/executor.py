@@ -44,6 +44,7 @@ from agentos_core.planner import plan_workflow
 from agentos_core.providers.base import Message, ModelConfig, ModelResponse
 from agentos_core.redaction import redact
 from agentos_core.storage import Storage
+from agentos_core.telemetry import context_from_traceparent
 from agentos_core.tools.registry import ToolRegistry
 from agentos_core.tools.runner import StepScope, ToolCallRequest, arguments_hash, execute_tool_call
 from agentos_core.util import sha256_hex
@@ -76,9 +77,12 @@ class StepExecutor:
         timeout = float(cfg.get("timeout_seconds", 300))
         with tracer.start_as_current_span(
             "step.execute",
+            # Continue the trace that created the run (stored on the run), across the process boundary.
+            context=context_from_traceparent(claim.traceparent),
             attributes={
                 "agentos.run_id": str(claim.run_id),
                 "agentos.step_id": str(claim.step_id),
+                "agentos.attempt_id": str(claim.attempt_id),
                 "agentos.node_key": claim.node_key,
                 "agentos.node_type": claim.node_type,
                 "agentos.attempt": claim.attempt_number,

@@ -134,3 +134,14 @@ New automated coverage: 13 rule-engine unit tests + 2 integration (real traces �
 (including 8 concurrent reservations admitting exactly 3) + FinOps API, 6 rollback-rule unit tests, 5 release integration tests (gates, approval, seeded routing over 2,000 run ids and a
 live 24-run canary through real workers, promotion, automatic rollback with evidence windows, recommendation-only mode, environment routing, rejected request) + release API over HTTP with roles.
 Bugs found while building: a self-deadlock between a refusal-audit transaction and a `FOR UPDATE` plan lock (fixed with `FOR NO KEY UPDATE`), a budget `limit_usd` below the column precision violating a check constraint (API now validates ≥ 0.000001), and the experiment dialog posting an empty dataset id before the dataset list loaded.
+
+## Phase 11 verification (2026-10-26)
+
+| Check | Result |
+|---|---|
+| Full backend suite | **425 passed, 3 skipped** (444 s) |
+| `ruff` / `mypy --strict` (161 files) / `alembic check` (0014) | clean |
+| Playwright (Docker stack) | **27 passed** (adds inspector ×5: grouped nav, nine-view inspector, telemetry, mobile menu, 22-page 390 px overflow check) |
+
+Bugs found by the new tests: `workflow_runs.trace_id` was never populated and worker spans started unrelated traces (fixed: `run.create` root span + stored `traceparent`);
+span-less events (recorded while claiming a step) had no trace id (now inherit the run's); three pages overflowed horizontally at 390 px (cards/grid children lacked `min-w-0`, two fixed widths).

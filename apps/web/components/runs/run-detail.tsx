@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ErrorState, InlineError, LoadingBlock } from "@/components/ui/feedback";
 import { JsonView } from "@/components/ui/json";
 import { StatCard } from "@/components/ui/stat";
@@ -22,16 +23,29 @@ import { durationBetween, formatCost, formatDuration, formatTime, shortId } from
 import { useApprovals, useRun, useRunArtifacts, useRunEvents, useSteps } from "@/lib/queries";
 import { ArtifactsList } from "./artifacts-list";
 import { EventFeed } from "./event-feed";
+import { CostTab, DeploymentTab, DiagnosisTab, EvaluationTab, FlightTab, ImprovementsTab, ToolsTab, TraceTab } from "./inspector";
 import { StepPanel } from "./step-panel";
 import { Timeline } from "./timeline";
 
 const ACTIVE = new Set(["pending", "planning", "running", "waiting_approval"]);
+/** The Agent Run Inspector: one run id, nine views over the same stored records. */
+const VIEWS = [
+  ["graph", "Live graph"], ["flight", "Flight Recorder"], ["trace", "Trace"], ["tools", "Tools"], ["evaluation", "Evaluation"],
+  ["cost", "Cost"], ["diagnosis", "Diagnosis"], ["improvements", "Improvements"], ["deployment", "Deployment"],
+] as const;
 
 export function RunDetailView() {
   const { id } = useParams<{ id: string }>();
   const search = useSearchParams();
   const router = useRouter();
   const selectedKey = search.get("step");
+  const view = VIEWS.some(([k]) => k === search.get("view")) ? (search.get("view") as string) : "graph";
+  const setView = (v: string) => {
+    const params = new URLSearchParams(search.toString());
+    if (v === "graph") params.delete("view");
+    else params.set("view", v);
+    router.replace(`/runs/${id}${params.size ? `?${params}` : ""}`, { scroll: false });
+  };
   const run = useRun(id);
   const steps = useSteps(id);
   const artifacts = useRunArtifacts(id);
@@ -148,6 +162,11 @@ export function RunDetailView() {
         </Card>
       ) : null}
 
+      <Tabs value={view} onValueChange={setView}>
+        <TabsList aria-label="Run inspector views" data-testid="inspector-tabs">
+          {VIEWS.map(([key, label]) => <TabsTrigger key={key} value={key} data-testid={`view-${key}`}>{label}</TabsTrigger>)}
+        </TabsList>
+        <TabsContent value="graph" className="flex flex-col gap-4">
       <Card>
         <CardHeader className="flex-row items-center justify-between">
           <CardTitle>Execution graph</CardTitle>
@@ -182,6 +201,16 @@ export function RunDetailView() {
         <CardHeader><CardTitle>Event log ({events.length})</CardTitle></CardHeader>
         <CardContent className="max-h-96 overflow-y-auto"><EventFeed events={events} /></CardContent>
       </Card>
+        </TabsContent>
+        <TabsContent value="flight">{view === "flight" ? <FlightTab id={id} /> : null}</TabsContent>
+        <TabsContent value="trace">{view === "trace" ? <TraceTab id={id} /> : null}</TabsContent>
+        <TabsContent value="tools">{view === "tools" ? <ToolsTab id={id} /> : null}</TabsContent>
+        <TabsContent value="evaluation">{view === "evaluation" ? <EvaluationTab id={id} /> : null}</TabsContent>
+        <TabsContent value="cost">{view === "cost" ? <CostTab id={id} /> : null}</TabsContent>
+        <TabsContent value="diagnosis">{view === "diagnosis" ? <DiagnosisTab id={id} /> : null}</TabsContent>
+        <TabsContent value="improvements">{view === "improvements" ? <ImprovementsTab id={id} /> : null}</TabsContent>
+        <TabsContent value="deployment">{view === "deployment" ? <DeploymentTab id={id} /> : null}</TabsContent>
+      </Tabs>
 
       <Sheet
         open={!!selected}

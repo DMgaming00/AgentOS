@@ -1331,6 +1331,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/metrics/telemetry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Telemetry View
+         * @description Unified telemetry from stored records: durations, queue/model/tool/database latency, rates, tokens, cost,
+         *     approval wait, recovery, worker utilization, failure heatmap, agent-tool dependencies, evaluation summaries.
+         */
+        get: operations["telemetry_view_api_v1_metrics_telemetry_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/metrics/usage": {
         parameters: {
             query?: never;
@@ -1683,6 +1704,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/runs/{run_id}/inspector": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Inspector
+         * @description Everything stored about one run, joined by run id and trace id (spans, tools, cost, versions, evaluation, diagnosis).
+         */
+        get: operations["inspector_api_v1_runs__run_id__inspector_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/runs/{run_id}/pause": {
         parameters: {
             query?: never;
@@ -1940,6 +1981,23 @@ export interface paths {
         };
         /** List Tools */
         get: operations["list_tools_api_v1_tools_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Workers */
+        get: operations["list_workers_api_v1_workers_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7758,6 +7816,41 @@ export interface operations {
             };
         };
     };
+    telemetry_view_api_v1_metrics_telemetry_get: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     usage_api_v1_metrics_usage_get: {
         parameters: {
             query?: {
@@ -8492,6 +8585,41 @@ export interface operations {
             };
         };
     };
+    inspector_api_v1_runs__run_id__inspector_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     pause_api_v1_runs__run_id__pause_post: {
         parameters: {
             query?: never;
@@ -9005,6 +9133,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ToolOut"][];
+                };
+            };
+        };
+    };
+    list_workers_api_v1_workers_get: {
+        parameters: {
+            query?: {
+                window_minutes?: number;
+            };
+            header?: {
+                "X-Workspace-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

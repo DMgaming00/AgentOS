@@ -15,6 +15,6 @@ Legend: ✅ done and tested · 🟡 partly done · ⏭️ not started. Updated a
 | 8 | Optimization Lab 2.0: deterministic versioned rule engine (9 rules) over trace evidence with provenance, same policy/gates/experiments as model proposals, API + UI + tests. Tool routing, memory policy and topology proposals NOT implemented | ✅ (partial: see limitations) |
 | 9 | FinOps: usage analytics (agent/workflow/model/tool, retry and failed-run cost, trends), workspace/agent budgets enforced at reservation time under an advisory lock, 6 anomaly detectors, evidence-labeled suggestions, versioned simulated pricing labels, API + UI + tests. Workspace-wide concurrency limits NOT implemented | ✅ (partial: see limitations) |
 | 10 | Release Center: development/staging/production-style environments with version pins, gated release plans, seeded canary routing (5/10/25/50/100), admin-advanced stages, 5 deterministic rollback rules with minimum evidence windows (auto-rollback or recommendation), append-only audit, API + UI + tests. No auto-advance | ✅ |
-| 11 | Unified UX and observability | ⏭️ |
+| 11 | Unified UX and observability: grouped nav (4 sections) + mobile nav, Agent Run Inspector (9 views of one run), unified telemetry (distributions, heatmap, dependency graph, approval wait, recovery), Workers page, end-to-end trace correlation (request → run → attempt → model/tool call, linked approvals/deployments), event-integrity tests, 390 px overflow test | ✅ |
 | 12 | Integration, five demos, benchmarks | ⏭️ |
 | 13 | Documentation and README | ⏭️ |

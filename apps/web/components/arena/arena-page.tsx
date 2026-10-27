@@ -201,7 +201,7 @@ export function ArenaPage() {
               {eligible.length === 0 ? <EmptyState title="No contenders" description="Seed the demo workspace to get sample contenders." /> : null}
             </div>
             <div className="flex items-end gap-2">
-              <div className="w-64"><Input aria-label="Arena run name" value={name} onChange={(e) => setName(e.target.value)} /></div>
+              <div className="w-full sm:w-64"><Input aria-label="Arena run name" value={name} onChange={(e) => setName(e.target.value)} /></div>
               <Button data-testid="start-arena" disabled={create.isPending || selected.length < 2 || !name.trim()} onClick={() => create.mutate({ name: name.trim(), agent_version_ids: selected }, { onSuccess: (r) => setRunId(r.id) })}><Play aria-hidden /> Run selection ({selected.length} chosen)</Button>
             </div>
             <InlineError error={create.error} />
@@ -211,7 +211,7 @@ export function ArenaPage() {
       <Card>
         <CardHeader className="flex-row items-center justify-between">
           <div><CardTitle className="flex items-center gap-2"><Trophy className="size-4" aria-hidden /> Leaderboard</CardTitle></div>
-          {runs.data?.length ? <Select aria-label="Arena run" className="w-64" value={activeRun ?? ""} onChange={(e) => setRunId(e.target.value)}>{runs.data.map((r) => <option key={r.id} value={r.id}>{r.name} · {new Date(r.created_at).toLocaleString()}</option>)}</Select> : null}
+          {runs.data?.length ? <Select aria-label="Arena run" className="w-full max-w-full sm:w-64" value={activeRun ?? ""} onChange={(e) => setRunId(e.target.value)}>{runs.data.map((r) => <option key={r.id} value={r.id}>{r.name} · {new Date(r.created_at).toLocaleString()}</option>)}</Select> : null}
         </CardHeader>
         <CardContent>{activeRun ? <RunView id={activeRun} /> : <EmptyState title="No arena runs yet" description={canWrite ? "Pick at least two contenders above." : "A developer can start an arena run."} />}</CardContent>
       </Card>

@@ -162,6 +162,9 @@ class WorkflowRun(Base):
     deadline_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     cancel_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     trace_id: Mapped[str | None] = mapped_column(String(32))
+    # W3C traceparent of the run's root span (set when the run is created), so the spans of every worker attempt, model
+    # call, tool call and approval for this run join the trace that created it, across process boundaries.
+    traceparent: Mapped[str | None] = mapped_column(String(64))
     # 'workflow' for normal runs, 'evaluation' for OpenEval case executions.
     purpose: Mapped[str] = mapped_column(
         String(16), nullable=False, default="workflow", server_default="workflow"
