@@ -7,7 +7,7 @@ outputs, which makes CI and demos reproducible. Usage is reported as simulated.
 
 Scenarios (``model_configuration.scenario`` or model name ``mock-<scenario>``):
 research, analysis, writer, planner, invalid_plan, invalid_then_valid, echo,
-rate_limit, timeout, forbidden_tool, extractor, arena.
+rate_limit, timeout, forbidden_tool, extractor, arena, memory_qa.
 """
 
 from __future__ import annotations
@@ -391,6 +391,14 @@ class MockProvider:
         from agentos_core.providers.arena_policy import arena
 
         return arena(self, messages, tools, config)
+
+    def _memory_qa(
+        self, messages: list[Message], tools: list[ToolDefinition], config: ModelConfig
+    ) -> tuple[str, list[ToolCall]]:
+        """Memory Lab question answering; see ``memory_policy``."""
+        from agentos_core.providers.memory_policy import memory_qa
+
+        return memory_qa(self, messages, tools, config)
 
     def _extractor(
         self, messages: list[Message], tools: list[ToolDefinition], config: ModelConfig

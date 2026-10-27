@@ -973,6 +973,116 @@ class ArenaEntry(Base):
     )
 
 
+class MemoryRecord(Base):
+    """A durable, versioned, workspace-scoped memory. Content is untrusted context whenever it is read back."""
+
+    __tablename__ = "memory_records"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="RESTRICT"), nullable=False
+    )
+    namespace: Mapped[str] = mapped_column(String(100), nullable=False, default="default")
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)  # kv | note | task_summary
+    key: Mapped[str | None] = mapped_column(String(200))
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    tags: Mapped[list[str]] = mapped_column(JSONB, nullable=False, server_default="[]")
+    source: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=EMPTY_OBJECT)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    deleted_reason: Mapped[str | None] = mapped_column(String(16))  # deleted | expired
+    created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = created_at_col()
+    updated_at: Mapped[datetime] = created_at_col()
+    search_vector: Mapped[Any] = mapped_column(
+        TSVECTOR, Computed("to_tsvector('english', coalesce(key,'') || ' ' || content)", persisted=True)
+    )
+    __table_args__ = (
+        CheckConstraint("kind in ('kv','note','task_summary')", name="kind_valid"),
+        CheckConstraint(
+            "deleted_reason is null or deleted_reason in ('deleted','expired')", name="deleted_reason_valid"
+        ),
+        Index(
+            "uq_memory_records_live_key",
+            "workspace_id",
+            "namespace",
+            "key",
+            unique=True,
+            postgresql_where=text("key is not null and deleted_at is null"),
+        ),
+        Index("ix_memory_records_ws_ns", "workspace_id", "namespace", "kind"),
+        Index("ix_memory_records_search", "search_vector", postgresql_using="gin"),
+    )
+
+
+class MemoryVersion(Base):
+    """Every state a memory record has been in. Append-only."""
+
+    __tablename__ = "memory_versions"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    record_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("memory_records.id", ondelete="RESTRICT"), nullable=False
+    )
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    change_type: Mapped[str] = mapped_column(String(16), nullable=False)  # create|update|delete|expire
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    tags: Mapped[list[str]] = mapped_column(JSONB, nullable=False, server_default="[]")
+    content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    changed_by: Mapped[str | None] = mapped_column(String(100))
+    changed_at: Mapped[datetime] = created_at_col()
+    __table_args__ = (
+        UniqueConstraint("record_id", "version", "change_type", name="uq_memory_versions_identity"),
+        CheckConstraint("change_type in ('create','update','delete','expire')", name="change_type_valid"),
+        Index("ix_memory_versions_record", "record_id", "version"),
+    )
+
+
+class MemoryAuditEvent(Base):
+    """Who touched memory and how (including reads by agents and denied attempts). Append-only."""
+
+    __tablename__ = "memory_audit_events"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="RESTRICT"), nullable=False
+    )
+    record_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("memory_records.id", ondelete="RESTRICT"))
+    action: Mapped[str] = mapped_column(String(16), nullable=False)
+    actor_type: Mapped[str] = mapped_column(String(16), nullable=False)  # user | agent | system
+    actor_id: Mapped[str | None] = mapped_column(String(100))
+    details: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=EMPTY_OBJECT)
+    created_at: Mapped[datetime] = created_at_col()
+    __table_args__ = (
+        CheckConstraint(
+            "action in ('create','read','search','update','delete','expire','denied')", name="action_valid"
+        ),
+        Index("ix_memory_audit_ws_created", "workspace_id", "created_at"),
+        Index("ix_memory_audit_record", "record_id"),
+    )
+
+
+class MemoryExperiment(Base):
+    """A comparison of memory strategies on deterministic tasks. Sealed once completed."""
+
+    __tablename__ = "memory_experiments"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="RESTRICT"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="running")
+    config: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=EMPTY_OBJECT)
+    results: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    error: Mapped[str | None] = mapped_column(Text)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = created_at_col()
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    __table_args__ = (
+        CheckConstraint("status in ('running','completed','failed','cancelled')", name="status_valid"),
+        Index("ix_memory_experiments_ws", "workspace_id", "created_at"),
+    )
+
+
 class FailureSignal(Base):
     """One deterministic detection (error or anomaly) with links to its evidence."""
 

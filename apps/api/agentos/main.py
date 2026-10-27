@@ -26,6 +26,7 @@ from agentos.api import (
     events,
     experiments,
     flight,
+    memory,
     metrics,
     runs,
     security,
@@ -142,6 +143,7 @@ def create_app() -> FastAPI:
         chaos,
         security,
         arena,
+        memory,
     ):
         app.include_router(module.router)
 
@@ -155,7 +157,7 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=False,
-        allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+        allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type", "X-Workspace-Id", "Idempotency-Key", "Last-Event-ID"],
         expose_headers=["X-Request-Id", "Idempotent-Replayed", "Retry-After"],
     )

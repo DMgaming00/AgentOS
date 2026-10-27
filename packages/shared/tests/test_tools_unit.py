@@ -115,7 +115,14 @@ def test_content_types():
 
 def test_registry_catalog_has_no_shell_and_declares_policy():
     reg = get_registry()
-    assert reg.names() == ["artifact_writer", "calculator", "document_search", "structured_data_reader"]
+    assert reg.names() == [
+        "artifact_writer",
+        "calculator",
+        "document_search",
+        "memory_search",
+        "memory_write",
+        "structured_data_reader",
+    ]
     meta = {m["name"]: m for m in reg.catalog()}
     assert (
         meta["artifact_writer"]["requires_approval"] and meta["artifact_writer"]["side_effect"] == "internal"

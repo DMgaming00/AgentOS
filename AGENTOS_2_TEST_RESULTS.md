@@ -110,3 +110,11 @@ spec failed once immediately after a rebuild and passed on rerun and in every la
 Full backend suite 363 passed, 3 skipped; ruff, `mypy --strict` (138 files) and `alembic check` (migration 0009) clean; Playwright 16/16; Autopilot demo passes.
 The Autopilot Playwright spec failed twice during this phase and the cause was real, not flakiness: the new Arena datasets were picked up by split-only dataset lookups
 (experiment dialog default, optimizer examples). Fixed and re-verified; the earlier unexplained single failure after a rebuild may have a similar cause but was never reproduced.
+
+## Phase 7 verification (2026-10-26)
+
+Backend suite 375 passed, 3 skipped (last full run); ruff, `mypy --strict` (145 files), `alembic check` (migration 0010, round trip) clean; Playwright memory spec 2/2.
+**Flaky tests, not fixed:** across four full-suite runs during this phase, `test_chaos.py::test_a_dropped_postgres_connection_is_retried_not_fatal` failed in two and
+`test_engine_budget.py::test_failure_cancellation_and_completion_release_unsettled_reservations` in one; both pass in isolation, in the worker-directory run and in the last full run.
+Both are timing-sensitive and the runs overlapped with a rebuilt Docker stack and other CPU load; the cause was not isolated and no code change was made for them.
+Bugs found by the new tests: refusal audits were rolled back with the failing transaction (now written in their own transaction); the browser could not call `PUT`/`DELETE` (CORS allow-list).

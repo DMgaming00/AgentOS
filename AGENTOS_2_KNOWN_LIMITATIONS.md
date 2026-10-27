@@ -93,3 +93,13 @@ Updated each phase. Items are things that are not done, not verified, or weaker 
 * 111 cases with 7–20 per family-split give wide intervals; many adjacent contenders legitimately tie.
 * The test split can be scored once **per arena run**; nothing stops a user from creating a new arena run and scoring it again, so repeated peeking across runs is possible (each run records its own dataset hashes). Optimizers (Autopilot) never see validation or test answers.
 * Latency and cost columns come from the simulated mock provider.
+
+## Phase 7 (Memory Lab)
+
+* **No embeddings.** Retrieval is keyword full-text; paraphrased queries will miss records a semantic index would find. An optional vector index was not built.
+* The experiment reader is a **scripted policy** with fixed matching rules (longest entity name contained in the question, conversation before memory). Results show how a strategy's context affects that reader, not how a real model uses memory; with another matching rule the ranking of strategies could change.
+* 38 questions over 26 stored facts from one seeded scenario; retrieval and "persistent" tie on accuracy there, and the context-size difference is the real finding.
+* The sensitive-content check is a pattern heuristic (known key shapes, `secret: value` pairs). It will miss other secrets and personal data.
+* Delete is soft: content stays in `memory_versions` for audit. There is no admin purge, so a user who needs content erased must be handled out of band.
+* Experiments create `mlab-…` namespaces, `memory-lab-…` datasets and the Memory Lab Agent in the workspace; they are not cleaned up automatically (they are the experiment's evidence).
+* Expiry is enforced on read immediately and recorded by the coordinator tick (every worker runs it); the experiment fast-forwards expiry for specific records instead of waiting.

@@ -11,7 +11,7 @@ Legend: ✅ done and tested · 🟡 partly done · ⏭️ not started. Updated a
 | 4 | Chaos Lab: 17 faults at real boundaries, seeded reproducible schedules, safety limits, injection ledger, scorecard with defined metrics, before/after via OpenEval statistics, API + UI + tests; benchmark of all presets with and without retries | ✅ · found and fixed 4 platform bugs |
 | 5 | Security Center: 11 engine-level policy tests, 28-attack + 8-control injection corpus run through real workflows, trace-sanitization checks, metrics with denominators, derived incidents, API + UI + tests; sensitivity tests prove the suite can fail | ✅ |
 | 6 | OpenEval expansion and Agent Arena: 111-case corpus (3 families, 3 splits, hash manifest), arena runs with a one-shot test split, statistical leaderboard, API + UI + tests | ✅ |
-| 7 | Memory Lab | ⏭️ |
+| 7 | Memory Lab: versioned, audited, expiring workspace memory in PostgreSQL; keyword retrieval with provenance and untrusted marking; approval-gated agent write tool; secret refusal; 6-strategy experiment with measured stale/reuse/precision/context metrics; API + UI + tests | ✅ |
 | 8 | Optimization Lab 2.0 | ⏭️ |
 | 9 | FinOps | ⏭️ |
 | 10 | Release Center | ⏭️ |

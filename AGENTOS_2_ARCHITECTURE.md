@@ -330,3 +330,27 @@ flowchart LR
 * **Scoring**: a case passes only if every deterministic evaluator passes; family score = pass rate; overall = unweighted mean of families; 95% intervals; rank = 1 + number of contenders significantly better by paired bootstrap, so indistinguishable contenders share a rank.
 * **Contenders** are one scripted policy (`providers/arena_policy.py`, mock scenario `arena`) in six configurations (prompt flags, tools, step limit). Paid providers are rejected in code (`offline_only`).
 * **Side effects found and fixed**: the optimizer picked "development"/"validation" datasets by split only and the experiment dialog defaulted to the first validation dataset, so a second dataset family contaminated Autopilot; both are now scoped (optimizer: datasets the agent was evaluated on; dialog: visible default).
+
+## 7. Memory Lab (Phase 7)
+
+Migration `0010` (`memory_records`, `memory_versions`, `memory_audit_events`, `memory_experiments`). PostgreSQL is the only store; there is no vector index and none is required.
+
+```mermaid
+flowchart LR
+  U[API / UI] --> S[memory store<br/>create · read · update · delete · expire]
+  A[agent tools<br/>memory_search · memory_write*] --> S
+  S --> R[(memory_records<br/>FTS vector, tags, namespace, expiry)]
+  S --> V[(memory_versions<br/>append-only)]
+  S --> L[(memory_audit_events<br/>append-only)]
+  S -->|keyword retrieval + provenance + untrusted flag| X[experiments]
+  X -->|6 strategies × 38 questions| E[OpenEval datasets → evaluation runs → workers]
+  E --> M[measured accuracy · stale · reuse · precision · context · latency]
+```
+\* `memory_write` needs human approval, writes only into the `agent` namespace and is lease-fenced and idempotent.
+
+* **Boundaries**: every query filters by `workspace_id`; a foreign id is "not found". Namespaces separate uses within a workspace.
+* **Lifecycle**: optimistic updates (`expected_version`), every state kept in `memory_versions`; delete is a soft delete (history stays as audit); expiry hides a record from reads and retrieval the moment `expires_at` passes and the coordinator tick then records it in history and the audit log.
+* **Sensitive content**: credential-shaped strings and `password: …` pairs are refused (heuristic, not DLP). The refusal is audited in its own transaction without the content. Nothing is stored automatically.
+* **Retrieval**: PostgreSQL full-text relevance (`ts_rank_cd`) with namespace, kind and tag filters; each hit carries provenance (origin, run, step, tool execution, version, hash) and `untrusted: true`. Agent reads are audited with a hash of the query.
+* **Experiments**: a two-session scenario with known answers (current, updated, expired, in-conversation, missing and look-alike facts) is written through the real store; each strategy builds its context through real store calls; every (strategy, question) is graded as an evaluation case. Reported per strategy: accuracy, stale-memory answers, wrong-entity reuse, retrieval precision and answer recall (with denominators), context size, latency, simulated cost, and paired comparisons.
+* **Side effect fixed**: the browser could not call `PUT`/`DELETE` (CORS allow-list); updates use `PATCH` and `DELETE` is now allowed.

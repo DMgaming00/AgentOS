@@ -14,6 +14,7 @@ from agentos_core.tools.base import Tool
 from agentos_core.tools.calculator import CalculatorTool
 from agentos_core.tools.data_reader import DataReaderTool
 from agentos_core.tools.document_search import DocumentSearchTool
+from agentos_core.tools.memory import MemorySearchTool, MemoryWriteTool
 
 
 class ToolRegistry:
@@ -40,6 +41,13 @@ def get_registry() -> ToolRegistry:
     global _registry
     if _registry is None:
         _registry = ToolRegistry(
-            [CalculatorTool(), DocumentSearchTool(), DataReaderTool(), ArtifactWriterTool()]
+            [
+                CalculatorTool(),
+                DocumentSearchTool(),
+                DataReaderTool(),
+                ArtifactWriterTool(),
+                MemorySearchTool(),
+                MemoryWriteTool(),
+            ]
         )
     return _registry
