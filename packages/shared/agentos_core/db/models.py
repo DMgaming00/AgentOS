@@ -1083,6 +1083,67 @@ class MemoryExperiment(Base):
     )
 
 
+class FinopsBudget(Base):
+    """A spending limit for a workspace or one agent over a calendar period (UTC)."""
+
+    __tablename__ = "finops_budgets"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
+    )
+    scope: Mapped[str] = mapped_column(String(12), nullable=False)  # workspace | agent
+    agent_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("agent_definitions.id", ondelete="CASCADE"))
+    period: Mapped[str] = mapped_column(String(8), nullable=False)  # daily | monthly
+    limit_usd: Mapped[Decimal] = mapped_column(Numeric(14, 6), nullable=False)
+    mode: Mapped[str] = mapped_column(String(8), nullable=False, default="enforce")  # enforce | alert
+    warn_fraction: Mapped[Decimal] = mapped_column(Numeric(4, 3), nullable=False, default=Decimal("0.8"))
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = created_at_col()
+    updated_at: Mapped[datetime] = created_at_col()
+    __table_args__ = (
+        CheckConstraint("scope in ('workspace','agent')", name="scope_valid"),
+        CheckConstraint("period in ('daily','monthly')", name="period_valid"),
+        CheckConstraint("mode in ('enforce','alert')", name="mode_valid"),
+        CheckConstraint("limit_usd > 0", name="limit_positive"),
+        CheckConstraint("warn_fraction > 0 and warn_fraction <= 1", name="warn_fraction_range"),
+        CheckConstraint("(scope = 'agent') = (agent_id is not null)", name="agent_matches_scope"),
+        Index(
+            "uq_finops_budgets_scope",
+            "workspace_id",
+            "scope",
+            text("coalesce(agent_id, '00000000-0000-0000-0000-000000000000')"),
+            "period",
+            unique=True,
+        ),
+    )
+
+
+class FinopsAnomaly(Base):
+    """A deterministic cost/behavior anomaly with the numbers that triggered it. Idempotent per fingerprint."""
+
+    __tablename__ = "finops_anomalies"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
+    )
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    severity: Mapped[str] = mapped_column(String(8), nullable=False)
+    subject: Mapped[str] = mapped_column(String(200), nullable=False)
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=EMPTY_OBJECT)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="open")  # open | acknowledged
+    detected_at: Mapped[datetime] = created_at_col()
+    acknowledged_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "fingerprint", name="uq_finops_anomalies_fingerprint"),
+        CheckConstraint("severity in ('info','warning','high')", name="severity_valid"),
+        CheckConstraint("status in ('open','acknowledged')", name="status_valid"),
+        Index("ix_finops_anomalies_ws", "workspace_id", "detected_at"),
+    )
+
+
 class FailureSignal(Base):
     """One deterministic detection (error or anomaly) with links to its evidence."""
 

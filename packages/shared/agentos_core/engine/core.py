@@ -1877,7 +1877,26 @@ async def reserve_model_call(
 
     The reservation is also recorded on the attempt, so it can be released if that attempt dies mid-call."""
 
-    async def _do(session: AsyncSession) -> bool:
+    async def _do(session: AsyncSession) -> str | None:
+        from agentos_core.finops.budgets import check_budgets
+
+        denial = await check_budgets(session, run_id, attempt_id, estimate_usd)
+        if denial is not None:
+            await lock_run(session, run_id)
+            await append_event(
+                session,
+                run_id,
+                "budget.exceeded",
+                {
+                    "limit": denial.limit_name,
+                    "budget_id": str(denial.budget_id),
+                    "period": denial.period,
+                    "spent_usd": float(denial.spent),
+                    "reserved_usd": float(denial.in_flight),
+                    "limit_usd": float(denial.limit),
+                },
+            )
+            return f"{denial.scope} budget exhausted ({denial.period} limit ${denial.limit})"
         res = await session.execute(
             update(WorkflowRun)
             .where(
@@ -1899,13 +1918,14 @@ async def reserve_model_call(
                     .where(StepAttempt.id == attempt_id)
                     .values(reserved_usd=StepAttempt.reserved_usd + estimate_usd)
                 )
-            return True
+            return None
         await lock_run(session, run_id)
         await append_event(session, run_id, "budget.exceeded", {"limit": "model_calls_or_cost"})
-        return False
+        return "run budget exhausted (max_model_calls or max_cost_usd)"
 
-    if not await run_in_transaction(_do):
-        raise BudgetExceededError("run budget exhausted (max_model_calls or max_cost_usd)")
+    problem = await run_in_transaction(_do)
+    if problem is not None:
+        raise BudgetExceededError(problem)
 
 
 async def settle_model_call(

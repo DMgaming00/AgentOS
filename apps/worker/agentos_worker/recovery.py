@@ -17,6 +17,7 @@ from agentos_core.engine.core import (
     subflow_tick,
 )
 from agentos_core.engine.tx import unit_of_work
+from agentos_core.finops.anomalies import finops_tick
 from agentos_core.log import get_logger
 from agentos_core.memory.experiments import memory_experiments_tick
 from agentos_core.memory.store import expire_due
@@ -39,6 +40,7 @@ class TickResult:
     security_advanced: int = 0
     memory_expired: int = 0
     memory_experiments: int = 0
+    anomalies_detected: int = 0
 
 
 async def coordinator_tick() -> TickResult:
@@ -57,6 +59,7 @@ async def coordinator_tick() -> TickResult:
     async with unit_of_work() as session:
         r.memory_expired = await expire_due(session)
     r.memory_experiments = await memory_experiments_tick()
+    r.anomalies_detected = await finops_tick()
     if r.leases_expired or r.runs_timed_out or r.subflows_propagated:
         log.info("coordinator_tick", **r.__dict__)
     return r

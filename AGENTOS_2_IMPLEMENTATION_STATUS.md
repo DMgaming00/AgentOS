@@ -13,7 +13,7 @@ Legend: ✅ done and tested · 🟡 partly done · ⏭️ not started. Updated a
 | 6 | OpenEval expansion and Agent Arena: 111-case corpus (3 families, 3 splits, hash manifest), arena runs with a one-shot test split, statistical leaderboard, API + UI + tests | ✅ |
 | 7 | Memory Lab: versioned, audited, expiring workspace memory in PostgreSQL; keyword retrieval with provenance and untrusted marking; approval-gated agent write tool; secret refusal; 6-strategy experiment with measured stale/reuse/precision/context metrics; API + UI + tests | ✅ |
 | 8 | Optimization Lab 2.0: deterministic versioned rule engine (9 rules) over trace evidence with provenance, same policy/gates/experiments as model proposals, API + UI + tests. Tool routing, memory policy and topology proposals NOT implemented | ✅ (partial: see limitations) |
-| 9 | FinOps | ⏭️ |
+| 9 | FinOps: usage analytics (agent/workflow/model/tool, retry and failed-run cost, trends), workspace/agent budgets enforced at reservation time under an advisory lock, 6 anomaly detectors, evidence-labeled suggestions, versioned simulated pricing labels, API + UI + tests. Workspace-wide concurrency limits NOT implemented | ✅ (partial: see limitations) |
 | 10 | Release Center | ⏭️ |
 | 11 | Unified UX and observability | ⏭️ |
 | 12 | Integration, five demos, benchmarks | ⏭️ |

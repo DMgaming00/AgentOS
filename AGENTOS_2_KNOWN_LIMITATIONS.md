@@ -112,3 +112,13 @@ Updated each phase. Items are things that are not done, not verified, or weaker 
 * `cheaper_model` uses list prices from the price table (simulated for mock models) and is explicitly a projection; it has no measured evidence until an experiment runs.
 * The latency comparison is reported but is **not a deployment gate**: offline latencies are wall-clock times of a mock provider on a shared machine and too noisy to gate on.
 * The model-proposed and rule-proposed optimizers can produce the same configuration (same content hash, one version, two candidate records).
+
+## Phase 9 (FinOps)
+
+* **All amounts are estimates**; offline they are simulated and say so. Real invoices can differ (caching, batching, billing rounding).
+* Budget spend uses recorded `model_usage` cost; **calls with unknown cost contribute nothing** and are only counted. Autopilot diagnosis/optimizer calls count toward spend but are not stopped by these budgets (they keep their own per-cycle cap).
+* A budget can be exceeded by a call's *actual* cost over its reserved estimate (the reservation is an estimate); the next call is then denied.
+* **Workspace-wide concurrency limits are not implemented**; concurrency is limited per run (`max_concurrency`) and by worker count.
+* Anomaly thresholds are fixed defaults, not tuned or learned, and are evaluated per process every 5 minutes; a slowly rising cost can pass under the ratio thresholds.
+* "Cost per successful task" is cost per successful *step* (agent) or per succeeded *run* (workflow); a task spanning several steps is not tracked as one unit.
+* The cheaper-model suggestion only considers models the workspace policy already approves, and quality is explicitly unverified until an experiment runs.

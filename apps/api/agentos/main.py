@@ -25,6 +25,7 @@ from agentos.api import (
     evaluations,
     events,
     experiments,
+    finops,
     flight,
     memory,
     metrics,
@@ -144,6 +145,7 @@ def create_app() -> FastAPI:
         security,
         arena,
         memory,
+        finops,
     ):
         app.include_router(module.router)
 
