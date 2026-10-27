@@ -311,12 +311,24 @@ async def live_release_trials(out: Path, repetitions: int) -> list[dict[str, Any
             for _ in range(30):
                 run_ids.append(await start_run(seeded, _live_def(agent.name), name="rel"))
             await _wait_runs(run_ids)
+            # the rules need a minimum number of steps in BOTH arms; keep sending until the seeded routing delivered them
+            while True:
+                n_canary = sum(canary_bucket(r, agent.id, f"bench-{rep}") < 50 for r in run_ids)
+                if min(n_canary, len(run_ids) - n_canary) >= 12 or len(run_ids) >= 150:
+                    break
+                more = [await start_run(seeded, _live_def(agent.name), name="rel") for _ in range(10)]
+                await _wait_runs(more)
+                run_ids += more
             t_ready = time.perf_counter()
+            deadline = time.monotonic() + 90
             while True:  # evidence is now sufficient; the coordinator's tick decides
-                async with unit_of_work() as s:
-                    p = await s.get(ReleasePlan, plan_id)
-                    if p.status != "active":
-                        break
+                p = await _plan(plan_id)
+                if p.status != "active":
+                    break
+                if time.monotonic() > deadline:
+                    raise TimeoutError(
+                        f"no automatic rollback within 90 s (canary {n_canary}, baseline {len(run_ids) - n_canary} runs)"
+                    )
                 await asyncio.sleep(0.1)
             detect_s = time.perf_counter() - t_ready
             async with unit_of_work() as s:
@@ -378,6 +390,13 @@ def _live_def(agent_name: str) -> dict[str, Any]:
     d = live_extraction_workflow()
     d["nodes"][0]["agent"] = agent_name
     return d
+
+
+async def _plan(plan_id: uuid.UUID) -> ReleasePlan:
+    async with unit_of_work() as s:
+        p = await s.get(ReleasePlan, plan_id)
+        assert p is not None
+        return p
 
 
 async def _wait_runs(ids: list[uuid.UUID], timeout: float = 180) -> None:
