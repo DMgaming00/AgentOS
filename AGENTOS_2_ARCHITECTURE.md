@@ -388,3 +388,27 @@ Migration `0012` (`finops_budgets`, `finops_anomalies`). Every amount is an *est
 * **Anomaly detectors** (`finops/anomalies.py`, fixed documented thresholds with minimum sample sizes): request-volume spike, spend increase vs the prior days, abnormal per-model p95 latency, excessive failed attempts per agent, repetitive identical tool calls, high spend with low success. Detection is idempotent (fingerprint = kind + subject + time bucket), runs on demand and from the coordinator (throttled, every 5 minutes per process), and stores the numbers that triggered each anomaly.
 * **Suggestions** (`finops/suggestions.py`): reduce redundant tool calls, bound retries, cache read-only tool results, evaluate a cheaper *policy-approved* model, trim context, add worker capacity. Each carries its evidence and a savings label: `measured` (actually spent on something avoidable), `projected` (with its formula) or `none` (no cost claim). Nothing is applied automatically.
 * **Roles**: anyone reads; developers run detection and acknowledge; only admins create, change or delete budgets.
+
+## 10. Release Center (Phase 10)
+
+Migration `0013` (`workflow_runs.environment`, `agent_definitions.canary_seed`, `agent_environment_pins`, `release_plans`, `release_events`). It sits on top of the existing immutable deployment records and approval flow; nothing in those was replaced.
+
+```mermaid
+flowchart LR
+  X[eligible experiment] --> G{promotion gates<br/>quality · regressions · sample size ·<br/>budget · security · approval}
+  G -->|development| D[(env pin)]
+  G -->|staging, gates pass| S[(env pin)]
+  G -->|production, gates pass| R[deployment request → admin approves]
+  R --> C1[canary 5%] --> C2[10%] --> C3[25%] --> C4[50%] --> P[100% = promote]
+  C1 & C2 & C3 & C4 -. each advance: live samples, rules clear, budget, security .-> A((admin advance))
+  T[coordinator tick: rollback rules] -->|triggered| RB[auto-rollback or recommendation]
+```
+
+* **"Production" is a production-style local simulation**: the agent's own active/canary pointers. The UI and API say so; nothing implies a hosted production deployment.
+* **Environments**: a run carries `environment` (`production` by default). Development and staging resolve to the agent's pin for that environment (falling back to the production active version); production resolves override > canary bucket > active, exactly as before. Child runs inherit the environment. Versions are still pinned at run creation.
+* **Seeded routing**: `canary_bucket(run_id, agent_id, seed)` hashes the release's seed; the same run id always routes the same way for that release (tested against the resolver and a 2,000-run distribution), and without a seed the original hash is unchanged.
+* **Gates** (`release/gates.py`, facts read from recorded results): paired experiment eligible and not stale, candidate success rate, per-case/critical regressions, minimum matched samples, budget compliance (no exceeded budget, experiment cost gate), latest completed Security Center evaluation (≤7 days, zero unsafe side effects, 100% enforcement, no failing cases: a statement about the *platform's enforcement layer*, not about the candidate), and administrator approval for production. A refused creation or advance returns the full gate list; refused advances are recorded in the audit trail.
+* **Stages**: default 5/10/25/50/100%; each *advance* is an explicit administrator action and needs live canary samples, a minimum stage duration, rollback rules clear, budget and security gates. Reaching 100% promotes through the normal deployment records. There is **no auto-advance**.
+* **Rollback rules** (`release/rules.py`, pure functions with minimum evidence windows; below the minimum a rule reports `insufficient_evidence`, never "ok"): critical policy violations (denied tool calls on the canary), failure-rate increase over N steps per arm, error-budget exhaustion from a success SLO, sustained latency regression across K consecutive windows, excessive spending (ratio or cap). With `auto_rollback` the coordinator rolls back to the baseline and records the measurements; otherwise it records one recommendation per stage and rule.
+* **Audit**: `release_events` is append-only (database trigger) and holds gates, approvals, stage changes, triggered rules with measurements, and rollbacks (manual or automatic).
+* **Bug found by the tests**: writing a refusal record in a separate transaction while the plan row was locked `FOR UPDATE` self-deadlocked on the foreign-key lock; release rows are locked `FOR NO KEY UPDATE`.

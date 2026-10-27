@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ErrorState, InlineError, LoadingBlock } from "@/components/ui/feedback";
-import { Label, Textarea } from "@/components/ui/inputs";
+import { Label, Select, Textarea } from "@/components/ui/inputs";
 import { JsonView } from "@/components/ui/json";
 import { api, idempotencyKey, unwrap } from "@/lib/api";
 import { canWrite, useAuth } from "@/lib/auth";
@@ -87,12 +87,13 @@ function StartRun({ workflowId, disabled }: { workflowId: string; disabled: bool
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("{}");
   const key = useRef(idempotencyKey());
+  const [environment, setEnvironment] = useState<"development" | "staging" | "production">("production");
   const start = useMutation({
     mutationFn: async () => {
       const parsed = JSON.parse(input) as Record<string, never>;
       return unwrap(await api.POST("/api/v1/workflows/{workflow_id}/runs", {
         params: { path: { workflow_id: workflowId }, header: { "Idempotency-Key": key.current } },
-        body: { input: parsed, priority: 0 },
+        body: { input: parsed, priority: 0, environment },
       }));
     },
     onSuccess: (run) => router.push(`/runs/${run.id}`),
@@ -105,6 +106,12 @@ function StartRun({ workflowId, disabled }: { workflowId: string; disabled: bool
       <DialogContent title="Start a run" description="Optional run input, available to nodes as {{input.*}} and $ref input.*">
         <Label htmlFor="run-input">Input JSON</Label>
         <Textarea id="run-input" value={input} onChange={(e) => setInput(e.target.value)} className="font-mono text-xs" />
+        <Label htmlFor="run-env">Environment</Label>
+        <Select id="run-env" value={environment} onChange={(e) => setEnvironment(e.target.value as typeof environment)}>
+          <option value="production">production (production-style local simulation)</option>
+          <option value="staging">staging</option>
+          <option value="development">development</option>
+        </Select>
         <InlineError error={start.error} />
         <div className="flex justify-end">
           <Button onClick={() => start.mutate()} disabled={start.isPending} data-testid="confirm-start-run">

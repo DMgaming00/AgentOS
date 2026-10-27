@@ -298,6 +298,7 @@ async def start_run(
         requested_by=ctx.user.id,
         agents_by_name=agents,
         priority=body.priority,
+        environment=body.environment,
     )
     await session.flush()
     await session.refresh(run)

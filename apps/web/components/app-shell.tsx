@@ -17,6 +17,7 @@ import {
   Swords,
   Brain,
   Coins,
+  Rocket,
   Sparkles,
   Sun,
 } from "lucide-react";
@@ -48,6 +49,7 @@ const NAV = [
   { href: "/arena", label: "Agent Arena", icon: Swords },
   { href: "/memory", label: "Memory Lab", icon: Brain },
   { href: "/finops", label: "FinOps", icon: Coins },
+  { href: "/releases", label: "Release Center", icon: Rocket },
   { href: "/artifacts", label: "Artifacts", icon: FileBox },
   { href: "/observability", label: "Observability", icon: Activity },
   { href: "/settings", label: "Settings", icon: Settings },

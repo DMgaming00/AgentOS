@@ -284,7 +284,9 @@ async def _expand_fan_out(
             None,
         )
         if version_id is None:
-            version_id = (await resolve_pins(session, {agent_id}, run.id, None)).get(agent_id)
+            version_id = (await resolve_pins(session, {agent_id}, run.id, None, run.environment)).get(
+                agent_id
+            )
     children: list[WorkflowStep] = []
     for i, item in enumerate(items):
         key = f"{step.node_key}[{i}]"
@@ -431,6 +433,7 @@ async def _start_sub_workflow(
         parent=(run, step),
         budget_cap_usd=remaining,
         deadline_cap=run.deadline_at,
+        environment=run.environment,
     )
     _set_step_status(step, StepStatus.WAITING_CHILD)
     step.started_at = utcnow()
@@ -625,6 +628,7 @@ async def materialize_run(
     chaos_experiment_id: uuid.UUID | None = None,
     chaos_case_index: int | None = None,
     budget_override: dict[str, Any] | None = None,
+    environment: str = "production",
 ) -> WorkflowRun:
     """Create a run and its steps atomically. Root steps become ready immediately.
 
@@ -657,6 +661,7 @@ async def materialize_run(
         replay_of_run_id=replay_of_run_id,
         chaos_experiment_id=chaos_experiment_id,
         chaos_case_index=chaos_case_index,
+        environment=environment,
     )
     session.add(run)
     await session.flush()
@@ -664,7 +669,7 @@ async def materialize_run(
         session, run.id, "run.created", {"workflow": workflow.name, "version": workflow.version}
     )
 
-    await _add_steps(session, run.id, spec, agents_by_name, version_overrides)
+    await _add_steps(session, run.id, spec, agents_by_name, version_overrides, environment)
     steps = await _run_steps(session, run.id)
     _set_run_status(run, RunStatus.RUNNING)
     run.started_at = now
@@ -681,11 +686,12 @@ async def _add_steps(
     spec: WorkflowSpec,
     agents_by_name: dict[str, AgentRef],
     version_overrides: dict[uuid.UUID, uuid.UUID] | None,
+    environment: str = "production",
 ) -> None:
     from agentos_core.autopilot.versions import resolve_pins, version_retry_overrides
 
     agent_ids = {agents_by_name[n.agent].id for n in spec.nodes if n.agent}
-    pins = await resolve_pins(session, agent_ids, run_id, version_overrides)
+    pins = await resolve_pins(session, agent_ids, run_id, version_overrides, environment)
     retry = await version_retry_overrides(session, {v for v in pins.values() if v})
     for node in spec.nodes:
         agent_id = agents_by_name[node.agent].id if node.agent else None
@@ -2046,7 +2052,7 @@ async def complete_planner_step(
         # A plan may tighten the run budget but never loosen it.
         planned = spec.budget.model_dump()
         run.budget = {k: min(planned[k], run.budget.get(k, planned[k])) for k in planned}
-        await _add_steps(session, run.id, spec, agents_by_name, None)
+        await _add_steps(session, run.id, spec, agents_by_name, None, run.environment)
         _set_run_status(run, RunStatus.RUNNING)
         await append_event(
             session, run.id, "run.planned", {"node_count": len(spec.nodes), "plan": plan, **plan_meta}

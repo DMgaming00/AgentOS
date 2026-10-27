@@ -81,6 +81,7 @@ async def start_run(
     run_input: dict[str, Any] | None = None,
     priority: int = 0,
     exact_name: bool = False,
+    environment: str = "production",
 ) -> uuid.UUID:
     """Create a workflow definition and start a run. ``exact_name`` keeps the name unsuffixed, so
     other workflows can reference it from a ``sub_workflow`` node."""
@@ -103,6 +104,7 @@ async def start_run(
             requested_by=seeded.users["admin"].id,
             agents_by_name={n: AgentRef(a.id, n) for n, a in seeded.agents.items()},
             priority=priority,
+            environment=environment,
         )
         return run.id
 

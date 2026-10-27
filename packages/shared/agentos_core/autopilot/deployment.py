@@ -42,6 +42,13 @@ class DeploymentError(Exception):
         self.code, self.status = code, status
 
 
+async def _notify_release(session: AsyncSession, req: DeploymentRequest) -> None:
+    """A release plan linked to this request becomes active or aborted (imported lazily: release depends on this module)."""
+    from agentos_core.release.controller import on_request_decided
+
+    await on_request_decided(session, req)
+
+
 async def request_promotion(
     session: AsyncSession,
     *,
@@ -144,6 +151,7 @@ async def decide_request(
         await emit(
             session, workspace_id, "approval.decided", {"request_id": str(req.id), "status": "expired"}
         )
+        await _notify_release(session, req)
         return req
     req.decided_by, req.decided_at, req.decision_reason = user_id, now, reason
     if not approve:
@@ -154,6 +162,7 @@ async def decide_request(
             "approval.decided",
             {"request_id": str(req.id), "status": "rejected", "reason": reason},
         )
+        await _notify_release(session, req)
         return req
     agent = await lock_agent(session, req.agent_id)
     if agent.active_version_id != req.baseline_version_id:
@@ -165,6 +174,7 @@ async def decide_request(
             "approval.decided",
             {"request_id": str(req.id), "status": "rejected", "reason": req.decision_reason},
         )
+        await _notify_release(session, req)
         return req
     exp = await session.get(OptimizationExperiment, req.experiment_id)
     if exp is None or exp.decision != "eligible":
@@ -220,6 +230,7 @@ async def decide_request(
         )
     )
     await emit(session, workspace_id, "approval.decided", {"request_id": str(req.id), "status": "approved"})
+    await _notify_release(session, req)
     await emit(
         session,
         workspace_id,
@@ -240,7 +251,7 @@ async def rollback(
     *,
     workspace_id: uuid.UUID,
     agent_id: uuid.UUID,
-    user_id: uuid.UUID,
+    user_id: uuid.UUID | None,
     reason: str,
     target_version_id: uuid.UUID | None = None,
 ) -> AgentDeployment:
@@ -439,7 +450,7 @@ async def monitoring_tick() -> int:
                     session,
                     workspace_id=dep.workspace_id,
                     agent_id=dep.agent_id,
-                    user_id=None,  # type: ignore[arg-type]
+                    user_id=None,
                     reason="automatic rollback: live failure-rate regression",
                 )
             return 1

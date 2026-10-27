@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from agentos_core.autopilot.config import AgentConfig, config_from_agent
-from agentos_core.db.models import AgentConfigVersion, AgentDefinition, AgentDeployment
+from agentos_core.db.models import AgentConfigVersion, AgentDefinition, AgentDeployment, AgentEnvironmentPin
 from agentos_core.util import sha256_hex, utcnow
 
 
@@ -200,9 +200,12 @@ async def active_config(session: AsyncSession, agent: AgentDefinition) -> AgentC
     return AgentConfig.model_validate(version.config_snapshot)
 
 
-def canary_bucket(run_id: uuid.UUID, agent_id: uuid.UUID) -> int:
-    """Deterministic 0-99 bucket so a run always gets the same arm (reproducible, auditable)."""
-    return int(sha256_hex(f"{run_id}:{agent_id}")[:8], 16) % 100
+def canary_bucket(run_id: uuid.UUID, agent_id: uuid.UUID, seed: str | None = None) -> int:
+    """Deterministic 0-99 bucket so a run always gets the same arm (reproducible, auditable).
+
+    A release's seed (when set) is part of the hash, so a given run id routes the same way every time for that release
+    and tests can choose seeds; without a seed the original hash is unchanged."""
+    return int(sha256_hex(f"{seed}:{run_id}:{agent_id}" if seed else f"{run_id}:{agent_id}")[:8], 16) % 100
 
 
 async def resolve_pins(
@@ -210,20 +213,39 @@ async def resolve_pins(
     agent_ids: set[uuid.UUID],
     run_id: uuid.UUID,
     overrides: dict[uuid.UUID, uuid.UUID] | None = None,
+    environment: str = "production",
 ) -> dict[uuid.UUID, uuid.UUID | None]:
-    """Version each agent in a new run will use: explicit override > canary bucket > active."""
+    """Version each agent in a new run will use.
+
+    Explicit override > (development/staging: that environment's pin, if the agent has one) > production canary bucket >
+    active. Production is the agent's own pointers (the production-style local simulation, not a hosted deployment).
+    """
     overrides = overrides or {}
     if not agent_ids:
         return {}
     rows = (await session.execute(select(AgentDefinition).where(AgentDefinition.id.in_(agent_ids)))).scalars()
+    env_pins: dict[uuid.UUID, uuid.UUID] = {}
+    if environment != "production":
+        env_pins = dict(
+            (
+                await session.execute(
+                    select(AgentEnvironmentPin.agent_id, AgentEnvironmentPin.version_id).where(
+                        AgentEnvironmentPin.agent_id.in_(agent_ids),
+                        AgentEnvironmentPin.environment == environment,
+                    )
+                )
+            ).all()
+        )
     pins: dict[uuid.UUID, uuid.UUID | None] = {}
     for agent in rows:
         if agent.id in overrides:
             pins[agent.id] = overrides[agent.id]
+        elif agent.id in env_pins:
+            pins[agent.id] = env_pins[agent.id]
         elif (
             agent.canary_version_id
             and agent.canary_percent
-            and canary_bucket(run_id, agent.id) < agent.canary_percent
+            and canary_bucket(run_id, agent.id, agent.canary_seed) < agent.canary_percent
         ):
             pins[agent.id] = agent.canary_version_id
         else:

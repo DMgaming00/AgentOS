@@ -29,6 +29,7 @@ from agentos.api import (
     flight,
     memory,
     metrics,
+    releases,
     runs,
     security,
     tools,
@@ -81,7 +82,11 @@ def create_app() -> FastAPI:
     async def http_error(_: Request, exc: HTTPException) -> JSONResponse:
         detail = exc.detail if isinstance(exc.detail, dict) else {"code": "error", "message": str(exc.detail)}
         return _error(
-            exc.status_code, detail.get("code", "error"), detail.get("message", ""), headers=exc.headers
+            exc.status_code,
+            detail.get("code", "error"),
+            detail.get("message", ""),
+            detail.get("details"),
+            headers=exc.headers,
         )
 
     @app.exception_handler(RequestValidationError)
@@ -146,6 +151,7 @@ def create_app() -> FastAPI:
         arena,
         memory,
         finops,
+        releases,
     ):
         app.include_router(module.router)
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Annotated
+from typing import Annotated, Any
 
 import jwt
 from fastapi import Depends, Header, HTTPException, Request
@@ -45,8 +45,8 @@ async def get_session() -> AsyncIterator[AsyncSession]:
 SessionDep = Annotated[AsyncSession, Depends(get_session, scope="function")]
 
 
-def api_error(status: int, code: str, message: str) -> HTTPException:
-    return HTTPException(status, detail={"code": code, "message": message})
+def api_error(status: int, code: str, message: str, details: Any = None) -> HTTPException:
+    return HTTPException(status, detail={"code": code, "message": message, "details": details})
 
 
 async def current_user(

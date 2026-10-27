@@ -122,3 +122,13 @@ Updated each phase. Items are things that are not done, not verified, or weaker 
 * Anomaly thresholds are fixed defaults, not tuned or learned, and are evaluated per process every 5 minutes; a slowly rising cost can pass under the ratio thresholds.
 * "Cost per successful task" is cost per successful *step* (agent) or per succeeded *run* (workflow); a task spanning several steps is not tracked as one unit.
 * The cheaper-model suggestion only considers models the workspace policy already approves, and quality is explicitly unverified until an experiment runs.
+
+## Phase 10 (Release Center)
+
+* "Production" is a **local simulation** inside this deployment; there is no hosted environment, traffic shaping, or load balancer. Routing happens when a run is created.
+* **No automatic advance**: moving to the next canary percentage needs an administrator, by design. Time-based progression would need minimum soak times and a policy for unattended promotion.
+* Canary evidence is **per agent version** measured on finished live steps (`purpose=workflow`, the plan's environment). Workflows that call several agents mix their steps into each agent's own arms; there is no per-workflow canary.
+* The security gate reflects the workspace-wide enforcement-layer evaluation, not the candidate specifically.
+* The seeded bucket is a hash, so small samples can deviate noticeably from the target percentage (the 5% stage may see no canary traffic for a while); the stage gates require a minimum number of canary steps for that reason.
+* Environment pins exist for development and staging only; they are routing pins, not separate databases or deployments.
+* The older `monitoring_tick` failure-rate check (policy-level, off by default for auto-rollback) still runs alongside release rules; a release's rules are the configurable path.

@@ -237,6 +237,10 @@ class RunCreate(BaseModel):
     priority: int = Field(
         default=0, ge=0, le=9, description="0 lowest .. 9 highest; waiting steps age upward"
     )
+    environment: Literal["development", "staging", "production"] = Field(
+        default="production",
+        description="Which environment's agent versions this run uses (production = the production-style local simulation)",
+    )
 
 
 class PauseRequest(BaseModel):
@@ -273,6 +277,7 @@ class RunOut(ORM):
     event_seq: int
     trace_id: str | None
     priority: int = 0
+    environment: str = "production"
     paused_at: datetime | None = None
     pause_reason: str | None = None
     parent_run_id: uuid.UUID | None = None

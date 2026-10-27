@@ -98,6 +98,8 @@ class AgentDefinition(Base):
         ForeignKey("agent_config_versions.id", ondelete="RESTRICT", use_alter=True)
     )
     canary_percent: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    # Optional seed for the canary bucket hash: makes routing reproducible for a given run id in tests and audits.
+    canary_seed: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = created_at_col()
     updated_at: Mapped[datetime] = updated_at_col()
     __table_args__ = (
@@ -164,6 +166,11 @@ class WorkflowRun(Base):
     purpose: Mapped[str] = mapped_column(
         String(16), nullable=False, default="workflow", server_default="workflow"
     )
+    # Which environment's version pins this run resolves against (Release Center). 'production' is the
+    # production-style local simulation, i.e. the agent's own active/canary pointers.
+    environment: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="production", server_default="production"
+    )
     # Scheduling: 0 (lowest) .. 9. Waiting steps gain effective priority over time (starvation protection).
     priority: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0, server_default="0")
     # Paused runs keep their state; no new step is claimed until resumed. Running steps finish.
@@ -205,6 +212,7 @@ class WorkflowRun(Base):
         CheckConstraint(
             "purpose in ('workflow','evaluation','replay','chaos','security')", name="purpose_valid"
         ),
+        CheckConstraint("environment in ('development','staging','production')", name="environment_valid"),
         CheckConstraint("priority between 0 and 9", name="priority_range"),
         CheckConstraint("depth between 0 and 5", name="depth_range"),
         Index("ix_workflow_runs_parent", "parent_run_id", postgresql_where=text("parent_run_id is not null")),
@@ -1358,6 +1366,92 @@ class RolloutEvent(Base):
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default=EMPTY_OBJECT, nullable=False)
     created_at: Mapped[datetime] = created_at_col()
     __table_args__ = (Index("ix_rollout_events_deployment", "deployment_id", "id"),)
+
+
+class AgentEnvironmentPin(Base):
+    """Which version an agent runs in the development or staging environment (production uses the agent's own pointers)."""
+
+    __tablename__ = "agent_environment_pins"
+    agent_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("agent_definitions.id", ondelete="CASCADE"), primary_key=True
+    )
+    environment: Mapped[str] = mapped_column(String(16), primary_key=True)
+    version_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("agent_config_versions.id", ondelete="RESTRICT"), nullable=False
+    )
+    updated_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    updated_at: Mapped[datetime] = created_at_col()
+    __table_args__ = (CheckConstraint("environment in ('development','staging')", name="environment_valid"),)
+
+
+class ReleasePlan(Base):
+    """A staged rollout of one candidate version: canary schedule, rollback rules, evidence thresholds."""
+
+    __tablename__ = "release_plans"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="RESTRICT"), nullable=False
+    )
+    agent_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("agent_definitions.id", ondelete="RESTRICT"), nullable=False
+    )
+    environment: Mapped[str] = mapped_column(String(16), nullable=False)
+    candidate_version_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("agent_config_versions.id", ondelete="RESTRICT"), nullable=False
+    )
+    baseline_version_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("agent_config_versions.id", ondelete="RESTRICT"), nullable=False
+    )
+    experiment_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("optimization_experiments.id", ondelete="RESTRICT")
+    )
+    request_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("deployment_requests.id", ondelete="RESTRICT")
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending_approval")
+    schedule: Mapped[list[int]] = mapped_column(JSONB, nullable=False)
+    stage_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    seed: Mapped[str] = mapped_column(String(64), nullable=False)
+    rules: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=EMPTY_OBJECT)
+    auto_rollback: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    min_stage_samples: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
+    min_stage_seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = created_at_col()
+    stage_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    end_reason: Mapped[str | None] = mapped_column(Text)
+    __table_args__ = (
+        CheckConstraint(
+            "status in ('pending_approval','active','completed','rolled_back','aborted')", name="status_valid"
+        ),
+        CheckConstraint("environment in ('development','staging','production')", name="environment_valid"),
+        Index("ix_release_plans_ws_created", "workspace_id", "created_at"),
+        Index("ix_release_plans_agent", "agent_id", "status"),
+        # one live release per agent and environment
+        Index(
+            "uq_release_plans_live",
+            "agent_id",
+            "environment",
+            unique=True,
+            postgresql_where=text("status in ('pending_approval','active')"),
+        ),
+    )
+
+
+class ReleaseEvent(Base):
+    """Everything that happened to a release (stage changes, gate checks, triggered rules, rollbacks). Append-only."""
+
+    __tablename__ = "release_events"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    plan_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("release_plans.id", ondelete="RESTRICT"), nullable=False
+    )
+    event_type: Mapped[str] = mapped_column(String(48), nullable=False)
+    actor: Mapped[str | None] = mapped_column(String(100))
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=EMPTY_OBJECT)
+    created_at: Mapped[datetime] = created_at_col()
+    __table_args__ = (Index("ix_release_events_plan", "plan_id", "id"),)
 
 
 class AutopilotEvent(Base):

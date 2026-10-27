@@ -31,6 +31,10 @@ AUTOPILOT_EVENT_TYPES = frozenset(
         "canary.started",
         "monitoring.regression_detected",
         "dataset.imported",
+        "release.requested",
+        "release.stage_advanced",
+        "release.completed",
+        "release.rolled_back",
     }
 )
 

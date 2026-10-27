@@ -118,3 +118,19 @@ Backend suite 375 passed, 3 skipped (last full run); ruff, `mypy --strict` (145 
 `test_engine_budget.py::test_failure_cancellation_and_completion_release_unsettled_reservations` in one; both pass in isolation, in the worker-directory run and in the last full run.
 Both are timing-sensitive and the runs overlapped with a rebuilt Docker stack and other CPU load; the cause was not isolated and no code change was made for them.
 Bugs found by the new tests: refusal audits were rolled back with the failing transaction (now written in their own transaction); the browser could not call `PUT`/`DELETE` (CORS allow-list).
+
+## Phase 8–10 verification (2026-10-26)
+
+| Check | Result |
+|---|---|
+| Full backend suite | **422 passed, 3 skipped** (446 s) |
+| `ruff check` / `ruff format --check` | clean |
+| `mypy --strict` | clean (159 source files) |
+| Alembic | migrations 0011 (rule provenance), 0012 (FinOps), 0013 (Release Center): upgrade, `alembic check`, downgrade/upgrade round trips, no drift |
+| Playwright (Docker stack) | **22 passed** (adds memory ×2, finops ×2, releases ×2, arena ×2, autopilot rule step) |
+| Autopilot demo (`make autopilot-demo`) | not re-run after Phases 8–10 (re-run in Phase 12) |
+
+New automated coverage: 13 rule-engine unit tests + 2 integration (real traces → rule candidate → paired experiment eligible), 10 FinOps unit tests + 8 budget-enforcement integration tests
+(including 8 concurrent reservations admitting exactly 3) + FinOps API, 6 rollback-rule unit tests, 5 release integration tests (gates, approval, seeded routing over 2,000 run ids and a
+live 24-run canary through real workers, promotion, automatic rollback with evidence windows, recommendation-only mode, environment routing, rejected request) + release API over HTTP with roles.
+Bugs found while building: a self-deadlock between a refusal-audit transaction and a `FOR UPDATE` plan lock (fixed with `FOR NO KEY UPDATE`), a budget `limit_usd` below the column precision violating a check constraint (API now validates ≥ 0.000001), and the experiment dialog posting an empty dataset id before the dataset list loaded.
