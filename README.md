@@ -486,7 +486,7 @@ depth.
 
 ## Author
 
-Built by **Dev Mulchandani** ([@DMgaming00](https://github.com/DMgaming00)), with Claude Code as a coding assistant.
+Built by **Dev Mulchandani** ([@DMgaming00](https://github.com/DMgaming00)).
 Issues and pull requests: <https://github.com/DMgaming00/AgentOS>.
 
 ## License
