@@ -124,7 +124,7 @@ export function CostTab({ id }: { id: string }) {
     <Gate q={q}>
       {(d) => (
         <div className="flex flex-col gap-3" data-testid="cost-tab">
-          <p className="text-sm"><Badge tone="warning">{d.cost.label}</Badge> <span className="text-muted-foreground">Estimated from reported token usage and the versioned price table; the run&apos;s budget counter shows {usd(d.cost.run_reported_usd)}.</span></p>
+          <p className="text-sm"><Badge tone="warning" className="whitespace-normal break-words text-left">{d.cost.label}</Badge> <span className="text-muted-foreground">Estimated from reported token usage and the versioned price table; the run&apos;s budget counter shows {usd(d.cost.run_reported_usd)}.</span></p>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3"><Card className="p-4"><p className="text-xs text-muted-foreground">Total estimated</p><p className="text-2xl font-semibold" data-testid="cost-total">{usd(d.cost.total_usd)}</p></Card>
             <Card className="p-4"><p className="text-xs text-muted-foreground">Spent on failed attempts</p><p className="text-2xl font-semibold">{usd(d.cost.retry_cost_usd)}</p></Card></div>
           <div className="grid gap-3 lg:grid-cols-2">

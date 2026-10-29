@@ -1,0 +1,3291 @@
+{
+  "name": "hard-ops",
+  "version": 2,
+  "split": "test",
+  "description": "Hard multi-step questions over 12 fictional platform documents (conflicts, arithmetic, filtering, buried facts, near-miss abstention).",
+  "cases": [
+    {
+      "case_id": "hrd-2a654513",
+      "task": "How many of the 12 platforms in the documents have an uptime SLA of at least 99.5% AND at least 6 regions? Answer with a number. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "aggregate_count"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 8
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.01
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "aggregate_count",
+        "count-all"
+      ]
+    },
+    {
+      "case_id": "hrd-51338dd5",
+      "task": "How many of the 12 platforms in the documents have an uptime SLA of at least 99.95% AND at least 12 regions? Answer with a number. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "aggregate_count"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 3
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.01
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "aggregate_count",
+        "count-all"
+      ]
+    },
+    {
+      "case_id": "hrd-7265ab56",
+      "task": "How many of the 12 platforms in the documents have an uptime SLA of at least 99.5% AND at least 8 regions? Answer with a number. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "aggregate_count"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 8
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.01
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "aggregate_count",
+        "count-all"
+      ]
+    },
+    {
+      "case_id": "hrd-775cc491",
+      "task": "What is the total of the Number of regions values (regions) across all platforms whose uptime SLA is at least 99.99%? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "aggregate_sum"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 39
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.01
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "aggregate_sum",
+        "sum-filtered"
+      ]
+    },
+    {
+      "case_id": "hrd-b8e60066",
+      "task": "What is the total of the Median latency (p50) values (ms) across all platforms whose uptime SLA is at least 99.95%? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "aggregate_sum"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 1895
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.01
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "aggregate_sum",
+        "sum-filtered"
+      ]
+    },
+    {
+      "case_id": "hrd-3e130d06",
+      "task": "In the operations handbook, how many minutes is the on-call escalation window for Ember Cloud? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "buried"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 45
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.5
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "buried",
+        "long-document"
+      ]
+    },
+    {
+      "case_id": "hrd-d11a640d",
+      "task": "In the operations handbook, how many minutes is the on-call escalation window for Granite Host? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "buried"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 25
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.5
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "buried",
+        "long-document"
+      ]
+    },
+    {
+      "case_id": "hrd-c4b68ef5",
+      "task": "For a workload of 2 million input tokens and 12 million output tokens, which of Granite Host, Cedar Infer, Brio Compute, Lumen Cloud, Iris Engine, Aurora Serve has the lowest total token cost using the CURRENT prices in the documents (note that some documents state prices per 1K tokens and the pricing changelog lists later changes)? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "cheapest_blend"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Lumen Cloud"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "cheapest_blend",
+        "blend-argmin"
+      ]
+    },
+    {
+      "case_id": "hrd-322792de",
+      "task": "For a workload of 20 million input tokens and 1 million output tokens, which of Lumen Cloud, Granite Host, Juniper Serve, Fjord Models, Ember Cloud, Dune Runtime has the lowest total token cost using the CURRENT prices in the documents (note that some documents state prices per 1K tokens and the pricing changelog lists later changes)? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "cheapest_blend"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Fjord Models"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "cheapest_blend",
+        "blend-argmin"
+      ]
+    },
+    {
+      "case_id": "hrd-2830e85f",
+      "task": "For a workload of 5 million input tokens and 3 million output tokens, which of Dune Runtime, Iris Engine, Kestrel Infer, Halcyon AI, Cedar Infer, Ember Cloud has the lowest total token cost using the CURRENT prices in the documents (note that some documents state prices per 1K tokens and the pricing changelog lists later changes)? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "cheapest_blend"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Kestrel Infer"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "cheapest_blend",
+        "blend-argmin"
+      ]
+    },
+    {
+      "case_id": "hrd-b0032511",
+      "task": "For a workload of 20 million input tokens and 6 million output tokens, which of Dune Runtime, Iris Engine, Lumen Cloud, Cedar Infer, Ember Cloud, Aurora Serve has the lowest total token cost using the CURRENT prices in the documents (note that some documents state prices per 1K tokens and the pricing changelog lists later changes)? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "cheapest_blend"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Ember Cloud"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "cheapest_blend",
+        "blend-argmin"
+      ]
+    },
+    {
+      "case_id": "hrd-9073fbf7",
+      "task": "For a workload of 2 million input tokens and 1 million output tokens, which of Brio Compute, Cedar Infer, Halcyon AI, Juniper Serve, Ember Cloud, Granite Host has the lowest total token cost using the CURRENT prices in the documents (note that some documents state prices per 1K tokens and the pricing changelog lists later changes)? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "cheapest_blend"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Ember Cloud"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "cheapest_blend",
+        "blend-argmin"
+      ]
+    },
+    {
+      "case_id": "hrd-59f23a66",
+      "task": "For a workload of 10 million input tokens and 1 million output tokens, which of Ember Cloud, Dune Runtime, Brio Compute, Halcyon AI, Cedar Infer, Lumen Cloud has the lowest total token cost using the CURRENT prices in the documents (note that some documents state prices per 1K tokens and the pricing changelog lists later changes)? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "cheapest_blend"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Halcyon AI"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "cheapest_blend",
+        "blend-argmin"
+      ]
+    },
+    {
+      "case_id": "hrd-c2e30676",
+      "task": "For a workload of 5 million input tokens and 3 million output tokens, which of Ember Cloud, Lumen Cloud, Granite Host, Halcyon AI, Iris Engine, Cedar Infer has the lowest total token cost using the CURRENT prices in the documents (note that some documents state prices per 1K tokens and the pricing changelog lists later changes)? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "cheapest_blend"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Ember Cloud"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "cheapest_blend",
+        "blend-argmin"
+      ]
+    },
+    {
+      "case_id": "hrd-f7f8fa56",
+      "task": "For a workload of 2 million input tokens and 12 million output tokens, which of Granite Host, Ember Cloud, Lumen Cloud, Brio Compute, Aurora Serve, Kestrel Infer has the lowest total token cost using the CURRENT prices in the documents (note that some documents state prices per 1K tokens and the pricing changelog lists later changes)? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "cheapest_blend"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Ember Cloud"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "cheapest_blend",
+        "blend-argmin"
+      ]
+    },
+    {
+      "case_id": "hrd-acabd631",
+      "task": "For a workload of 20 million input tokens and 3 million output tokens, which of Cedar Infer, Dune Runtime, Juniper Serve, Aurora Serve, Halcyon AI, Iris Engine has the lowest total token cost using the CURRENT prices in the documents (note that some documents state prices per 1K tokens and the pricing changelog lists later changes)? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "cheapest_blend"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Halcyon AI"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "cheapest_blend",
+        "blend-argmin"
+      ]
+    },
+    {
+      "case_id": "hrd-e7da1cc6",
+      "task": "For a workload of 2 million input tokens and 1 million output tokens, which of Fjord Models, Brio Compute, Kestrel Infer, Juniper Serve, Aurora Serve, Cedar Infer has the lowest total token cost using the CURRENT prices in the documents (note that some documents state prices per 1K tokens and the pricing changelog lists later changes)? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "cheapest_blend"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Kestrel Infer"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "cheapest_blend",
+        "blend-argmin"
+      ]
+    },
+    {
+      "case_id": "hrd-9cf46099",
+      "task": "For a workload of 10 million input tokens and 3 million output tokens, which of Juniper Serve, Granite Host, Dune Runtime, Iris Engine, Lumen Cloud, Fjord Models has the lowest total token cost using the CURRENT prices in the documents (note that some documents state prices per 1K tokens and the pricing changelog lists later changes)? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "cheapest_blend"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Fjord Models"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "cheapest_blend",
+        "blend-argmin"
+      ]
+    },
+    {
+      "case_id": "hrd-5ea260e6",
+      "task": "For a workload of 2 million input tokens and 1 million output tokens, which of Brio Compute, Iris Engine, Juniper Serve, Kestrel Infer, Aurora Serve, Dune Runtime has the lowest total token cost using the CURRENT prices in the documents (note that some documents state prices per 1K tokens and the pricing changelog lists later changes)? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "cheapest_blend"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Kestrel Infer"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "cheapest_blend",
+        "blend-argmin"
+      ]
+    },
+    {
+      "case_id": "hrd-5325d149",
+      "task": "A workload sends 3 million input tokens and 2 million output tokens to Kestrel Infer. Using the current prices in the documents, what is the total token cost in USD? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "compute_cost"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 2.75
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.005
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "compute_cost",
+        "arithmetic"
+      ]
+    },
+    {
+      "case_id": "hrd-6e29b7c9",
+      "task": "A workload sends 10 million input tokens and 4 million output tokens to Fjord Models. Using the current prices in the documents, what is the total token cost in USD? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "compute_cost"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 7.88
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.005
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "compute_cost",
+        "arithmetic"
+      ]
+    },
+    {
+      "case_id": "hrd-a70677bb",
+      "task": "A workload sends 1 million input tokens and 6 million output tokens to Juniper Serve. Using the current prices in the documents, what is the total token cost in USD? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "compute_cost"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 11.4
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.005
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "compute_cost",
+        "arithmetic"
+      ]
+    },
+    {
+      "case_id": "hrd-f7fd21f0",
+      "task": "A workload sends 3 million input tokens and 6 million output tokens to Halcyon AI. Using the current prices in the documents, what is the total token cost in USD? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "compute_cost"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 12.3
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.005
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "compute_cost",
+        "arithmetic"
+      ]
+    },
+    {
+      "case_id": "hrd-2782080c",
+      "task": "A workload sends 8 million input tokens and 2 million output tokens to Iris Engine. Using the current prices in the documents, what is the total token cost in USD? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "compute_cost"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 7.4
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.005
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "compute_cost",
+        "arithmetic"
+      ]
+    },
+    {
+      "case_id": "hrd-57525c47",
+      "task": "A workload sends 2 million input tokens and 6 million output tokens to Granite Host. Using the current prices in the documents, what is the total token cost in USD? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "compute_cost"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 17.44
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.005
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "compute_cost",
+        "arithmetic"
+      ]
+    },
+    {
+      "case_id": "hrd-36f3b13b",
+      "task": "A workload sends 10 million input tokens and 6 million output tokens to Fjord Models. Using the current prices in the documents, what is the total token cost in USD? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "compute_cost"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 11.22
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.005
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "compute_cost",
+        "arithmetic"
+      ]
+    },
+    {
+      "case_id": "hrd-ece02350",
+      "task": "A workload sends 10 million input tokens and 6 million output tokens to Halcyon AI. Using the current prices in the documents, what is the total token cost in USD? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "compute_cost"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 13.98
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.005
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "compute_cost",
+        "arithmetic"
+      ]
+    },
+    {
+      "case_id": "hrd-6589bbc3",
+      "task": "A workload sends 1 million input tokens and 2 million output tokens to Dune Runtime. Using the current prices in the documents, what is the total token cost in USD? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "compute_cost"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 1.67
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.005
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "compute_cost",
+        "arithmetic"
+      ]
+    },
+    {
+      "case_id": "hrd-f2c45172",
+      "task": "A workload sends 3 million input tokens and 10 million output tokens to Brio Compute. Using the current prices in the documents, what is the total token cost in USD? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "compute_cost"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 23.86
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.005
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "compute_cost",
+        "arithmetic"
+      ]
+    },
+    {
+      "case_id": "hrd-43dac6b0",
+      "task": "A workload sends 5 million input tokens and 1 million output tokens to Aurora Serve. Using the current prices in the documents, what is the total token cost in USD? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "compute_cost"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 3.19
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.005
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "compute_cost",
+        "arithmetic"
+      ]
+    },
+    {
+      "case_id": "hrd-e522e89e",
+      "task": "A workload sends 1 million input tokens and 10 million output tokens to Cedar Infer. Using the current prices in the documents, what is the total token cost in USD? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "compute_cost"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 13.96
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.005
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "compute_cost",
+        "arithmetic"
+      ]
+    },
+    {
+      "case_id": "hrd-fa015f6f",
+      "task": "A workload sends 2 million input tokens and 4 million output tokens to Ember Cloud. Using the current prices in the documents, what is the total token cost in USD? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "compute_cost"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 3.76
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.005
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "compute_cost",
+        "arithmetic"
+      ]
+    },
+    {
+      "case_id": "hrd-801879c6",
+      "task": "A workload sends 8 million input tokens and 4 million output tokens to Halcyon AI. Using the current prices in the documents, what is the total token cost in USD? Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "compute_cost"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 9.64
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.005
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "compute_cost",
+        "arithmetic"
+      ]
+    },
+    {
+      "case_id": "hrd-bbfd8d96",
+      "task": "What was the Price per 1M output tokens of Brio Compute in USD on 2026-11-20? The platform document states launch prices (as of 2025-11-01); the pricing changelog lists later changes. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "conflict_latest"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 2.29
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.001
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "conflict_latest",
+        "as-of-date"
+      ]
+    },
+    {
+      "case_id": "hrd-50b51ae5",
+      "task": "What was the Price per 1M input tokens of Ember Cloud in USD on 2026-03-22? The platform document states launch prices (as of 2025-11-01); the pricing changelog lists later changes. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "conflict_latest"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 0.38
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.001
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "conflict_latest",
+        "as-of-date"
+      ]
+    },
+    {
+      "case_id": "hrd-2c6275fa",
+      "task": "What is the current Price per 1M input tokens of Ember Cloud in USD? Prices change over time: use the most recent information in the documents. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "conflict_latest"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 0.44
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.001
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "conflict_latest",
+        "current"
+      ]
+    },
+    {
+      "case_id": "hrd-d6eecd32",
+      "task": "What was the Price per 1M input tokens of Fjord Models in USD on 2026-08-23? The platform document states launch prices (as of 2025-11-01); the pricing changelog lists later changes. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "conflict_latest"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 0.12
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.001
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "conflict_latest",
+        "as-of-date"
+      ]
+    },
+    {
+      "case_id": "hrd-09107787",
+      "task": "What was the Price per 1M output tokens of Brio Compute in USD on 2026-10-01? The platform document states launch prices (as of 2025-11-01); the pricing changelog lists later changes. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "conflict_latest"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 2.29
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.001
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "conflict_latest",
+        "as-of-date"
+      ]
+    },
+    {
+      "case_id": "hrd-ac80edec",
+      "task": "What is the current Price per 1M input tokens of Halcyon AI in USD? Prices change over time: use the most recent information in the documents. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "conflict_latest"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 0.24
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.001
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "conflict_latest",
+        "current"
+      ]
+    },
+    {
+      "case_id": "hrd-71860bb6",
+      "task": "What is the Number of regions of Dune Runtime (in regions)? Answer from the workspace documents. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "lookup"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 5
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.01
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "lookup",
+        "single"
+      ]
+    },
+    {
+      "case_id": "hrd-2469836f",
+      "task": "What is the p95 latency of Aurora Serve (in ms)? Answer from the workspace documents. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "lookup"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 540
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.01
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "lookup",
+        "single"
+      ]
+    },
+    {
+      "case_id": "hrd-86ba0eca",
+      "task": "What is the Median latency (p50) of Cedar Infer (in ms)? Answer from the workspace documents. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "lookup"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 225
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.01
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "lookup",
+        "single"
+      ]
+    },
+    {
+      "case_id": "hrd-d71c14fd",
+      "task": "Among Iris Engine, Dune Runtime, Kestrel Infer, Aurora Serve: which platform has the lowest p95 latency among those with an uptime SLA of at least 99.99%? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "multi_hop"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Kestrel Infer"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "multi_hop",
+        "filter"
+      ]
+    },
+    {
+      "case_id": "hrd-efa8f8d6",
+      "task": "Among Iris Engine, Brio Compute, Dune Runtime, Fjord Models: which platform has the lowest p95 latency among those with an uptime SLA of at least 99.9%? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "multi_hop"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Brio Compute"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "multi_hop",
+        "filter"
+      ]
+    },
+    {
+      "case_id": "hrd-54766518",
+      "task": "Among Iris Engine, Aurora Serve, Kestrel Infer, Juniper Serve: which platform has the lowest p95 latency among those with an uptime SLA of at least 99.95%? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "multi_hop"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Juniper Serve"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "multi_hop",
+        "filter"
+      ]
+    },
+    {
+      "case_id": "hrd-2144efe5",
+      "task": "Among Iris Engine, Ember Cloud, Lumen Cloud, Cedar Infer: which platform has the lowest p95 latency among those with an uptime SLA of at least 99.95%? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "multi_hop"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Lumen Cloud"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "multi_hop",
+        "filter"
+      ]
+    },
+    {
+      "case_id": "hrd-cd2191e9",
+      "task": "Among Granite Host, Iris Engine, Aurora Serve, Ember Cloud: which platform has the lowest p95 latency among those with an uptime SLA of at least 99.95%? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "multi_hop"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Aurora Serve"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "multi_hop",
+        "filter"
+      ]
+    },
+    {
+      "case_id": "hrd-e48bf3f2",
+      "task": "Among Kestrel Infer, Dune Runtime, Iris Engine, Lumen Cloud: which platform has the lowest p95 latency among those with an uptime SLA of at least 99.9%? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "multi_hop"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Kestrel Infer"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "multi_hop",
+        "filter"
+      ]
+    },
+    {
+      "case_id": "hrd-99b4237e",
+      "task": "Among Lumen Cloud, Ember Cloud, Halcyon AI, Kestrel Infer: which platform has the lowest p95 latency among those with an uptime SLA of at least 99.9%? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "multi_hop"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Kestrel Infer"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "multi_hop",
+        "filter"
+      ]
+    },
+    {
+      "case_id": "hrd-d3283ad2",
+      "task": "Among Lumen Cloud, Granite Host, Aurora Serve, Juniper Serve: which platform has the lowest p95 latency among those with an uptime SLA of at least 99.9%? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "multi_hop"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Juniper Serve"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "multi_hop",
+        "filter"
+      ]
+    },
+    {
+      "case_id": "hrd-cfec9419",
+      "task": "Among Cedar Infer, Brio Compute, Juniper Serve, Fjord Models: which platform has the lowest p95 latency among those with an uptime SLA of at least 99.95%? Answer with the platform name only. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "multi_hop"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": "Juniper Serve"
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "exact_match",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "exact_match": {
+          "fields": [
+            "answer"
+          ],
+          "normalize": "casefold"
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "multi_hop",
+        "filter"
+      ]
+    },
+    {
+      "case_id": "hrd-6289270c",
+      "task": "How many times higher is the p95 latency of Ember Cloud than that of Brio Compute? Round to 2 decimal places. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "ratio"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 1.45
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.011
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "ratio",
+        "ratio"
+      ]
+    },
+    {
+      "case_id": "hrd-239c1984",
+      "task": "How many times higher is the p95 latency of Halcyon AI than that of Ember Cloud? Round to 2 decimal places. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "ratio"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 0.96
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.011
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "ratio",
+        "ratio"
+      ]
+    },
+    {
+      "case_id": "hrd-faa1bc93",
+      "task": "How many times higher is the p95 latency of Halcyon AI than that of Dune Runtime? Round to 2 decimal places. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "ratio"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": 0.98
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.011
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "ratio",
+        "ratio"
+      ]
+    },
+    {
+      "case_id": "hrd-6e33e874",
+      "task": "What is the Free tier requests per month of Brio Compute (in requests)? Answer from the workspace documents. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "unanswerable"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": null
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.5
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "unanswerable",
+        "absent"
+      ]
+    },
+    {
+      "case_id": "hrd-309b7f57",
+      "task": "What is the Free tier requests per month of Iris Engine (in requests)? Answer from the workspace documents. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "unanswerable"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": null
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.5
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "unanswerable",
+        "absent"
+      ]
+    },
+    {
+      "case_id": "hrd-497d5ca4",
+      "task": "What is the Free tier requests per month of Granite Host (in requests)? Answer from the workspace documents. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "unanswerable"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": null
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.5
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "unanswerable",
+        "near-miss"
+      ]
+    },
+    {
+      "case_id": "hrd-529606ff",
+      "task": "What is the Egress bandwidth of Kestrel Infer (in Gbps)? Answer from the workspace documents. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "unanswerable"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": null
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.5
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "unanswerable",
+        "absent"
+      ]
+    },
+    {
+      "case_id": "hrd-40613d8d",
+      "task": "What is the Data retention period of Granite Host (in days)? Answer from the workspace documents. Return only a JSON object {\"answer\": <value, or null if the documents do not state it>}.",
+      "input": {
+        "family": "hard_ops",
+        "kind": "unanswerable"
+      },
+      "input_artifacts": [],
+      "expected_output": {
+        "answer": null
+      },
+      "evaluation_methods": [
+        "schema_validation",
+        "numeric_tolerance",
+        "task_completion",
+        "tool_correctness"
+      ],
+      "evaluator_config": {
+        "tool_correctness": {
+          "required_tools": [
+            "document_search"
+          ],
+          "max_calls": 30,
+          "max_identical_calls": 3
+        },
+        "schema_validation": {
+          "schema": {
+            "type": "object",
+            "required": [
+              "answer"
+            ],
+            "properties": {
+              "answer": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "numeric_tolerance": {
+          "fields": {
+            "answer": {
+              "abs": 0.5
+            }
+          }
+        }
+      },
+      "tags": [
+        "hard_ops",
+        "unanswerable",
+        "near-miss"
+      ]
+    }
+  ]
+}

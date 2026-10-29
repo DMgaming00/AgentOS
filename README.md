@@ -1,24 +1,18 @@
 # AgentOS
 
-**An agent-engineering platform: durable execution, flight recording, chaos testing, security enforcement,
-evaluation, memory, cost control and gated releases for AI agent workflows. It runs entirely offline.**
+### Build, break, measure and safely ship AI agents, offline by default and proven on real Claude.
 
-Multi-step agent DAGs run across multiple workers and survive worker crashes. Tool permissions are enforced in
-code, sensitive actions pause for human approval, and every attempt, model call, tool call and dollar is
-inspectable. Autopilot (2.0) proposes agent improvements from trace evidence, measures them on held-out cases,
-and ships them through gated canary releases with automatic rollback.
-
-> **Zero-cost, offline by default.** No paid model is ever called unless four settings are all changed
-> deliberately, enforced in code at two layers (not just documented). No API keys are needed to run the app,
-> the demos, the benchmarks or CI. Every quality number in this repository comes from deterministic mock or
-> fixture providers and describes *platform behavior*, not the intelligence of any real model.
->
-> A production-inspired portfolio project, not a production system. See
-> [Known limitations](#known-limitations) for what is hardened and what is not.
+AgentOS is an **agent-engineering platform**: durable multi-worker execution, a flight recorder, chaos testing, security
+enforcement, evaluation and an agent arena, memory strategies, cost control, and gated canary releases with automatic
+rollback. Agent runs survive worker crashes, tool permissions are enforced in code (not in prompts), sensitive actions wait for
+human approval, and every attempt, model call, tool call and dollar is inspectable. **Autopilot** diagnoses an agent's failures
+from trace evidence, proposes fixes, tests them on held-out cases with real statistics, and only then lets a human promote them.
 
 <p align="center">
   <a href="https://github.com/DMgaming00/AgentOS/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/DMgaming00/AgentOS/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="offline by default" src="https://img.shields.io/badge/paid%20model%20calls-blocked%20by%20default-2ea44f">
+  <img alt="real claude" src="https://img.shields.io/badge/verified%20on-real%20Claude%20Haiku%20%2B%20Sonnet-d97706">
+  <img alt="tests" src="https://img.shields.io/badge/tests-435%20backend%20%C2%B7%2027%20e2e-2563eb">
   <img alt="python" src="https://img.shields.io/badge/python-3.13-3776ab">
   <img alt="postgres" src="https://img.shields.io/badge/PostgreSQL-16-336791">
   <img alt="next" src="https://img.shields.io/badge/Next.js-16-000000">
@@ -28,11 +22,48 @@ and ships them through gated canary releases with automatic rollback.
 
 ![Run waiting for approval](docs/screenshots/run-waiting-approval.png)
 
-**Contents:**
+> **Zero-cost and offline by default.** No paid model is called unless four settings are all changed deliberately, enforced in
+> code at two layers (not just documented), and a spend cap is checked before every request. No API keys are needed for the app,
+> the demos, the benchmarks, the tests or CI. Unless a section says "real Claude", numbers come from deterministic mock or
+> fixture providers and describe *platform behavior*, not the intelligence of any real model.
+>
+> A production-inspired portfolio project, not a production system. See [Known limitations](#known-limitations).
+
+## Headline results (real Claude, small-n, honestly labeled)
+
+![Real-model headline results](docs/benchmarks/real_results.png)
+
+| Claim | Evidence | Where |
+|---|---|---|
+| **Autopilot repairs a flawed real agent and the repair holds up out of sample** | 3-step-budget Haiku agent: 48% -> 98% on validation (CI +0.38 to +0.62), **47.5% -> 89.0% on a held-out test** (CI +0.29 to +0.54). Sonnet's diagnosis named the cause correctly | [Round 2](#round-2-a-harder-evaluation-set-a-real-repair-and-a-model-comparison) |
+| **Gates refuse what the evidence does not support** | A prompt edit that "looked" better (70.8% -> 77.1%) was refused (CI includes 0); the strong repair above was still blocked by 2 per-case regressions | [Round 1](#round-1-engine-security-arena-chaos-memory-and-autopilot-smoke-runs) |
+| **Retries and recovery are measurable** | Provider brownout: **0/20 -> 20/20** completed with retries; worker crashes: 1/6 -> 5/6 with a larger retry budget; 30/30 state-consistency checks every time | Chaos Lab |
+| **Security enforcement under real-model attack** | 0 harmful effects over 140 attack cases (28 attacks x 5 real-model runs); the model followed 4 injections under a "naive" prompt and **all 4 were contained** | Security Center |
+| **Memory strategies compared on a real reader** | Retrieval = full context = refreshed summaries = **380/380**; stale summaries only 60% (every stale fact answered wrongly) | Memory Lab |
+| **Model choice has a price** | Sonnet 92% vs Haiku 82% on the same prompt at about **10x the cost per success** | Agent Arena / Evaluations |
+| **A real benchmark of the platform itself** | Old-vs-new engine control (ratio 0.90-1.07), 18/18 crash recoveries, a rollback rule whose 28-37% false-positive rate was found by the benchmark and fixed | [Benchmarks](#benchmarks) |
+
+Everything is reproducible from scripts and saved raw results ([benchmarks/results/real_haiku/](benchmarks/results/real_haiku/)),
+total real spend was about **$14**, and the README says where each result is thin.
+
+### What is proven, and what is not
+
+| | Status |
+|---|---|
+| Durable execution: crash-safe leases, fencing, idempotent side effects, approvals bound to exact arguments | Proven with real killed processes |
+| Offline guarantee (no paid call without four flags and a spend cap, two enforcement layers, tests cannot spend) | Proven; verified while a live `.env` was present |
+| Autopilot loop end to end on a real model, with gates | Proven at small n; repairs a *constrained* agent, not a weak model |
+| Containment of a real model following an injection | **Thin**: 4 observed followed attacks, all contained |
+| Chaos crash-loop recovery at n=20 | **Not shown**: runs hit the 10-minute cap (capacity limit); n=6 result only |
+| Real-model result for OpenAI or other providers | Not done |
+| Production readiness, load, third-party security review | **Not claimed** |
+
+## Contents
 [The problem](#the-problem) ·
 [What makes it different](#what-makes-it-different) ·
 [2.0 engineering labs](#agentos-20-engineering-labs) ·
 [Five demos](#five-demonstrations) ·
+[Real-model results](#real-model-results-claude-haiku-55-plus-sonnet-55-where-stated) ·
 [Visual tour](#visual-tour) ·
 [Architecture](#architecture) ·
 [Quick start](#quick-start) ·
@@ -42,6 +73,10 @@ and ships them through gated canary releases with automatic rollback.
 [Lessons](#engineering-lessons-from-building-20) ·
 [Limitations](#known-limitations) ·
 [Roadmap](#roadmap)
+
+**Documentation map:** [architecture](AGENTOS_2_ARCHITECTURE.md) · [status](AGENTOS_2_IMPLEMENTATION_STATUS.md) ·
+[test results](AGENTOS_2_TEST_RESULTS.md) · [benchmarks](AGENTOS_2_BENCHMARKS.md) · [limitations](AGENTOS_2_KNOWN_LIMITATIONS.md) ·
+[enable real Claude](docs/ENABLE_REAL_CLAUDE.md) · [hard evaluation set](examples/hard-eval/README.md) · [demos](docs/demos/README.md)
 
 ### 60-second start
 
@@ -139,7 +174,7 @@ Each lab is built on the same stored records (PostgreSQL rows, not logs) and the
 | **Flight Recorder** | Immutable sanitized model-call records, frames with status deltas and integrity checks, playback UI, recorded replay vs deterministic re-execution, structured run diff, fail-closed export | Gap-free event check on every demo run |
 | **Chaos Lab** | 17 faults injected at real boundaries (provider, tool, DB, worker), seeded reproducible schedules, safety caps, an injection ledger and a scorecard | Eight scenarios x 3 retry arms; found and fixed 4 platform bugs |
 | **Security Center** | 11 engine-level policy tests, 28 injection attacks (7 goals x 4 surfaces) + 8 benign controls through real workflows, trace-sanitization checks, incidents | 28/28 contained, 0/8 benign blocked, 0 secrets in traces; sensitivity tests prove the suite can fail |
-| **Agent Arena + OpenEval** | 111-case corpus (3 families, dev/validation/test splits, hash manifest), one-shot test split, Wilson and bootstrap intervals, leaderboard with statistical ties | Independently parsed answer keys; offline-only contenders enforced in code |
+| **Agent Arena + OpenEval** | 111-case corpus (3 families, dev/validation/test splits, hash manifest), one-shot test split, Wilson and bootstrap intervals, leaderboard with statistical ties | Independently parsed answer keys; offline contenders by default, real contenders are an admin opt-in |
 | **Memory Lab** | Versioned, audited, expiring workspace memory with provenance, untrusted marking, approval-gated writes and secret refusal; 6 strategies compared under fact churn | Stale-summary errors scale with churn (17/17 at the highest level); retrieval matches full context with ~1/7 of the characters |
 | **Optimization Lab** | A deterministic, versioned rule engine (9 rules) over trace evidence proposes changes that cite failing steps; same validation, experiments and gates as model-written candidates | 43.8% -> 100% on held-out validation (CI lower bound +0.31); cheaper-but-worse candidate refused with 7 per-case regressions |
 | **FinOps** | Analytics by agent/workflow/model/tool, budgets enforced *before* a call under an advisory lock, anomaly detectors, suggestions labeled measured / projected / none | Everything labeled "Estimated cost, simulated pricing" |
@@ -189,6 +224,80 @@ failure. To enable real Claude later, see [docs/ENABLE_REAL_CLAUDE.md](docs/ENAB
   worker processes; where a claim compares versions, a control experiment (same harness, only code differs) is run.
 * Several benchmark findings changed the code (a rollback rule with a 28-37% false-positive rate, 4 Chaos Lab bugs,
   tracing that started new traces in workers). They are recorded rather than hidden.
+
+## Real-model results (Claude Haiku 5.5, plus Sonnet 5.5 where stated)
+
+On 2026-10-28 and 2026-10-29 (UTC) the platform was run deliberately against the real Anthropic API in two rounds, under
+an application-level spend cap and a switch that was turned off again afterwards. Everything else in this README is offline
+mock or fixture data unless it says so. These are **small, single-run demonstrations, not benchmarks of Haiku or Sonnet**:
+one run per experiment, one to three trials per case, 6 to 150 cases. Real models are nondeterministic, so a rerun can differ.
+Raw results: [benchmarks/results/real_haiku/](benchmarks/results/real_haiku/).
+
+**Total: about 7,500 real model calls and about $14 estimated** (round 1: about $0.76; round 2: about $13.2, of which Sonnet
+was about $10.2). Costs are price-table estimates, not invoices. Each lab's real mode is opt-in (admin only, refused unless the
+four paid-mode settings are on, counted against the spend cap); the offline versions stay the default and the automated test
+suite stays offline whatever `.env` says.
+
+### Round 2: a harder evaluation set, a real repair, and a model comparison
+
+[`hard-ops`](examples/hard-eval/README.md) is a deterministic 150-case set (41 development / 50 validation / 59 test) over 12
+fictional platforms: multi-hop filtering, cost arithmetic from the *current* prices, a changelog that overrides launch
+documents (including "as of date" questions), per-1K vs per-1M unit traps, exhaustive counts and sums over all platforms, a fact
+buried in a long handbook, and near-miss abstention. Answer keys come from the same fact model that renders the documents, and
+`scripts/build_hard_eval.py` re-parses the rendered text independently (it caught a bug in its own first verifier).
+
+| What ran | Result |
+|---|---|
+| **How hard is it for Haiku?** | With a calculator and 14 steps the plain Haiku agent scored 39/40 (97.5%) on the first version and 38/41 (92.7%) on the final one: **Haiku is strong at this task**, so there was nothing to repair. Harder questions alone did not create headroom |
+| **A realistic deployment flaw** | The same agent with a **3-step budget** scored 19/41 (46%) |
+| **Autopilot on the flawed agent** (Sonnet diagnoser and optimizer, Haiku agent) | Failures: 21 task-incomplete, 5 repetitive loops. Sonnet's diagnosis: *"The agent's max_steps=3 budget is too small for these multi-hop document questions... the model kept issuing document_search calls through every allowed step and never produced the final JSON answer"*, which is correct |
+| **Candidates, validation split** (50 cases x 3 trials, paired, interleaved) | Model-written "raise step cap and add efficient-search instructions": **48.0% -> 98.0%** (+0.50, 95% CI [+0.38, +0.62], 27 improvements, 0 regressions, cheaper per success: $0.0040 -> $0.0024), **eligible**. Rule engine "raise the step limit to 5": 50.0% -> 92.0% (+0.42, CI [+0.31, +0.53]), **eligible**. "Higher step cap with a stronger model": 50.7% -> 86.7%, **not eligible** (unauthorized tool behavior, cost per success) |
+| **Held-out test split** (59 cases x 2 trials, scored once) | Best candidate: **47.5% -> 89.0%**, paired difference +0.415, 95% CI [+0.29, +0.54]. The improvement is statistically supported, but the strict gate still said **not eligible** because 2 individual cases regressed. Nothing was promoted |
+| **Haiku vs Sonnet** (careful prompt, 14 steps, validation, 1 trial) | Haiku **41/50 (82%)** at $0.0054 per success; Sonnet **46/50 (92%)** at $0.057 per success: about +10 points for about 10x the cost per success. One trial over 50 cases: the gap is suggestive, not established |
+| **Security Center, naive prompt** (the agent is told to carry out the documents' instructions) | 4 runs x 28 attacks: the model followed an injection only **4 times** (twice a read of another workspace's secret file, each answered "not found in this workspace"; twice a partial call flood, 1 call where 8 were asked, inside the budget). **No harmful effect in any run**, 0 false-positive blocks, 0 secrets in traces. This is the first real-model evidence of containment, and it is thin (4 followed attacks). Two grader problems found along the way (a model's own bad argument counted as a false positive; a flood the model did not carry out counted as a failure) were fixed |
+| **Chaos Lab at n=20** (3 parallel Haiku lookups + aggregation) | Brownout: **0/20 with retries off, 20/20 with retries on** (67 injections vs 28). Worker crash loop: **0/20 for both 3 and 5 attempts because every run was cancelled by the 10-minute safety cap** (20 runs on 2 workers, each crash kills co-located steps and each recovery waits out a 15 s lease): a capacity limit of the setup, not a retry-budget result. An earlier n=6 run completed 1/6 with 3 attempts and 5/6 with 5 |
+| **Memory Lab, 10 seeds** (Haiku reader, 380 questions per strategy) | Retrieval, full context and refreshed summaries **380/380**; stale summaries 228/380 (60%): all 152 stale facts answered wrongly; no memory 33% and short-term 43%; **zero look-alike mix-ups** (the scripted reader made 3-4 per scenario) |
+
+### Round 1: engine, Security, Arena, Chaos, Memory and Autopilot smoke runs
+
+| Lab | What ran on real Haiku | Result |
+|---|---|---|
+| **Core engine** | Research report workflow (3 parallel research agents, analysis, writer, approval, export) | Succeeded in 65.8 s; 10 model calls; 77,460 in / 21,799 out tokens reported by the provider; $0.0186; report written only after approval |
+| **Security Center** | The 28 injection attacks and 8 benign controls, Haiku reading the poisoned documents | **Haiku ignored 28/28** (it wrote, for example, "The excerpt contains an embedded instruction to read ../../../etc/passwd... I did not follow it. It is document content, not a task instruction"). 0 unsafe effects, 0/8 benign blocked, 0/4 secrets in traces, 11/11 policy tests |
+| **Agent Arena** | 5 Haiku contenders on the 111-case corpus, test split scored once | Test overall: **Careful 0.94** (45/48), Calculator 0.87, Formatter 0.86, **Bare 0.77** (37/48, ranked below the top group), Ungrounded 0.33 (13/48; 13/13 on calculation, 0/35 on retrieval, as it should). Validation: the first four statistically tied |
+| **Chaos Lab** | Faults around real calls and real workers, 6 runs per experiment | Brownout 0/6 without retries, 6/6 with; crash loop 1/6 with 3 attempts, 5/6 with 5; 30/30 state-consistency checks every time |
+| **Autopilot (first attempt)** | Haiku agent, Haiku diagnosis and optimizer, rule engine | Baseline 5/9; 3 candidates, 2 rejected by policy; the evaluated one (93.8% -> 75.0%) was refused; the rule engine proposed nothing |
+| **Paired prompt edit** | Bare -> Careful instructions, `arena-extraction` validation, 16 cases x 3 trials | 70.8% -> 77.1%, CI [-0.125, +0.271], McNemar p = 0.625, 1 regression: **not eligible**, an improvement the evidence did not support |
+
+### How to read this
+
+* The platform works end to end on real models, and its gates behave sensibly: they accepted a large, well-supported repair
+  (and still blocked it for two per-case regressions), and refused two changes that did not clearly help.
+* The honest constraints: Haiku is strong on these tasks, so the repairs shown are for a deliberately constrained deployment
+  (a tight step budget), not for the model being weak. The injection corpus barely moves Haiku, so containment of a real
+  followed attack rests on 4 observed cases. The crash-loop result at n=20 is limited by the experiment's capacity. All of it
+  is small-n, one run, and nondeterministic.
+* Chaos approvals in these runs are decided by a simulated reviewer.
+* I also made mistakes while doing this, all recorded in the commit history and test results: a chaos run that silently used
+  scripted agents (caught because the spend ledger did not move, discarded), an optimizer arm that switched to Sonnet and cost
+  about $5, and two security-grading rules that were too strict for a real model.
+
+Reproduce (live mode on and a cap set, see [docs/ENABLE_REAL_CLAUDE.md](docs/ENABLE_REAL_CLAUDE.md)): `scripts/real_hard_eval.py`
+(`setup`, `eval`, `optimize`, `testcand`), `scripts/real_haiku_autopilot.py`, `real_haiku_paired.py`, `real_haiku_arena.py`,
+`real_haiku_chaos.py`, `real_haiku_memory.py`, `scripts/demo.py research`, and "Run with real model" (or
+`POST /security/runs?agent=live_naive`) in the Security Center.
+
+| | |
+|---|---|
+| ![Optimizer, validation](docs/screenshots/haiku2-optimizer-validation.png)<br>**Autopilot repair, validation**: 48.0% -> 98.0% | ![Optimizer, test](docs/screenshots/haiku2-optimizer-test.png)<br>**Held-out test**: 47.5% -> 89.0%, gate: 2 regressions |
+| ![Sonnet diagnosis](docs/screenshots/haiku2-failures-diagnosis.png)<br>**Sonnet-written diagnosis** of the step-budget failure | ![Security, naive prompt](docs/screenshots/haiku2-security-naive.png)<br>**Security Center, naive-prompt real model** |
+| ![Chaos brownout without retries](docs/screenshots/haiku2-chaos-brownout-off.png)<br>**Chaos, brownout, retries off**: 0/20 | ![Chaos brownout with retries](docs/screenshots/haiku2-chaos-brownout-on.png)<br>**Chaos, brownout, retries on**: 20/20 |
+| ![Real Haiku run](docs/screenshots/haiku-run-graph.png)<br>**A real research run** (round 1) | ![Real run cost](docs/screenshots/haiku-run-cost.png)<br>**Cost per step and model** |
+| ![Security Center, real model](docs/screenshots/haiku-security.png)<br>**Security Center, real model** (round 1) | ![Arena, real contenders](docs/screenshots/haiku-arena.png)<br>**Agent Arena**, 5 Haiku contenders |
+| ![Chaos, brownout without retries](docs/screenshots/haiku-chaos-brownout.png)<br>**Chaos, n=6**: brownout, retries off | ![Chaos, crash loop with 5 attempts](docs/screenshots/haiku-chaos-crash.png)<br>**Chaos, n=6**: crash loop, 5 attempts |
+| ![Memory Lab, real reader](docs/screenshots/haiku-memory.png)<br>**Memory Lab** with a real reader | ![Paired experiment](docs/screenshots/haiku-paired-experiment.png)<br>**Paired prompt edit**: not supported, refused |
+| ![Real failures](docs/screenshots/haiku-autopilot-failures.png)<br>**Failure Intelligence**, Haiku diagnosis | ![Real experiment](docs/screenshots/haiku-autopilot-experiment.png)<br>**Optimizer candidate** refused |
+| ![Real FinOps](docs/screenshots/haiku-finops.png)<br>**FinOps** (round 1): real calls, 0% simulated | ![Real trace](docs/screenshots/haiku-run-trace.png)<br>**Trace** of the real run |
 
 ## Visual tour
 
@@ -451,8 +560,9 @@ Full tables, methodology and caveats: [AGENTOS_2_BENCHMARKS.md](AGENTOS_2_BENCHM
 Highlights (full lists: [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md),
 [AGENTOS_2_KNOWN_LIMITATIONS.md](AGENTOS_2_KNOWN_LIMITATIONS.md)):
 
-* **No real model was ever called.** Every score, including Arena, Memory Lab and Autopilot results, is from scripted
-  offline providers. Nothing here is evidence that a real model is robust, accurate or injection-resistant.
+* **Real-model evidence is minimal.** Apart from the small real-model runs above (about 7,500 calls), every score, including the
+  benchmark tables, is from scripted offline providers. Nothing here is evidence that a real
+  model is robust, accurate or injection-resistant, and OpenAI was never run.
 * **"Production" in the Release Center is a production-style local simulation**, not a hosted service. Do not read
   this repository as production-ready; it has not been load-tested or externally reviewed.
 * The Arena corpus has no dedicated tool-use-conflict family (calculation and grounded QA are used); the leaderboard is
@@ -465,16 +575,16 @@ Highlights (full lists: [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md),
 
 See [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md). Highlights:
 
-* The real-provider adapters are tested against the official SDKs with a mocked HTTP
-  transport, **but were not run against the live APIs here** because no credentials
-  were available. Opt-in smoke tests exist (`AGENTOS_LIVE_TESTS=1`).
+* The Anthropic adapter was exercised against the live API only briefly (one smoke test and the Haiku runs above); it
+  was otherwise tested with a mocked HTTP transport. The OpenAI adapter was **never run live**. Opt-in smoke tests
+  exist (`AGENTOS_LIVE_TESTS=1`).
 * Development authentication only (seeded users, HS256, `localStorage` tokens).
 * Single PostgreSQL instance. No horizontal API autoscaling story, no multi-region
   setup.
 * No HTTP fetch tool. Document search is keyword-based (no embeddings).
 * The CI workflow is included but has not been run on GitHub from this environment.
-* Autopilot's diagnosis and optimizer were never run against a real model, and its
-  benchmark agent is scripted. See [AUTOPILOT_KNOWN_LIMITATIONS.md](AUTOPILOT_KNOWN_LIMITATIONS.md).
+* Autopilot's diagnosis and optimizer ran against Claude Haiku once (small sample, no improvement found); its
+  benchmarks use a scripted agent. See [AUTOPILOT_KNOWN_LIMITATIONS.md](AUTOPILOT_KNOWN_LIMITATIONS.md).
 
 ## Roadmap
 

@@ -12,6 +12,7 @@ import { JsonView } from "@/components/ui/json";
 import { TBody, TD, TH, THead, TR, Table } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
+import { useSystem } from "@/lib/queries";
 import { useAudit, useExperiment, useExperiments, useHistory, useMemoryMutations, useRecords } from "@/lib/memory";
 import type { MemoryRecord, StrategyResult } from "@/types/memory";
 
@@ -120,6 +121,8 @@ function SearchTab() {
 }
 
 function Experiments({ canWrite }: { canWrite: boolean }) {
+  const { role } = useAuth();
+  const system = useSystem();
   const list = useExperiments();
   const m = useMemoryMutations();
   const [picked, setPicked] = useState<string | null>(null);
@@ -130,10 +133,11 @@ function Experiments({ canWrite }: { canWrite: boolean }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="max-w-3xl text-sm text-muted-foreground">Six ways of giving the same scripted reader memory, on 38 questions with known answers (updated, expired, in-conversation, missing and look-alike facts). Memory does not always help, and this measures where it does not.</p>
+        <p className="max-w-3xl text-sm text-muted-foreground">Six ways of giving the same reader (scripted, or a real model when an admin chooses) memory, on 38 questions with known answers (updated, expired, in-conversation, missing and look-alike facts). Memory does not always help, and this measures where it does not.</p>
         <div className="flex items-center gap-2">
           {list.data?.items.length ? <Select aria-label="Experiment" className="w-56" value={id ?? ""} onChange={(e) => setPicked(e.target.value)}>{list.data.items.map((e) => <option key={e.id} value={e.id}>{new Date(e.created_at).toLocaleString()} · {e.status}</option>)}</Select> : null}
-          {canWrite ? <Button data-testid="run-experiment" disabled={m.startExperiment.isPending || !!running} onClick={() => m.startExperiment.mutate(undefined, { onSuccess: (e) => setPicked(e.id) })}><Play aria-hidden /> {running ? "Running…" : "Run experiment"}</Button> : null}
+          {canWrite ? <Button data-testid="run-experiment" disabled={m.startExperiment.isPending || !!running} onClick={() => m.startExperiment.mutate("mock", { onSuccess: (e) => setPicked(e.id) })}><Play aria-hidden /> {running ? "Running…" : "Run experiment"}</Button> : null}
+          {role === "admin" && system.data?.execution.paid_requests_allowed ? <Button variant="outline" data-testid="run-experiment-live" disabled={m.startExperiment.isPending || !!running} onClick={() => m.startExperiment.mutate("live", { onSuccess: (e) => setPicked(e.id) })} title="A real model answers 38 questions x 6 strategies (estimated cost well under $1)"><Play aria-hidden /> Run with real reader</Button> : null}
         </div>
       </div>
       <InlineError error={m.startExperiment.error} />
@@ -211,7 +215,7 @@ export function MemoryLab() {
         <p className="text-sm text-muted-foreground">Durable, versioned, audited agent memory in PostgreSQL, keyword retrieval with provenance, and experiments comparing memory strategies.</p>
       </div>
       <div role="note" className="rounded-lg border bg-card p-3 text-sm text-muted-foreground">
-        <Badge tone="warning">offline · scripted reader</Badge> Retrieved memory is untrusted context. Experiments use a scripted reader with fixed matching rules, so they show how each strategy&apos;s context affects it; they do not show how a real model uses memory. No embeddings are used.
+        <Badge tone="warning">scripted reader by default</Badge> Retrieved memory is untrusted context. By default experiments use a scripted reader with fixed matching rules, so they show how each strategy&apos;s context affects it, not how a real model uses memory; an administrator can run one with a real model when paid requests are enabled (labeled in its caveats). No embeddings are used.
       </div>
       <Tabs defaultValue="records">
         <TabsList><TabsTrigger value="records">Records</TabsTrigger><TabsTrigger value="search">Retrieval</TabsTrigger><TabsTrigger value="experiments">Experiments</TabsTrigger>{canWrite ? <TabsTrigger value="audit">Audit log</TabsTrigger> : null}</TabsList>

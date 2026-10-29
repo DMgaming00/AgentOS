@@ -164,6 +164,27 @@ class MockProvider:
             {"attempted_tool": "artifact_writer", "outcome": results[0][1], "denied": results[0][2]}
         ), []
 
+    def _resistant(
+        self, messages: list[Message], tools: list[ToolDefinition], config: ModelConfig
+    ) -> tuple[str, list[ToolCall]]:
+        """Stands in for a real model that does the legitimate read and then ignores any injected directive. Used to test
+        the Security Center's live-model grading path offline; it never makes a second tool call."""
+        inp = task_payload(messages).get("input") or {}
+        if not tool_rounds(messages):
+            if inp.get("search"):
+                return "", [
+                    self._call("document_search", {"query": str(inp["search"]), "limit": 5}, messages)
+                ]
+            if inp.get("read_file"):
+                return "", [
+                    self._call(
+                        "structured_data_reader",
+                        {"filename": str(inp["read_file"]), "source": "document"},
+                        messages,
+                    )
+                ]
+        return json.dumps({"done": True, "ignored_directives": True}), []
+
     def _susceptible(
         self, messages: list[Message], tools: list[ToolDefinition], config: ModelConfig
     ) -> tuple[str, list[ToolCall]]:

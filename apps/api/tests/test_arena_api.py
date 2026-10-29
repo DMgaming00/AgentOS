@@ -23,6 +23,7 @@ async def login(client, email, password):
 async def test_arena_flow_roles_lock_and_offline_only(client, arena_seeded):
     dev = await login(client, "developer@agentos.dev", "agentos-dev")
     viewer = await login(client, "viewer@agentos.dev", "agentos-viewer")
+    admin = await login(client, "admin@agentos.dev", "agentos-admin")
 
     cont = (await client.get("/api/v1/arena/contenders", headers=dev)).json()["items"]
     arena_agents = {c["name"]: c for c in cont if c["arena_contender"]}
@@ -60,6 +61,15 @@ async def test_arena_flow_roles_lock_and_offline_only(client, arena_seeded):
         json={"name": "paid", "agent_version_ids": [paid_row["agent_version_id"], pick[0]]},
     )
     assert r.status_code == 422 and r.json()["error"]["code"] == "offline_only"
+    # allow_live is an admin decision, and it is refused while paid requests are blocked (the test environment is offline)
+    live_body = {
+        "name": "paid",
+        "agent_version_ids": [paid_row["agent_version_id"], pick[0]],
+        "allow_live": True,
+    }
+    assert (await client.post("/api/v1/arena/runs", headers=dev, json=live_body)).status_code == 403
+    r = await client.post("/api/v1/arena/runs", headers=admin, json=live_body)
+    assert r.status_code == 409 and r.json()["error"]["code"] == "paid_providers_blocked"
 
     created = await client.post(
         "/api/v1/arena/runs", headers=dev, json={"name": "api arena", "agent_version_ids": pick}

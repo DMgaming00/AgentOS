@@ -4,4 +4,6 @@ Every amount here is an **estimate from reported token usage and a versioned pri
 pricing; they are never invoices.
 """
 
-ESTIMATE_LABEL = "Estimated cost — simulated pricing"
+ESTIMATE_LABEL = (
+    "Estimated cost — simulated pricing offline; a price-table estimate (not an invoice) for real providers"
+)

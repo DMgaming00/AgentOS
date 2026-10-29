@@ -1667,6 +1667,12 @@
             "title": "Agent Version Ids",
             "type": "array"
           },
+          "allow_live": {
+            "default": false,
+            "description": "admin only; permits real-provider contenders when paid requests are enabled",
+            "title": "Allow Live",
+            "type": "boolean"
+          },
           "name": {
             "maxLength": 200,
             "minLength": 1,
@@ -12202,6 +12208,58 @@
         "operationId": "start_experiment_api_v1_memory_experiments_post",
         "parameters": [
           {
+            "description": "'live' uses a real model; admin only",
+            "in": "query",
+            "name": "reader",
+            "required": false,
+            "schema": {
+              "default": "mock",
+              "description": "'live' uses a real model; admin only",
+              "enum": [
+                "mock",
+                "live"
+              ],
+              "title": "Reader",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "seed",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 10000,
+              "minimum": 0,
+              "title": "Seed",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "updated",
+            "required": false,
+            "schema": {
+              "default": 8,
+              "maximum": 20,
+              "minimum": 0,
+              "title": "Updated",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "expired",
+            "required": false,
+            "schema": {
+              "default": 3,
+              "maximum": 10,
+              "minimum": 0,
+              "title": "Expired",
+              "type": "integer"
+            }
+          },
+          {
             "in": "header",
             "name": "Idempotency-Key",
             "required": false,
@@ -15659,6 +15717,23 @@
       "post": {
         "operationId": "start_api_v1_security_runs_post",
         "parameters": [
+          {
+            "description": "'live' uses a real model; needs paid requests enabled",
+            "in": "query",
+            "name": "agent",
+            "required": false,
+            "schema": {
+              "default": "mock",
+              "description": "'live' uses a real model; needs paid requests enabled",
+              "enum": [
+                "mock",
+                "live",
+                "live_naive"
+              ],
+              "title": "Agent",
+              "type": "string"
+            }
+          },
           {
             "in": "header",
             "name": "Idempotency-Key",

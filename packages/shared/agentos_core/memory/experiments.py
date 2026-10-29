@@ -29,6 +29,7 @@ import openeval
 from agentos_core.autopilot.evaluation import create_evaluation_run, import_dataset
 from agentos_core.autopilot.policy import load_policy
 from agentos_core.autopilot.versions import initialize_agent_versioning
+from agentos_core.config import get_settings
 from agentos_core.db.models import (
     AgentConfigVersion,
     AgentDefinition,
@@ -49,6 +50,7 @@ from openeval.metrics import CaseRecord, aggregate, nearest_rank
 from openeval.stats import compare
 
 MEMORY_AGENT = "Memory Lab Agent"
+LIVE_MEMORY_AGENT = "Memory Lab Agent (live model)"
 STRATEGIES = [
     "none",
     "short_term",
@@ -85,26 +87,54 @@ class MemoryExperimentError(Exception):
         self.code, self.status = code, status
 
 
+def _live_spec() -> tuple[str, str, dict[str, Any]]:
+    """(provider, model, model configuration) of the live reader; a seam so tests can stand in a mock."""
+    return "anthropic", get_settings().anthropic_model, {}
+
+
+def _require_live_allowed() -> None:
+    from agentos_core.providers.execution import ExecutionPolicy
+
+    policy = ExecutionPolicy.current()
+    if not policy.paid_requests_allowed:
+        raise MemoryExperimentError(
+            "a live-reader memory experiment needs paid requests enabled: " + "; ".join(policy.blockers()),
+            "paid_providers_blocked",
+        )
+
+
 async def ensure_agent(
-    session: AsyncSession, workspace_id: uuid.UUID, created_by: uuid.UUID | None
+    session: AsyncSession, workspace_id: uuid.UUID, created_by: uuid.UUID | None, *, live: bool = False
 ) -> AgentDefinition:
+    name = LIVE_MEMORY_AGENT if live else MEMORY_AGENT
     agent = (
         await session.execute(
             select(AgentDefinition).where(
-                AgentDefinition.workspace_id == workspace_id, AgentDefinition.name == MEMORY_AGENT
+                AgentDefinition.workspace_id == workspace_id, AgentDefinition.name == name
             )
         )
     ).scalar_one_or_none()
     if agent is None:
+        provider, model, config = (
+            _live_spec() if live else ("mock", "mock-memory_qa", {"scenario": "memory_qa"})
+        )
         agent = AgentDefinition(
             id=uuid.uuid4(),
             workspace_id=workspace_id,
-            name=MEMORY_AGENT,
-            description="Scripted reader used by Memory Lab experiments; answers only from the context it is given.",
-            system_instructions=SYSTEM_PROMPT,
-            provider="mock",
-            model="mock-memory_qa",
-            model_configuration={"scenario": "memory_qa"},
+            name=name,
+            description=(
+                "A real model reading the context each strategy provides; answers only from it."
+                if live
+                else "Scripted reader used by Memory Lab experiments; answers only from the context it is given."
+            ),
+            system_instructions=(
+                SYSTEM_PROMPT + ' Reply with only a JSON object: {"answer": "<value, or unknown>"}.'
+                if live
+                else SYSTEM_PROMPT
+            ),
+            provider=provider,
+            model=model,
+            model_configuration=config,
             allowed_tool_ids=[],
             max_steps=3,
             max_cost_usd=Decimal("0.5"),
@@ -266,7 +296,14 @@ async def start_experiment(
     seed: int = 7,
     updated: int = 8,
     expired: int = 3,
+    reader: str = "mock",
 ) -> MemoryExperiment:
+    """``reader="mock"`` is the scripted policy; ``reader="live"`` uses a real model and needs paid requests enabled."""
+    if reader not in ("mock", "live"):
+        raise MemoryExperimentError("reader must be 'mock' or 'live'", "invalid_request", 422)
+    live = reader == "live"
+    if live:
+        _require_live_allowed()
     running = (
         await session.execute(
             select(MemoryExperiment.id).where(
@@ -285,7 +322,7 @@ async def start_experiment(
     session.add(exp)
     await session.flush()
     namespaces = await _seed_state(session, workspace_id, exp.id, scenario)
-    agent = await ensure_agent(session, workspace_id, user_id)
+    agent = await ensure_agent(session, workspace_id, user_id, live=live)
     version = await session.get(AgentConfigVersion, agent.active_version_id)
     assert version is not None
     ws = await session.get(Workspace, workspace_id)
@@ -353,7 +390,9 @@ async def start_experiment(
         "facts": len(scenario.facts),
         "cases": case_meta,
         "agent_version_id": str(version.id),
-        "offline": True,
+        "offline": not live,
+        "reader": reader,
+        "reader_model": f"{agent.provider}/{agent.model}",
     }
     await session.flush()
     return exp
@@ -500,9 +539,18 @@ async def _finalize(session: AsyncSession, exp: MemoryExperiment) -> None:
         "tasks": len(tasks),
         "facts_stored": cfg["facts"],
         "caveats": [
-            "The reader is a scripted policy with fixed matching rules; results show how each strategy's context affects it, not how a real model would use memory.",
+            (
+                f"The reader is a real model ({cfg.get('reader_model')}) run once per question, so answers are nondeterministic; "
+                "results describe that model on this small scenario."
+                if not cfg.get("offline", True)
+                else "The reader is a scripted policy with fixed matching rules; results show how each strategy's context affects it, not how a real model would use memory."
+            ),
             "38 questions over 26 stored facts: differences smaller than the intervals are not evidence.",
-            "Cost and latency are simulated/measured on the mock provider and mostly reflect context size.",
+            (
+                "Cost is an estimate from the price table; latency is measured."
+                if not cfg.get("offline", True)
+                else "Cost and latency are simulated/measured on the mock provider and mostly reflect context size."
+            ),
         ],
     }
     exp.status, exp.completed_at = "completed", utcnow()

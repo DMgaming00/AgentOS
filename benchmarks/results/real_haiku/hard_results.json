@@ -1,0 +1,564 @@
+[
+  {
+    "kind": "eval",
+    "agent": "bare",
+    "split": "development",
+    "trials": 1,
+    "status": "completed",
+    "run_id": "4faaa898-1a4c-4bd4-9b1f-0f6fb46a5f13",
+    "metrics": {
+      "cases": 40,
+      "attempts": 40,
+      "latency_ms": {
+        "p50": 3113.724,
+        "p95": 10243.314,
+        "mean": 4378.503699999999,
+        "measured": 40
+      },
+      "retry_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 40
+      },
+      "failure_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 40
+      },
+      "total_cost_usd": 0.0648719,
+      "numeric_accuracy": {
+        "value": 0.96875,
+        "numerator": 31,
+        "denominator": 32
+      },
+      "failure_breakdown": {
+        "FACTUAL_GROUNDING_FAILURE": 1
+      },
+      "schema_compliance": {
+        "value": 1.0,
+        "numerator": 40,
+        "denominator": 40
+      },
+      "task_success_rate": {
+        "value": 0.975,
+        "numerator": 39,
+        "denominator": 40
+      },
+      "planned_executions": 40,
+      "grounding_pass_rate": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0
+      },
+      "incomplete_executions": 0,
+      "tool_call_correctness": {
+        "value": 1.0,
+        "numerator": 40,
+        "denominator": 40
+      },
+      "cost_measured_attempts": 40,
+      "cost_per_successful_task_usd": 0.0016633820512820512
+    },
+    "at": "2026-10-28T20:11:04-0700"
+  },
+  {
+    "kind": "eval",
+    "agent": "tight",
+    "split": "development",
+    "trials": 1,
+    "status": "completed",
+    "run_id": "1dfbfee4-ee1c-4f77-9fc3-fa81a1f7123d",
+    "metrics": {
+      "cases": 41,
+      "attempts": 41,
+      "latency_ms": {
+        "p50": 3949.9,
+        "p95": 7998.507,
+        "mean": 4646.225195121951,
+        "measured": 41
+      },
+      "retry_rate": {
+        "value": 0.5121951219512195,
+        "numerator": 21,
+        "denominator": 41
+      },
+      "failure_rate": {
+        "value": 0.5121951219512195,
+        "numerator": 21,
+        "denominator": 41
+      },
+      "total_cost_usd": 0.0793939,
+      "numeric_accuracy": {
+        "value": 0.4444444444444444,
+        "numerator": 12,
+        "denominator": 27
+      },
+      "failure_breakdown": {
+        "TASK_INCOMPLETE": 21,
+        "FACTUAL_GROUNDING_FAILURE": 1
+      },
+      "schema_compliance": {
+        "value": 0.4878048780487805,
+        "numerator": 20,
+        "denominator": 41
+      },
+      "task_success_rate": {
+        "value": 0.4634146341463415,
+        "numerator": 19,
+        "denominator": 41
+      },
+      "planned_executions": 41,
+      "grounding_pass_rate": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0
+      },
+      "incomplete_executions": 0,
+      "tool_call_correctness": {
+        "value": 1.0,
+        "numerator": 41,
+        "denominator": 41
+      },
+      "cost_measured_attempts": 41,
+      "cost_per_successful_task_usd": 0.004178626315789474
+    },
+    "at": "2026-10-29T14:55:40-0700"
+  },
+  {
+    "kind": "failures",
+    "agent": "tight",
+    "by_category": {
+      "TASK_INCOMPLETE": 21,
+      "REPETITIVE_TOOL_LOOP": 5,
+      "COST_ANOMALY": 1,
+      "FACTUAL_GROUNDING_FAILURE": 1
+    },
+    "at": "2026-10-29T14:56:30-0700"
+  },
+  {
+    "kind": "diagnosis",
+    "status": "hypothesis",
+    "confidence": "medium",
+    "category": "TASK_INCOMPLETE",
+    "hypothesis": "The agent's max_steps=3 budget is too small for these multi-hop document questions. Across all 12 failed runs, the model kept issuing document_search calls (and sometimes calculator) through every allowed step and never produced the final JSON answer. The model text previews show it is still gathering information when it runs out, for example checking for more platforms and reading the changelog for later price changes. The behavior looks like legitimate but unbounded exploration under a tight cap, not a tool failure, provider error or infrastructure problem. No step errors other than step_limit_exceeded appear, and the signals are flagged non-infrastructure.",
+    "evidence_refs": 10,
+    "model": "claude-sonnet-5-5",
+    "at": "2026-10-29T14:56:38-0700"
+  },
+  {
+    "kind": "candidates",
+    "items": [
+      {
+        "generator": "model",
+        "title": "Raise step cap and add efficient-search instructions",
+        "status": "proposed",
+        "violations": [],
+        "changes": [
+          "max_steps",
+          "system_instructions"
+        ]
+      },
+      {
+        "generator": "model",
+        "title": "Higher step cap with a stronger model",
+        "status": "proposed",
+        "violations": [],
+        "changes": [
+          "max_steps",
+          "model",
+          "provider",
+          "system_instructions"
+        ]
+      },
+      {
+        "generator": "model",
+        "title": "Moderate step cap with a calculator-focused tool strategy",
+        "status": "rejected_policy",
+        "violations": [
+          "model_configuration: anthropic models used here reject sampling parameters"
+        ],
+        "changes": [
+          "max_steps",
+          "tool_strategy",
+          "tool_descriptions",
+          "model_configuration.temperature"
+        ]
+      },
+      {
+        "generator": "rules",
+        "title": "Raise the step limit to 5",
+        "status": "proposed",
+        "violations": [],
+        "changes": [
+          "max_steps"
+        ]
+      }
+    ],
+    "at": "2026-10-29T14:56:49-0700"
+  },
+  {
+    "kind": "paired",
+    "split": "validation",
+    "trials": 3,
+    "experiment_id": "29a27b47-cae6-4419-bbd0-862aafea29cb",
+    "candidate": "Raise step cap and add efficient-search instructions",
+    "decision": "eligible",
+    "summary": "Eligible; improvement demonstrated (95% CI excludes 0).",
+    "baseline": {
+      "value": 0.48,
+      "numerator": 72,
+      "denominator": 150
+    },
+    "candidate_metrics": {
+      "value": 0.98,
+      "numerator": 147,
+      "denominator": 150
+    },
+    "comparison": {
+      "diff_mean": 0.5,
+      "ci95": [
+        0.38,
+        0.62
+      ],
+      "mcnemar_p": 1.4901161193847656e-08,
+      "n_matched": 50,
+      "significant": true,
+      "regressions": [],
+      "improvements": [
+        "hrd-02283aa1",
+        "hrd-054c0713",
+        "hrd-0f601548",
+        "hrd-2574e246",
+        "hrd-36a6ebde",
+        "hrd-3fb5ca1b",
+        "hrd-47d5756f",
+        "hrd-52e5392a",
+        "hrd-533e2315",
+        "hrd-5d640418",
+        "hrd-629189d9",
+        "hrd-684a0bb0",
+        "hrd-6b2f4fbf",
+        "hrd-803d2f26",
+        "hrd-813fcf1e",
+        "hrd-84cc348b",
+        "hrd-86c583a0",
+        "hrd-8a4d62c0",
+        "hrd-8fdd5ad6",
+        "hrd-91899ba4",
+        "hrd-bc9a473c",
+        "hrd-bfd86b60",
+        "hrd-cb4a9416",
+        "hrd-d6796e26",
+        "hrd-f638d07c",
+        "hrd-f8975474",
+        "hrd-fc845698"
+      ],
+      "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0."
+    },
+    "at": "2026-10-29T15:00:21-0700"
+  },
+  {
+    "kind": "paired",
+    "split": "validation",
+    "trials": 3,
+    "experiment_id": "86a5545d-6532-4c36-b90e-85806b775fbf",
+    "candidate": "Higher step cap with a stronger model",
+    "decision": "not_eligible",
+    "summary": "Not eligible: no_unauthorized_tool_behavior; cost_per_successful_task",
+    "baseline": {
+      "value": 0.5066666666666667,
+      "numerator": 76,
+      "denominator": 150
+    },
+    "candidate_metrics": {
+      "value": 0.8666666666666667,
+      "numerator": 130,
+      "denominator": 150
+    },
+    "comparison": {
+      "diff_mean": 0.36,
+      "ci95": [
+        0.24,
+        0.48
+      ],
+      "mcnemar_p": 2.384185791015625e-07,
+      "n_matched": 50,
+      "significant": true,
+      "regressions": [],
+      "improvements": [
+        "hrd-02283aa1",
+        "hrd-054c0713",
+        "hrd-0f601548",
+        "hrd-36a6ebde",
+        "hrd-3fb5ca1b",
+        "hrd-479ec5da",
+        "hrd-533e2315",
+        "hrd-629189d9",
+        "hrd-684a0bb0",
+        "hrd-6b2f4fbf",
+        "hrd-803d2f26",
+        "hrd-813fcf1e",
+        "hrd-84cc348b",
+        "hrd-86c583a0",
+        "hrd-8a4d62c0",
+        "hrd-8fdd5ad6",
+        "hrd-90e04c2b",
+        "hrd-bfd86b60",
+        "hrd-cb4a9416",
+        "hrd-ce075892",
+        "hrd-d6796e26",
+        "hrd-f638d07c",
+        "hrd-f8975474"
+      ],
+      "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0."
+    },
+    "at": "2026-10-29T15:04:53-0700"
+  },
+  {
+    "kind": "paired",
+    "split": "validation",
+    "trials": 3,
+    "experiment_id": "302dff19-ba84-47a0-928e-8a9f2909e391",
+    "candidate": "Raise the step limit to 5",
+    "decision": "eligible",
+    "summary": "Eligible; improvement demonstrated (95% CI excludes 0).",
+    "baseline": {
+      "value": 0.5,
+      "numerator": 75,
+      "denominator": 150
+    },
+    "candidate_metrics": {
+      "value": 0.92,
+      "numerator": 138,
+      "denominator": 150
+    },
+    "comparison": {
+      "diff_mean": 0.42,
+      "ci95": [
+        0.31333333333333335,
+        0.5266666666666667
+      ],
+      "mcnemar_p": 5.960464477539063e-08,
+      "n_matched": 50,
+      "significant": true,
+      "regressions": [],
+      "improvements": [
+        "hrd-02283aa1",
+        "hrd-054c0713",
+        "hrd-0f601548",
+        "hrd-2574e246",
+        "hrd-36a6ebde",
+        "hrd-479ec5da",
+        "hrd-47d5756f",
+        "hrd-52e5392a",
+        "hrd-533e2315",
+        "hrd-5d640418",
+        "hrd-629189d9",
+        "hrd-684a0bb0",
+        "hrd-6b2f4fbf",
+        "hrd-803d2f26",
+        "hrd-813fcf1e",
+        "hrd-86c583a0",
+        "hrd-8fdd5ad6",
+        "hrd-91899ba4",
+        "hrd-bc9a473c",
+        "hrd-bfd86b60",
+        "hrd-cb4a9416",
+        "hrd-ce075892",
+        "hrd-d6796e26",
+        "hrd-f8975474",
+        "hrd-fc845698"
+      ],
+      "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0."
+    },
+    "at": "2026-10-29T15:08:55-0700"
+  },
+  {
+    "kind": "paired",
+    "split": "test",
+    "trials": 2,
+    "experiment_id": "e9f705cb-af53-4c4f-908a-a1633b40285a",
+    "candidate": "Raise step cap and add efficient-search instructions",
+    "decision": "not_eligible",
+    "summary": "Not eligible: per_case_regressions",
+    "baseline": {
+      "value": 0.4745762711864407,
+      "numerator": 56,
+      "denominator": 118
+    },
+    "candidate_metrics": {
+      "value": 0.8898305084745762,
+      "numerator": 105,
+      "denominator": 118
+    },
+    "comparison": {
+      "diff_mean": 0.4152542372881356,
+      "ci95": [
+        0.288135593220339,
+        0.5423728813559322
+      ],
+      "mcnemar_p": 3.032386302947998e-06,
+      "n_matched": 59,
+      "significant": true,
+      "regressions": [
+        "hrd-2a654513",
+        "hrd-7265ab56"
+      ],
+      "improvements": [
+        "hrd-09107787",
+        "hrd-2782080c",
+        "hrd-2830e85f",
+        "hrd-36f3b13b",
+        "hrd-43dac6b0",
+        "hrd-529606ff",
+        "hrd-5325d149",
+        "hrd-57525c47",
+        "hrd-5ea260e6",
+        "hrd-6589bbc3",
+        "hrd-775cc491",
+        "hrd-801879c6",
+        "hrd-9073fbf7",
+        "hrd-9cf46099",
+        "hrd-a70677bb",
+        "hrd-ac80edec",
+        "hrd-acabd631",
+        "hrd-b0032511",
+        "hrd-bbfd8d96",
+        "hrd-c2e30676",
+        "hrd-e522e89e",
+        "hrd-ece02350",
+        "hrd-f2c45172",
+        "hrd-f7f8fa56",
+        "hrd-f7fd21f0",
+        "hrd-fa015f6f"
+      ],
+      "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0."
+    },
+    "at": "2026-10-29T15:12:01-0700"
+  },
+  {
+    "kind": "eval",
+    "agent": "careful",
+    "split": "validation",
+    "trials": 1,
+    "status": "completed",
+    "run_id": "6cc6c2f0-1264-407a-bc1b-21f24ecf9c90",
+    "metrics": {
+      "cases": 50,
+      "attempts": 50,
+      "latency_ms": {
+        "p50": 5792.334000000001,
+        "p95": 15919.603000000001,
+        "mean": 6861.31754,
+        "measured": 50
+      },
+      "retry_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 50
+      },
+      "failure_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 50
+      },
+      "total_cost_usd": 0.2205401,
+      "numeric_accuracy": {
+        "value": 0.9393939393939394,
+        "numerator": 31,
+        "denominator": 33
+      },
+      "failure_breakdown": {
+        "RETRIEVAL_FAILURE": 7,
+        "FACTUAL_GROUNDING_FAILURE": 2
+      },
+      "schema_compliance": {
+        "value": 1.0,
+        "numerator": 50,
+        "denominator": 50
+      },
+      "task_success_rate": {
+        "value": 0.82,
+        "numerator": 41,
+        "denominator": 50
+      },
+      "planned_executions": 50,
+      "grounding_pass_rate": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0
+      },
+      "incomplete_executions": 0,
+      "tool_call_correctness": {
+        "value": 0.86,
+        "numerator": 43,
+        "denominator": 50
+      },
+      "cost_measured_attempts": 50,
+      "cost_per_successful_task_usd": 0.005379026829268292
+    },
+    "at": "2026-10-29T16:11:25-0700"
+  },
+  {
+    "kind": "eval",
+    "agent": "sonnet",
+    "split": "validation",
+    "trials": 1,
+    "status": "completed",
+    "run_id": "30a59fac-6135-4f7b-a103-9a0773fbfdba",
+    "metrics": {
+      "cases": 50,
+      "attempts": 50,
+      "latency_ms": {
+        "p50": 6065.8279999999995,
+        "p95": 11000.279,
+        "mean": 6417.72262,
+        "measured": 50
+      },
+      "retry_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 50
+      },
+      "failure_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 50
+      },
+      "total_cost_usd": 2.619032,
+      "numeric_accuracy": {
+        "value": 1.0,
+        "numerator": 33,
+        "denominator": 33
+      },
+      "failure_breakdown": {
+        "RETRIEVAL_FAILURE": 4
+      },
+      "schema_compliance": {
+        "value": 1.0,
+        "numerator": 50,
+        "denominator": 50
+      },
+      "task_success_rate": {
+        "value": 0.92,
+        "numerator": 46,
+        "denominator": 50
+      },
+      "planned_executions": 50,
+      "grounding_pass_rate": {
+        "value": null,
+        "numerator": 0,
+        "denominator": 0
+      },
+      "incomplete_executions": 0,
+      "tool_call_correctness": {
+        "value": 0.92,
+        "numerator": 46,
+        "denominator": 50
+      },
+      "cost_measured_attempts": 50,
+      "cost_per_successful_task_usd": 0.05693547826086956
+    },
+    "at": "2026-10-29T16:12:58-0700"
+  }
+]

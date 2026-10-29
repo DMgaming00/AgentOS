@@ -11,7 +11,7 @@ test("usage analytics from real runs, an enforced budget, anomaly detection and 
   await expect.poll(async () => (await (await request.get(`${API}/api/v1/runs/${runId}`, { headers: h })).json()).status, { timeout: 90_000 }).toBe("succeeded");
 
   await login(page);
-  await page.getByRole("link", { name: "FinOps" }).click();
+  await page.getByRole("link", { name: "FinOps", exact: true }).click();
   await expect(page.getByRole("heading", { name: "FinOps" })).toBeVisible();
   await expect(page.getByTestId("estimate-label")).toContainText("Estimated cost — simulated pricing");
   await expect(page.getByTestId("fin-total")).toContainText("$");

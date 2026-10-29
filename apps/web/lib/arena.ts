@@ -38,7 +38,7 @@ export function useCreateArena() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: { name: string; agent_version_ids: string[] }) =>
-      unwrap(await api.POST("/api/v1/arena/runs", { body: v, params: { header: { "Idempotency-Key": idempotencyKey() } } })) as unknown as ArenaSummary,
+      unwrap(await api.POST("/api/v1/arena/runs", { body: { ...v, allow_live: false }, params: { header: { "Idempotency-Key": idempotencyKey() } } })) as unknown as ArenaSummary,
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["arena"] }),
   });
 }

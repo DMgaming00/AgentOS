@@ -41,6 +41,8 @@ jobs:
           uv run alembic -c apps/api/alembic.ini check
       - name: Tests (unit + integration on real PostgreSQL; no LLM calls)
         run: uv run pytest -p no:warnings -rs
+      - name: Hard evaluation set matches its builder
+        run: uv run python scripts/build_hard_eval.py --check
       - name: OpenAPI client is up to date
         run: |
           uv run python scripts/export_openapi.py

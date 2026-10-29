@@ -1,0 +1,29 @@
+{
+  "datasets": {
+    "development": "1f523a46-883f-44f3-92eb-8c59ec96cc52",
+    "validation": "31185396-ab3e-4f2a-9b36-51fb2ca0c7ec",
+    "test": "6c89805c-2987-4611-ae97-d8939e298403"
+  },
+  "agents": {
+    "bare": {
+      "id": "623295f5-8aab-4d79-84e0-9c0cb54e1f38",
+      "version_id": "89d7f725-cb0d-4312-9df3-d04b59bb689e",
+      "name": "Hard \u00b7 Haiku \u00b7 Bare 1028-2009"
+    },
+    "careful": {
+      "id": "9cc70f79-c491-4a80-b588-9e35de3ca998",
+      "version_id": "c3bb9144-9fdc-406b-8fd5-4471e37dcfca",
+      "name": "Hard \u00b7 Haiku \u00b7 Careful 1028-2009"
+    },
+    "sonnet": {
+      "id": "744b5575-573a-46f0-a544-90fecc541ea3",
+      "version_id": "188e6290-41e2-438a-8ff0-997450685e7f",
+      "name": "Hard \u00b7 Sonnet \u00b7 Careful 1028-2009"
+    },
+    "tight": {
+      "id": "5db2bd8c-a07b-4ea9-aba2-e5646d874b44",
+      "version_id": "a8efa685-35c1-48a3-84d5-8d7ec7ff6bc1",
+      "name": "Hard \u00b7 Haiku \u00b7 Tight budget 1029-1454"
+    }
+  }
+}

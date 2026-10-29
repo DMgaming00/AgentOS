@@ -1,0 +1,285 @@
+{
+  "model": "claude-haiku-5-5",
+  "experiment_id": "9d65ec33-f7e3-48a7-ac00-37284895eb0b",
+  "decision": "not_eligible",
+  "summary": "Not eligible: per_case_regressions",
+  "baseline_success": {
+    "value": 0.7083333333333334,
+    "numerator": 34,
+    "denominator": 48
+  },
+  "candidate_success": {
+    "value": 0.7708333333333334,
+    "numerator": 37,
+    "denominator": 48
+  },
+  "comparison": {
+    "ci95": [
+      -0.125,
+      0.27083333333333337
+    ],
+    "per_case": [
+      {
+        "diff": 0.0,
+        "tags": [
+          "arena",
+          "extraction",
+          "unanswerable"
+        ],
+        "case_id": "ext-0f396052",
+        "baseline": 1.0,
+        "candidate": 1.0,
+        "baseline_failing": [],
+        "candidate_failing": []
+      },
+      {
+        "diff": -0.6666666666666666,
+        "tags": [
+          "arena",
+          "extraction",
+          "single"
+        ],
+        "case_id": "ext-35640a0e",
+        "baseline": 0.6666666666666666,
+        "candidate": 0.0,
+        "baseline_failing": [
+          "source_citation_check"
+        ],
+        "candidate_failing": [
+          "source_citation_check"
+        ]
+      },
+      {
+        "diff": 0.0,
+        "tags": [
+          "arena",
+          "extraction",
+          "single"
+        ],
+        "case_id": "ext-374d5c8c",
+        "baseline": 0.3333333333333333,
+        "candidate": 0.3333333333333333,
+        "baseline_failing": [
+          "source_citation_check"
+        ],
+        "candidate_failing": [
+          "source_citation_check"
+        ]
+      },
+      {
+        "diff": 0.0,
+        "tags": [
+          "arena",
+          "extraction",
+          "single"
+        ],
+        "case_id": "ext-42d5eae9",
+        "baseline": 0.0,
+        "candidate": 0.0,
+        "baseline_failing": [
+          "source_citation_check"
+        ],
+        "candidate_failing": [
+          "source_citation_check"
+        ]
+      },
+      {
+        "diff": 0.0,
+        "tags": [
+          "arena",
+          "extraction",
+          "unanswerable"
+        ],
+        "case_id": "ext-5440061b",
+        "baseline": 1.0,
+        "candidate": 1.0,
+        "baseline_failing": [],
+        "candidate_failing": []
+      },
+      {
+        "diff": 0.6666666666666667,
+        "tags": [
+          "arena",
+          "extraction",
+          "multi_field"
+        ],
+        "case_id": "ext-6a80b5a5",
+        "baseline": 0.3333333333333333,
+        "candidate": 1.0,
+        "baseline_failing": [
+          "source_citation_check"
+        ],
+        "candidate_failing": []
+      },
+      {
+        "diff": -0.33333333333333337,
+        "tags": [
+          "arena",
+          "extraction",
+          "single"
+        ],
+        "case_id": "ext-74ced8d3",
+        "baseline": 1.0,
+        "candidate": 0.6666666666666666,
+        "baseline_failing": [],
+        "candidate_failing": [
+          "source_citation_check"
+        ]
+      },
+      {
+        "diff": 0.0,
+        "tags": [
+          "arena",
+          "extraction",
+          "multi_field"
+        ],
+        "case_id": "ext-891fef71",
+        "baseline": 1.0,
+        "candidate": 1.0,
+        "baseline_failing": [],
+        "candidate_failing": []
+      },
+      {
+        "diff": -0.33333333333333337,
+        "tags": [
+          "arena",
+          "extraction",
+          "single"
+        ],
+        "case_id": "ext-9393b7fa",
+        "baseline": 1.0,
+        "candidate": 0.6666666666666666,
+        "baseline_failing": [],
+        "candidate_failing": [
+          "source_citation_check"
+        ]
+      },
+      {
+        "diff": 0.0,
+        "tags": [
+          "arena",
+          "extraction",
+          "multi_field"
+        ],
+        "case_id": "ext-9c137737",
+        "baseline": 1.0,
+        "candidate": 1.0,
+        "baseline_failing": [],
+        "candidate_failing": []
+      },
+      {
+        "diff": 0.0,
+        "tags": [
+          "arena",
+          "extraction",
+          "unanswerable"
+        ],
+        "case_id": "ext-ca531d60",
+        "baseline": 1.0,
+        "candidate": 1.0,
+        "baseline_failing": [],
+        "candidate_failing": []
+      },
+      {
+        "diff": 0.33333333333333337,
+        "tags": [
+          "arena",
+          "extraction",
+          "multi_subject"
+        ],
+        "case_id": "ext-d6ebea89",
+        "baseline": 0.6666666666666666,
+        "candidate": 1.0,
+        "baseline_failing": [
+          "source_citation_check"
+        ],
+        "candidate_failing": []
+      },
+      {
+        "diff": 1.0,
+        "tags": [
+          "arena",
+          "extraction",
+          "multi_field"
+        ],
+        "case_id": "ext-e9165e21",
+        "baseline": 0.0,
+        "candidate": 1.0,
+        "baseline_failing": [
+          "source_citation_check"
+        ],
+        "candidate_failing": []
+      },
+      {
+        "diff": -0.33333333333333337,
+        "tags": [
+          "arena",
+          "extraction",
+          "multi_subject"
+        ],
+        "case_id": "ext-ebfdb994",
+        "baseline": 1.0,
+        "candidate": 0.6666666666666666,
+        "baseline_failing": [],
+        "candidate_failing": [
+          "source_citation_check"
+        ]
+      },
+      {
+        "diff": 0.6666666666666667,
+        "tags": [
+          "arena",
+          "extraction",
+          "multi_subject"
+        ],
+        "case_id": "ext-efbd3571",
+        "baseline": 0.3333333333333333,
+        "candidate": 1.0,
+        "baseline_failing": [
+          "source_citation_check"
+        ],
+        "candidate_failing": []
+      },
+      {
+        "diff": 0.0,
+        "tags": [
+          "arena",
+          "extraction",
+          "multi_field"
+        ],
+        "case_id": "ext-fb994b12",
+        "baseline": 1.0,
+        "candidate": 1.0,
+        "baseline_failing": [],
+        "candidate_failing": []
+      }
+    ],
+    "settings": {
+      "seed": 20261025,
+      "alpha": 0.05,
+      "method": "paired percentile bootstrap over cases",
+      "resamples": 10000,
+      "secondary_test": "exact McNemar (two-sided)",
+      "min_n_for_significance": 10
+    },
+    "diff_mean": 0.0625,
+    "mcnemar_p": 0.625,
+    "n_matched": 16,
+    "unmatched": [],
+    "regressions": [
+      "ext-35640a0e"
+    ],
+    "significant": false,
+    "improvements": [
+      "ext-6a80b5a5",
+      "ext-e9165e21",
+      "ext-efbd3571"
+    ],
+    "interpretation": "No statistically supported difference: the 95% CI of the paired difference includes 0.",
+    "baseline_success": 0.7083333333333334,
+    "candidate_success": 0.7708333333333334
+  },
+  "trials": 3,
+  "cases": 16,
+  "candidate": "Careful instructions: JSON numbers, citations, abstain rather than guess"
+}

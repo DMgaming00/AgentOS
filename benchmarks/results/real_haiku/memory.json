@@ -1,0 +1,2315 @@
+{
+  "reader": "claude-haiku-5-5",
+  "runs": [
+    {
+      "seed": 1,
+      "id": "ead0b2b8-ebc6-4604-a919-ce52ebd241de",
+      "status": "completed",
+      "results": {
+        "tasks": 38,
+        "caveats": [
+          "The reader is a real model (anthropic/claude-haiku-5-5) run once per question, so answers are nondeterministic; results describe that model on this small scenario.",
+          "38 questions over 26 stored facts: differences smaller than the intervals are not evidence.",
+          "Cost is an estimate from the price table; latency is measured."
+        ],
+        "strategies": {
+          "none": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.7105263157894737,
+                "count": 27
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "current": {
+                "n": 15,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 0,
+              "mean_chars": 0.0,
+              "snippets_mean": 0.0,
+              "mean_tokens_est": 0.0
+            },
+            "accuracy": {
+              "value": 0.2894736842105263,
+              "numerator": 11,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 1854.484,
+              "p95": 2373.0280000000002,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 0.0,
+              "numerator": 0,
+              "denominator": 23
+            },
+            "evaluation_run_id": "a56f1020-be2c-4549-8277-4a49dd941098",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": null,
+              "numerator": 0,
+              "denominator": 0
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "short_term": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.6052631578947368,
+                "count": 23
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 51,
+              "mean_chars": 5.315789473684211,
+              "snippets_mean": 0.0,
+              "mean_tokens_est": 1.3289473684210527
+            },
+            "accuracy": {
+              "value": 0.39473684210526316,
+              "numerator": 15,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 1652.345,
+              "p95": 2358.5060000000003,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 0.0,
+              "numerator": 0,
+              "denominator": 23
+            },
+            "evaluation_run_id": "978cccf7-59b3-443b-b310-d870fe8f97ad",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": null,
+              "numerator": 0,
+              "denominator": 0
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "retrieval_top3": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 1.0,
+                "correct": 15
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 1.0,
+                "correct": 8
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 120,
+              "mean_chars": 70.5,
+              "snippets_mean": 2.8947368421052633,
+              "mean_tokens_est": 17.625
+            },
+            "accuracy": {
+              "value": 1.0,
+              "numerator": 38,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 2341.462,
+              "p95": 3846.429,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 1.0,
+              "numerator": 23,
+              "denominator": 23
+            },
+            "evaluation_run_id": "0bd86050-954c-4c87-909f-fbe893969973",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": 0.3333333333333333,
+              "numerator": 23,
+              "denominator": 69
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "persistent_full": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 1.0,
+                "correct": 15
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 1.0,
+                "correct": 8
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 562,
+              "mean_chars": 516.3157894736842,
+              "snippets_mean": 23.0,
+              "mean_tokens_est": 129.07894736842104
+            },
+            "accuracy": {
+              "value": 1.0,
+              "numerator": 38,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 2071.649,
+              "p95": 3417.6839999999997,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 1.0,
+              "numerator": 23,
+              "denominator": 23
+            },
+            "evaluation_run_id": "39ca8aa8-3a98-4baa-8926-151d98aea746",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": 0.043478260869565216,
+              "numerator": 23,
+              "denominator": 529
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "summarized_stale": {
+            "errors": {
+              "stale": {
+                "rate": 0.2894736842105263,
+                "count": 11
+              },
+              "missed": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 1.0,
+                "correct": 15
+              },
+              "expired": {
+                "n": 3,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 657,
+              "mean_chars": 611.3157894736842,
+              "snippets_mean": 10.0,
+              "mean_tokens_est": 152.82894736842104
+            },
+            "accuracy": {
+              "value": 0.7105263157894737,
+              "numerator": 27,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 2056.955,
+              "p95": 3558.002,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 1.0,
+              "numerator": 23,
+              "denominator": 23
+            },
+            "evaluation_run_id": "ede3e669-1270-40d9-917d-5227898919b2",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": 0.1,
+              "numerator": 23,
+              "denominator": 230
+            },
+            "stale_memory_errors": {
+              "count": 11,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "summarized_refreshed": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 1.0,
+                "correct": 15
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 1.0,
+                "correct": 8
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 609,
+              "mean_chars": 563.3157894736842,
+              "snippets_mean": 10.0,
+              "mean_tokens_est": 140.82894736842104
+            },
+            "accuracy": {
+              "value": 1.0,
+              "numerator": 38,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 2299.933,
+              "p95": 3590.341,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 1.0,
+              "numerator": 23,
+              "denominator": 23
+            },
+            "evaluation_run_id": "0f78c9c8-07d8-4b1b-9841-abfff1ba8085",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": 0.1,
+              "numerator": 23,
+              "denominator": 230
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          }
+        },
+        "comparisons": [
+          {
+            "ci95": [
+              0.02631578947368421,
+              0.21052631578947367
+            ],
+            "baseline": "none",
+            "candidate": "short_term",
+            "diff_mean": 0.10526315789473684,
+            "mcnemar_p": 0.125,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": true,
+            "improvements": [
+              "inline-cobalt-priority",
+              "inline-delta-priority",
+              "inline-ember-priority",
+              "inline-harbor-priority"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.2894736842105263,
+            "candidate_success": 0.39473684210526316
+          },
+          {
+            "ci95": [
+              0.4473684210526316,
+              0.7631578947368421
+            ],
+            "baseline": "short_term",
+            "candidate": "persistent_full",
+            "diff_mean": 0.6052631578947368,
+            "mcnemar_p": 2.384185791015625e-07,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": true,
+            "improvements": [
+              "current-atlas-owner",
+              "current-atlas-pro-owner",
+              "current-cobalt-deadline",
+              "current-cobalt-lite-owner",
+              "current-cobalt-owner",
+              "current-cobalt-region",
+              "current-ember-owner",
+              "current-ember-region",
+              "current-fjord-deadline",
+              "current-fjord-owner",
+              "current-fjord-region",
+              "current-granite-deadline",
+              "current-granite-owner",
+              "current-harbor-deadline",
+              "current-harbor-owner",
+              "updated-atlas-deadline",
+              "updated-atlas-region",
+              "updated-borealis-region",
+              "updated-delta-deadline",
+              "updated-delta-owner",
+              "updated-ember-deadline",
+              "updated-granite-region",
+              "updated-harbor-region"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.39473684210526316,
+            "candidate_success": 1.0
+          },
+          {
+            "ci95": [
+              0.4473684210526316,
+              0.7631578947368421
+            ],
+            "baseline": "short_term",
+            "candidate": "retrieval_top3",
+            "diff_mean": 0.6052631578947368,
+            "mcnemar_p": 2.384185791015625e-07,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": true,
+            "improvements": [
+              "current-atlas-owner",
+              "current-atlas-pro-owner",
+              "current-cobalt-deadline",
+              "current-cobalt-lite-owner",
+              "current-cobalt-owner",
+              "current-cobalt-region",
+              "current-ember-owner",
+              "current-ember-region",
+              "current-fjord-deadline",
+              "current-fjord-owner",
+              "current-fjord-region",
+              "current-granite-deadline",
+              "current-granite-owner",
+              "current-harbor-deadline",
+              "current-harbor-owner",
+              "updated-atlas-deadline",
+              "updated-atlas-region",
+              "updated-borealis-region",
+              "updated-delta-deadline",
+              "updated-delta-owner",
+              "updated-ember-deadline",
+              "updated-granite-region",
+              "updated-harbor-region"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.39473684210526316,
+            "candidate_success": 1.0
+          },
+          {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "baseline": "persistent_full",
+            "candidate": "retrieval_top3",
+            "diff_mean": 0.0,
+            "mcnemar_p": null,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": false,
+            "improvements": [],
+            "interpretation": "No statistically supported difference: the 95% CI of the paired difference includes 0.",
+            "baseline_success": 1.0,
+            "candidate_success": 1.0
+          },
+          {
+            "ci95": [
+              0.15789473684210525,
+              0.4473684210526316
+            ],
+            "baseline": "summarized_stale",
+            "candidate": "summarized_refreshed",
+            "diff_mean": 0.2894736842105263,
+            "mcnemar_p": 0.0009765625,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": true,
+            "improvements": [
+              "expired-borealis-deadline",
+              "expired-borealis-owner",
+              "expired-delta-region",
+              "updated-atlas-deadline",
+              "updated-atlas-region",
+              "updated-borealis-region",
+              "updated-delta-deadline",
+              "updated-delta-owner",
+              "updated-ember-deadline",
+              "updated-granite-region",
+              "updated-harbor-region"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.7105263157894737,
+            "candidate_success": 1.0
+          },
+          {
+            "ci95": [
+              0.13157894736842105,
+              0.5
+            ],
+            "baseline": "short_term",
+            "candidate": "summarized_stale",
+            "diff_mean": 0.3157894736842105,
+            "mcnemar_p": 0.007537841796875,
+            "n_matched": 38,
+            "regressions": [
+              "expired-borealis-deadline",
+              "expired-borealis-owner",
+              "expired-delta-region"
+            ],
+            "significant": true,
+            "improvements": [
+              "current-atlas-owner",
+              "current-atlas-pro-owner",
+              "current-cobalt-deadline",
+              "current-cobalt-lite-owner",
+              "current-cobalt-owner",
+              "current-cobalt-region",
+              "current-ember-owner",
+              "current-ember-region",
+              "current-fjord-deadline",
+              "current-fjord-owner",
+              "current-fjord-region",
+              "current-granite-deadline",
+              "current-granite-owner",
+              "current-harbor-deadline",
+              "current-harbor-owner"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.39473684210526316,
+            "candidate_success": 0.7105263157894737
+          }
+        ],
+        "facts_stored": 26
+      },
+      "config": null
+    },
+    {
+      "seed": 2,
+      "id": "581e6123-6467-4459-8eb9-63906d182e04",
+      "status": "completed",
+      "results": {
+        "tasks": 38,
+        "caveats": [
+          "The reader is a real model (anthropic/claude-haiku-5-5) run once per question, so answers are nondeterministic; results describe that model on this small scenario.",
+          "38 questions over 26 stored facts: differences smaller than the intervals are not evidence.",
+          "Cost is an estimate from the price table; latency is measured."
+        ],
+        "strategies": {
+          "none": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.7105263157894737,
+                "count": 27
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "current": {
+                "n": 15,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 0,
+              "mean_chars": 0.0,
+              "snippets_mean": 0.0,
+              "mean_tokens_est": 0.0
+            },
+            "accuracy": {
+              "value": 0.2894736842105263,
+              "numerator": 11,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 1732.1960000000001,
+              "p95": 2354.049,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 0.0,
+              "numerator": 0,
+              "denominator": 23
+            },
+            "evaluation_run_id": "866958dd-a5c6-439f-a69e-75265f51cb85",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": null,
+              "numerator": 0,
+              "denominator": 0
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "short_term": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.6052631578947368,
+                "count": 23
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 52,
+              "mean_chars": 5.368421052631579,
+              "snippets_mean": 0.0,
+              "mean_tokens_est": 1.3421052631578947
+            },
+            "accuracy": {
+              "value": 0.39473684210526316,
+              "numerator": 15,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 1854.614,
+              "p95": 2669.102,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 0.0,
+              "numerator": 0,
+              "denominator": 23
+            },
+            "evaluation_run_id": "698b3493-e4a2-4a4d-910e-b023682e3f95",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": null,
+              "numerator": 0,
+              "denominator": 0
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "retrieval_top3": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 1.0,
+                "correct": 15
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 1.0,
+                "correct": 8
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 121,
+              "mean_chars": 70.60526315789474,
+              "snippets_mean": 2.8421052631578947,
+              "mean_tokens_est": 17.651315789473685
+            },
+            "accuracy": {
+              "value": 1.0,
+              "numerator": 38,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 2408.608,
+              "p95": 3245.311,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 1.0,
+              "numerator": 23,
+              "denominator": 23
+            },
+            "evaluation_run_id": "feb03317-df52-4197-b5a2-027ee24f7181",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": 0.3333333333333333,
+              "numerator": 23,
+              "denominator": 69
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "persistent_full": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 1.0,
+                "correct": 15
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 1.0,
+                "correct": 8
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 568,
+              "mean_chars": 521.3684210526316,
+              "snippets_mean": 23.0,
+              "mean_tokens_est": 130.3421052631579
+            },
+            "accuracy": {
+              "value": 1.0,
+              "numerator": 38,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 1951.1000000000001,
+              "p95": 3102.064,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 1.0,
+              "numerator": 23,
+              "denominator": 23
+            },
+            "evaluation_run_id": "4c06098c-2f1b-4402-87f4-dce497265792",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": 0.043478260869565216,
+              "numerator": 23,
+              "denominator": 529
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "summarized_stale": {
+            "errors": {
+              "stale": {
+                "rate": 0.2894736842105263,
+                "count": 11
+              },
+              "missed": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 1.0,
+                "correct": 15
+              },
+              "expired": {
+                "n": 3,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 659,
+              "mean_chars": 612.3684210526316,
+              "snippets_mean": 10.0,
+              "mean_tokens_est": 153.0921052631579
+            },
+            "accuracy": {
+              "value": 0.7105263157894737,
+              "numerator": 27,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 2255.4599999999996,
+              "p95": 4251.176,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 1.0,
+              "numerator": 23,
+              "denominator": 23
+            },
+            "evaluation_run_id": "51c5e841-636f-44da-b24b-e1279d46bf82",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": 0.1,
+              "numerator": 23,
+              "denominator": 230
+            },
+            "stale_memory_errors": {
+              "count": 11,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "summarized_refreshed": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 1.0,
+                "correct": 15
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 1.0,
+                "correct": 8
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 610,
+              "mean_chars": 563.3684210526316,
+              "snippets_mean": 10.0,
+              "mean_tokens_est": 140.8421052631579
+            },
+            "accuracy": {
+              "value": 1.0,
+              "numerator": 38,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 2352.707,
+              "p95": 3288.139,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 1.0,
+              "numerator": 23,
+              "denominator": 23
+            },
+            "evaluation_run_id": "6a87f9f5-f0cc-48e4-b25d-31035db60ed3",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": 0.1,
+              "numerator": 23,
+              "denominator": 230
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          }
+        },
+        "comparisons": [
+          {
+            "ci95": [
+              0.02631578947368421,
+              0.21052631578947367
+            ],
+            "baseline": "none",
+            "candidate": "short_term",
+            "diff_mean": 0.10526315789473684,
+            "mcnemar_p": 0.125,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": true,
+            "improvements": [
+              "inline-cobalt-priority",
+              "inline-delta-priority",
+              "inline-granite-priority",
+              "inline-harbor-priority"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.2894736842105263,
+            "candidate_success": 0.39473684210526316
+          },
+          {
+            "ci95": [
+              0.4473684210526316,
+              0.7631578947368421
+            ],
+            "baseline": "short_term",
+            "candidate": "persistent_full",
+            "diff_mean": 0.6052631578947368,
+            "mcnemar_p": 2.384185791015625e-07,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": true,
+            "improvements": [
+              "current-atlas-deadline",
+              "current-atlas-owner",
+              "current-atlas-pro-owner",
+              "current-borealis-deadline",
+              "current-cobalt-deadline",
+              "current-cobalt-lite-owner",
+              "current-cobalt-region",
+              "current-delta-region",
+              "current-ember-deadline",
+              "current-ember-owner",
+              "current-fjord-deadline",
+              "current-fjord-region",
+              "current-granite-deadline",
+              "current-granite-region",
+              "current-harbor-region",
+              "updated-atlas-region",
+              "updated-borealis-owner",
+              "updated-borealis-region",
+              "updated-cobalt-owner",
+              "updated-ember-region",
+              "updated-fjord-owner",
+              "updated-granite-owner",
+              "updated-harbor-owner"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.39473684210526316,
+            "candidate_success": 1.0
+          },
+          {
+            "ci95": [
+              0.4473684210526316,
+              0.7631578947368421
+            ],
+            "baseline": "short_term",
+            "candidate": "retrieval_top3",
+            "diff_mean": 0.6052631578947368,
+            "mcnemar_p": 2.384185791015625e-07,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": true,
+            "improvements": [
+              "current-atlas-deadline",
+              "current-atlas-owner",
+              "current-atlas-pro-owner",
+              "current-borealis-deadline",
+              "current-cobalt-deadline",
+              "current-cobalt-lite-owner",
+              "current-cobalt-region",
+              "current-delta-region",
+              "current-ember-deadline",
+              "current-ember-owner",
+              "current-fjord-deadline",
+              "current-fjord-region",
+              "current-granite-deadline",
+              "current-granite-region",
+              "current-harbor-region",
+              "updated-atlas-region",
+              "updated-borealis-owner",
+              "updated-borealis-region",
+              "updated-cobalt-owner",
+              "updated-ember-region",
+              "updated-fjord-owner",
+              "updated-granite-owner",
+              "updated-harbor-owner"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.39473684210526316,
+            "candidate_success": 1.0
+          },
+          {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "baseline": "persistent_full",
+            "candidate": "retrieval_top3",
+            "diff_mean": 0.0,
+            "mcnemar_p": null,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": false,
+            "improvements": [],
+            "interpretation": "No statistically supported difference: the 95% CI of the paired difference includes 0.",
+            "baseline_success": 1.0,
+            "candidate_success": 1.0
+          },
+          {
+            "ci95": [
+              0.15789473684210525,
+              0.4473684210526316
+            ],
+            "baseline": "summarized_stale",
+            "candidate": "summarized_refreshed",
+            "diff_mean": 0.2894736842105263,
+            "mcnemar_p": 0.0009765625,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": true,
+            "improvements": [
+              "expired-delta-deadline",
+              "expired-delta-owner",
+              "expired-harbor-deadline",
+              "updated-atlas-region",
+              "updated-borealis-owner",
+              "updated-borealis-region",
+              "updated-cobalt-owner",
+              "updated-ember-region",
+              "updated-fjord-owner",
+              "updated-granite-owner",
+              "updated-harbor-owner"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.7105263157894737,
+            "candidate_success": 1.0
+          },
+          {
+            "ci95": [
+              0.13157894736842105,
+              0.5
+            ],
+            "baseline": "short_term",
+            "candidate": "summarized_stale",
+            "diff_mean": 0.3157894736842105,
+            "mcnemar_p": 0.007537841796875,
+            "n_matched": 38,
+            "regressions": [
+              "expired-delta-deadline",
+              "expired-delta-owner",
+              "expired-harbor-deadline"
+            ],
+            "significant": true,
+            "improvements": [
+              "current-atlas-deadline",
+              "current-atlas-owner",
+              "current-atlas-pro-owner",
+              "current-borealis-deadline",
+              "current-cobalt-deadline",
+              "current-cobalt-lite-owner",
+              "current-cobalt-region",
+              "current-delta-region",
+              "current-ember-deadline",
+              "current-ember-owner",
+              "current-fjord-deadline",
+              "current-fjord-region",
+              "current-granite-deadline",
+              "current-granite-region",
+              "current-harbor-region"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.39473684210526316,
+            "candidate_success": 0.7105263157894737
+          }
+        ],
+        "facts_stored": 26
+      },
+      "config": null
+    },
+    {
+      "seed": 3,
+      "id": "d26b885c-1c54-43a7-8f1d-1c2b9bf751ef",
+      "status": "completed",
+      "results": {
+        "tasks": 38,
+        "caveats": [
+          "The reader is a real model (anthropic/claude-haiku-5-5) run once per question, so answers are nondeterministic; results describe that model on this small scenario.",
+          "38 questions over 26 stored facts: differences smaller than the intervals are not evidence.",
+          "Cost is an estimate from the price table; latency is measured."
+        ],
+        "strategies": {
+          "none": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.7105263157894737,
+                "count": 27
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "current": {
+                "n": 15,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 0,
+              "mean_chars": 0.0,
+              "snippets_mean": 0.0,
+              "mean_tokens_est": 0.0
+            },
+            "accuracy": {
+              "value": 0.2894736842105263,
+              "numerator": 11,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 1991.5210000000002,
+              "p95": 2494.201,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 0.0,
+              "numerator": 0,
+              "denominator": 23
+            },
+            "evaluation_run_id": "ffed1592-faf0-4b22-b50e-13cdb06f730f",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": null,
+              "numerator": 0,
+              "denominator": 0
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "short_term": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.6052631578947368,
+                "count": 23
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 52,
+              "mean_chars": 5.368421052631579,
+              "snippets_mean": 0.0,
+              "mean_tokens_est": 1.3421052631578947
+            },
+            "accuracy": {
+              "value": 0.39473684210526316,
+              "numerator": 15,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 1742.6950000000002,
+              "p95": 2300.859,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 0.0,
+              "numerator": 0,
+              "denominator": 23
+            },
+            "evaluation_run_id": "a93a8096-b20d-491e-878d-e01b567051b8",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": null,
+              "numerator": 0,
+              "denominator": 0
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "retrieval_top3": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 1.0,
+                "correct": 15
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 1.0,
+                "correct": 8
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 123,
+              "mean_chars": 73.13157894736842,
+              "snippets_mean": 2.973684210526316,
+              "mean_tokens_est": 18.282894736842106
+            },
+            "accuracy": {
+              "value": 1.0,
+              "numerator": 38,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 2542.875,
+              "p95": 3462.635,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 1.0,
+              "numerator": 23,
+              "denominator": 23
+            },
+            "evaluation_run_id": "0f3d5eda-f1f5-4614-9524-f325a4b7e1fb",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": 0.3333333333333333,
+              "numerator": 23,
+              "denominator": 69
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "persistent_full": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 1.0,
+                "correct": 15
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 1.0,
+                "correct": 8
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 573,
+              "mean_chars": 526.3684210526316,
+              "snippets_mean": 23.0,
+              "mean_tokens_est": 131.5921052631579
+            },
+            "accuracy": {
+              "value": 1.0,
+              "numerator": 38,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 2468.404,
+              "p95": 4533.772,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 1.0,
+              "numerator": 23,
+              "denominator": 23
+            },
+            "evaluation_run_id": "2455b3dd-e850-49f4-bc63-36c9bd43fb45",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": 0.043478260869565216,
+              "numerator": 23,
+              "denominator": 529
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "summarized_stale": {
+            "errors": {
+              "stale": {
+                "rate": 0.2894736842105263,
+                "count": 11
+              },
+              "missed": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 1.0,
+                "correct": 15
+              },
+              "expired": {
+                "n": 3,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 0.0,
+                "correct": 0
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 658,
+              "mean_chars": 611.3684210526316,
+              "snippets_mean": 10.0,
+              "mean_tokens_est": 152.8421052631579
+            },
+            "accuracy": {
+              "value": 0.7105263157894737,
+              "numerator": 27,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 2127.168,
+              "p95": 3074.598,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 1.0,
+              "numerator": 23,
+              "denominator": 23
+            },
+            "evaluation_run_id": "f3f2c5ec-acee-46d4-b658-92ba6bf901da",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": 0.1,
+              "numerator": 23,
+              "denominator": 230
+            },
+            "stale_memory_errors": {
+              "count": 11,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          },
+          "summarized_refreshed": {
+            "errors": {
+              "stale": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "missed": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "no_answer": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "other_wrong": {
+                "rate": 0.0,
+                "count": 0
+              },
+              "incorrect_reuse": {
+                "rate": 0.0,
+                "count": 0
+              }
+            },
+            "by_kind": {
+              "inline": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "current": {
+                "n": 15,
+                "rate": 1.0,
+                "correct": 15
+              },
+              "expired": {
+                "n": 3,
+                "rate": 1.0,
+                "correct": 3
+              },
+              "missing": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              },
+              "updated": {
+                "n": 8,
+                "rate": 1.0,
+                "correct": 8
+              },
+              "near_match": {
+                "n": 4,
+                "rate": 1.0,
+                "correct": 4
+              }
+            },
+            "context": {
+              "max_chars": 615,
+              "mean_chars": 568.3684210526316,
+              "snippets_mean": 10.0,
+              "mean_tokens_est": 142.0921052631579
+            },
+            "accuracy": {
+              "value": 1.0,
+              "numerator": 38,
+              "denominator": 38
+            },
+            "latency_ms": {
+              "p50": 2274.068,
+              "p95": 3239.802,
+              "measured": 38
+            },
+            "answer_recall": {
+              "note": "questions whose context contains a statement about the exact entity and attribute",
+              "value": 1.0,
+              "numerator": 23,
+              "denominator": 23
+            },
+            "evaluation_run_id": "975ba9b8-0522-4905-b45d-c5829d391e03",
+            "cost_usd_simulated": null,
+            "retrieval_precision": {
+              "note": "relevant snippets / snippets shown, over answerable stored-fact questions",
+              "value": 0.1,
+              "numerator": 23,
+              "denominator": 230
+            },
+            "stale_memory_errors": {
+              "count": 0,
+              "denominator": 11
+            },
+            "incorrect_memory_reuse": {
+              "count": 0,
+              "denominator": 4
+            }
+          }
+        },
+        "comparisons": [
+          {
+            "ci95": [
+              0.02631578947368421,
+              0.21052631578947367
+            ],
+            "baseline": "none",
+            "candidate": "short_term",
+            "diff_mean": 0.10526315789473684,
+            "mcnemar_p": 0.125,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": true,
+            "improvements": [
+              "inline-cobalt-priority",
+              "inline-ember-priority",
+              "inline-granite-priority",
+              "inline-harbor-priority"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.2894736842105263,
+            "candidate_success": 0.39473684210526316
+          },
+          {
+            "ci95": [
+              0.4473684210526316,
+              0.7631578947368421
+            ],
+            "baseline": "short_term",
+            "candidate": "persistent_full",
+            "diff_mean": 0.6052631578947368,
+            "mcnemar_p": 2.384185791015625e-07,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": true,
+            "improvements": [
+              "current-atlas-deadline",
+              "current-atlas-owner",
+              "current-atlas-pro-owner",
+              "current-atlas-region",
+              "current-borealis-deadline",
+              "current-borealis-region",
+              "current-cobalt-lite-owner",
+              "current-cobalt-region",
+              "current-delta-owner",
+              "current-ember-deadline",
+              "current-ember-owner",
+              "current-ember-region",
+              "current-granite-owner",
+              "current-harbor-owner",
+              "current-harbor-region",
+              "updated-borealis-owner",
+              "updated-cobalt-deadline",
+              "updated-delta-deadline",
+              "updated-fjord-deadline",
+              "updated-fjord-owner",
+              "updated-granite-deadline",
+              "updated-granite-region",
+              "updated-harbor-deadline"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.39473684210526316,
+            "candidate_success": 1.0
+          },
+          {
+            "ci95": [
+              0.4473684210526316,
+              0.7631578947368421
+            ],
+            "baseline": "short_term",
+            "candidate": "retrieval_top3",
+            "diff_mean": 0.6052631578947368,
+            "mcnemar_p": 2.384185791015625e-07,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": true,
+            "improvements": [
+              "current-atlas-deadline",
+              "current-atlas-owner",
+              "current-atlas-pro-owner",
+              "current-atlas-region",
+              "current-borealis-deadline",
+              "current-borealis-region",
+              "current-cobalt-lite-owner",
+              "current-cobalt-region",
+              "current-delta-owner",
+              "current-ember-deadline",
+              "current-ember-owner",
+              "current-ember-region",
+              "current-granite-owner",
+              "current-harbor-owner",
+              "current-harbor-region",
+              "updated-borealis-owner",
+              "updated-cobalt-deadline",
+              "updated-delta-deadline",
+              "updated-fjord-deadline",
+              "updated-fjord-owner",
+              "updated-granite-deadline",
+              "updated-granite-region",
+              "updated-harbor-deadline"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.39473684210526316,
+            "candidate_success": 1.0
+          },
+          {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "baseline": "persistent_full",
+            "candidate": "retrieval_top3",
+            "diff_mean": 0.0,
+            "mcnemar_p": null,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": false,
+            "improvements": [],
+            "interpretation": "No statistically supported difference: the 95% CI of the paired difference includes 0.",
+            "baseline_success": 1.0,
+            "candidate_success": 1.0
+          },
+          {
+            "ci95": [
+              0.15789473684210525,
+              0.4473684210526316
+            ],
+            "baseline": "summarized_stale",
+            "candidate": "summarized_refreshed",
+            "diff_mean": 0.2894736842105263,
+            "mcnemar_p": 0.0009765625,
+            "n_matched": 38,
+            "regressions": [],
+            "significant": true,
+            "improvements": [
+              "expired-cobalt-owner",
+              "expired-delta-region",
+              "expired-fjord-region",
+              "updated-borealis-owner",
+              "updated-cobalt-deadline",
+              "updated-delta-deadline",
+              "updated-fjord-deadline",
+              "updated-fjord-owner",
+              "updated-granite-deadline",
+              "updated-granite-region",
+              "updated-harbor-deadline"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.7105263157894737,
+            "candidate_success": 1.0
+          },
+          {
+            "ci95": [
+              0.13157894736842105,
+              0.5
+            ],
+            "baseline": "short_term",
+            "candidate": "summarized_stale",
+            "diff_mean": 0.3157894736842105,
+            "mcnemar_p": 0.007537841796875,
+            "n_matched": 38,
+            "regressions": [
+              "expired-cobalt-owner",
+              "expired-delta-region",
+              "expired-fjord-region"
+            ],
+            "significant": true,
+            "improvements": [
+              "current-atlas-deadline",
+              "current-atlas-owner",
+              "current-atlas-pro-owner",
+              "current-atlas-region",
+              "current-borealis-deadline",
+              "current-borealis-region",
+              "current-cobalt-lite-owner",
+              "current-cobalt-region",
+              "current-delta-owner",
+              "current-ember-deadline",
+              "current-ember-owner",
+              "current-ember-region",
+              "current-granite-owner",
+              "current-harbor-owner",
+              "current-harbor-region"
+            ],
+            "interpretation": "Candidate success is higher; the 95% CI of the paired difference excludes 0.",
+            "baseline_success": 0.39473684210526316,
+            "candidate_success": 0.7105263157894737
+          }
+        ],
+        "facts_stored": 26
+      },
+      "config": null
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Header, Query
 from pydantic import BaseModel
@@ -39,6 +39,8 @@ def _run_summary(r: SecurityEvaluationRun) -> dict[str, Any]:
         "completed_at": r.completed_at.isoformat() if r.completed_at else None,
         "counts": (r.results or {}).get("counts"),
         "error": r.error,
+        "agent_mode": (r.conditions or {}).get("agent_mode", "mock"),
+        "agent_provider": (r.conditions or {}).get("agent_provider"),
         "successful_policy_enforcement": (m.get("successful_policy_enforcement") or {}).get("value"),
         "unsafe_side_effects": m.get("unsafe_side_effects"),
     }
@@ -89,19 +91,29 @@ async def start(
     session: SessionDep,
     ctx: WorkspaceDep,
     idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
+    agent: Annotated[
+        Literal["mock", "live", "live_naive"],
+        Query(description="'live' uses a real model; needs paid requests enabled"),
+    ] = "mock",
 ) -> Any:
     ctx.require(Role.DEVELOPER)
+    if agent != "mock":
+        ctx.require(Role.ADMIN)  # spends money
 
     async def go() -> Any:
         try:
-            run = await start_security_run(session, workspace_id=ctx.workspace_id, user_id=ctx.user.id)
+            run = await start_security_run(
+                session, workspace_id=ctx.workspace_id, user_id=ctx.user.id, agent=agent
+            )
         except EngineError as exc:
             raise api_error(exc.status_code, exc.code, str(exc)) from None
         await session.flush()
         await session.refresh(run)
         return _Out(_run_summary(run))
 
-    return await idempotent(session, ctx, scope="security:start", key=idempotency_key, body={}, fn=go)
+    return await idempotent(
+        session, ctx, scope="security:start", key=idempotency_key, body={"agent": agent}, fn=go
+    )
 
 
 @router.get("/runs")

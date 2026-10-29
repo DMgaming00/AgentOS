@@ -1,0 +1,129 @@
+{
+  "model": "claude-haiku-5-5",
+  "experiments": [
+    {
+      "label": "Haiku brownout, retries off",
+      "scenario": "provider-brownout",
+      "recovery_policy": "no_retry",
+      "experiment_id": "3697f2c4-5da4-406e-b6f3-2bdff7178581",
+      "status": "completed",
+      "planned_runs": 6,
+      "injections": 7,
+      "completion": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 6
+      },
+      "state_consistency": {
+        "value": 1.0,
+        "numerator": 30,
+        "violations": [],
+        "denominator": 30
+      },
+      "retry_amplification": {
+        "steps": 30,
+        "attempts": 14,
+        "attempts_per_step": 0.4666666666666667,
+        "extra_attempts_per_injection": -2.2857142857142856
+      },
+      "recovery_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 6
+      }
+    },
+    {
+      "label": "Haiku brownout, retries on",
+      "scenario": "provider-brownout",
+      "recovery_policy": "as_configured",
+      "experiment_id": "6bbf844f-5435-41bc-bb7e-3e9c80112888",
+      "status": "completed",
+      "planned_runs": 6,
+      "injections": 24,
+      "completion": {
+        "value": 1.0,
+        "numerator": 6,
+        "denominator": 6
+      },
+      "state_consistency": {
+        "value": 1.0,
+        "numerator": 30,
+        "violations": [],
+        "denominator": 30
+      },
+      "retry_amplification": {
+        "steps": 30,
+        "attempts": 60,
+        "attempts_per_step": 2.0,
+        "extra_attempts_per_injection": 1.25
+      },
+      "recovery_rate": {
+        "value": 1.0,
+        "numerator": 6,
+        "denominator": 6
+      }
+    },
+    {
+      "label": "Haiku worker crashes, retries on",
+      "scenario": "worker-crash-loop",
+      "recovery_policy": "as_configured",
+      "experiment_id": "3dd86bdc-7d2f-4aa7-8e31-644fc4d3900d",
+      "status": "completed",
+      "planned_runs": 6,
+      "injections": 13,
+      "completion": {
+        "value": 0.16666666666666666,
+        "numerator": 1,
+        "denominator": 6
+      },
+      "state_consistency": {
+        "value": 1.0,
+        "numerator": 30,
+        "violations": [],
+        "denominator": 30
+      },
+      "retry_amplification": {
+        "steps": 30,
+        "attempts": 51,
+        "attempts_per_step": 1.7,
+        "extra_attempts_per_injection": 1.6153846153846154
+      },
+      "recovery_rate": {
+        "value": 0.16666666666666666,
+        "numerator": 1,
+        "denominator": 6
+      }
+    },
+    {
+      "label": "Haiku worker crashes, 5 attempts",
+      "scenario": "worker-crash-loop",
+      "recovery_policy": "extra_retries",
+      "experiment_id": "8d55cb2c-f258-4930-9544-994615cdd219",
+      "status": "completed",
+      "planned_runs": 6,
+      "injections": 17,
+      "completion": {
+        "value": 0.8333333333333334,
+        "numerator": 5,
+        "denominator": 6
+      },
+      "state_consistency": {
+        "value": 1.0,
+        "numerator": 30,
+        "violations": [],
+        "denominator": 30
+      },
+      "retry_amplification": {
+        "steps": 30,
+        "attempts": 88,
+        "attempts_per_step": 2.933333333333333,
+        "extra_attempts_per_injection": 3.411764705882353
+      },
+      "recovery_rate": {
+        "value": 0.8333333333333334,
+        "numerator": 5,
+        "denominator": 6
+      }
+    }
+  ]
+}

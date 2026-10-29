@@ -91,3 +91,34 @@ async def test_same_seed_gives_identical_outcomes(seeded):
                 strategy,
                 key,
             )
+
+
+async def test_live_reader_is_refused_while_paid_requests_are_blocked(seeded):
+    async with unit_of_work() as s:
+        with pytest.raises(mx.MemoryExperimentError) as exc:
+            await mx.start_experiment(
+                s, workspace_id=seeded.workspace.id, user_id=seeded.users["admin"].id, reader="live"
+            )
+    assert exc.value.code == "paid_providers_blocked"
+
+
+async def test_live_reader_path_uses_its_own_agent_and_labels_the_results(seeded, monkeypatch):
+    # a scripted stand-in for the real model (no network, no cost) exercises the live code path end to end
+    monkeypatch.setattr(mx, "_require_live_allowed", lambda: None)
+    monkeypatch.setattr(mx, "_live_spec", lambda: ("mock", "mock-memory_qa", {"scenario": "memory_qa"}))
+    async with unit_of_work() as s:
+        exp = await mx.start_experiment(
+            s, workspace_id=seeded.workspace.id, user_id=seeded.users["admin"].id, reader="live"
+        )
+        exp_id = exp.id
+
+    async def done():
+        async with unit_of_work() as s:
+            e = await s.get(MemoryExperiment, exp_id)
+            return e if e.status != "running" else None
+
+    async with running_workers(2, concurrency=4):
+        exp = await wait_for(done, timeout=240, interval=1.0)
+    assert exp.status == "completed", exp.error
+    assert exp.config["reader"] == "live" and exp.config["offline"] is False
+    assert any("real model" in c for c in exp.results["caveats"])

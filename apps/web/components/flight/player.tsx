@@ -128,7 +128,7 @@ export function FlightPlayer({ rec }: { rec: FlightRecording }) {
             <Badge tone={rec.integrity.contiguous ? "success" : "danger"} title={`sha256 ${rec.integrity.sha256}`}>
               {rec.integrity.contiguous ? "event log contiguous" : "GAPS in event log"}
             </Badge>
-            · estimated cost {formatCost(rec.run.cost_spent_usd)} (simulated pricing for mock/fixture/recorded providers)
+            · estimated cost {formatCost(rec.run.cost_spent_usd)} (simulated pricing for mock/fixture/recorded providers; price-table estimate for real ones)
             · <Link className="text-primary hover:underline" href={`/runs/${rec.run.id}`}>live run view</Link>
           </p>
         </div>

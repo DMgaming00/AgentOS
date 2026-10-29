@@ -1,0 +1,181 @@
+{
+  "model": "claude-haiku-5-5",
+  "experiments": [
+    {
+      "label": "Haiku brownout, retries off",
+      "scenario": "provider-brownout",
+      "recovery_policy": "no_retry",
+      "experiment_id": "f4c42a7c-16d2-4aca-be20-2b1884c4d612",
+      "status": "completed",
+      "planned_runs": 20,
+      "injections": 28,
+      "completion": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 20
+      },
+      "state_consistency": {
+        "value": 1.0,
+        "numerator": 100,
+        "violations": [],
+        "denominator": 100
+      },
+      "retry_amplification": {
+        "steps": 80,
+        "attempts": 37,
+        "attempts_per_step": 0.4625,
+        "extra_attempts_per_injection": -1.5357142857142858
+      },
+      "recovery_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 20
+      }
+    },
+    {
+      "label": "Haiku brownout, retries on",
+      "scenario": "provider-brownout",
+      "recovery_policy": "as_configured",
+      "experiment_id": "03355180-245f-4acd-b0f0-9b7caa184706",
+      "status": "completed",
+      "planned_runs": 20,
+      "injections": 67,
+      "completion": {
+        "value": 1.0,
+        "numerator": 20,
+        "denominator": 20
+      },
+      "state_consistency": {
+        "value": 1.0,
+        "numerator": 100,
+        "violations": [],
+        "denominator": 100
+      },
+      "retry_amplification": {
+        "steps": 80,
+        "attempts": 147,
+        "attempts_per_step": 1.8375,
+        "extra_attempts_per_injection": 1.0
+      },
+      "recovery_rate": {
+        "value": 1.0,
+        "numerator": 20,
+        "denominator": 20
+      }
+    },
+    {
+      "label": "Haiku worker crashes, retries on",
+      "scenario": "worker-crash-loop",
+      "recovery_policy": "as_configured",
+      "experiment_id": "3b152be6-a35b-4893-a2f6-026fb278e023",
+      "status": "completed",
+      "planned_runs": 20,
+      "injections": 36,
+      "completion": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 20
+      },
+      "state_consistency": {
+        "value": 0.94,
+        "numerator": 94,
+        "violations": [
+          {
+            "check": "terminal_run_has_terminal_steps",
+            "run_id": "4c5e337b-3c71-42db-af20-84f395464e91",
+            "case_index": 4
+          },
+          {
+            "check": "terminal_run_has_terminal_steps",
+            "run_id": "54b773dd-39df-4b46-a8f7-073c0e3b9411",
+            "case_index": 16
+          },
+          {
+            "check": "terminal_run_has_terminal_steps",
+            "run_id": "9232046f-83db-4213-8a84-ff0cb88d47dd",
+            "case_index": 3
+          },
+          {
+            "check": "terminal_run_has_terminal_steps",
+            "run_id": "7e25c44b-c35d-4247-8842-ce43d6055ad4",
+            "case_index": 9
+          },
+          {
+            "check": "terminal_run_has_terminal_steps",
+            "run_id": "8dbf69c1-271f-4a97-b4c6-653c8b9df9f7",
+            "case_index": 1
+          },
+          {
+            "check": "terminal_run_has_terminal_steps",
+            "run_id": "5a890dc0-2f30-464d-8f5e-250e8d160393",
+            "case_index": 15
+          }
+        ],
+        "denominator": 100
+      },
+      "retry_amplification": {
+        "steps": 80,
+        "attempts": 155,
+        "attempts_per_step": 1.9375,
+        "extra_attempts_per_injection": 2.0833333333333335
+      },
+      "recovery_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 17
+      }
+    },
+    {
+      "label": "Haiku worker crashes, 5 attempts",
+      "scenario": "worker-crash-loop",
+      "recovery_policy": "extra_retries",
+      "experiment_id": "83dfe48d-5529-45bc-8cef-1a4c0c08b612",
+      "status": "completed",
+      "planned_runs": 20,
+      "injections": 20,
+      "completion": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 20
+      },
+      "state_consistency": {
+        "value": 0.96,
+        "numerator": 96,
+        "violations": [
+          {
+            "check": "terminal_run_has_terminal_steps",
+            "run_id": "9ddfb82f-3837-461c-9426-0d26eaf85a73",
+            "case_index": 10
+          },
+          {
+            "check": "terminal_run_has_terminal_steps",
+            "run_id": "9c4088fc-bad5-47f9-a276-0940ce2c54de",
+            "case_index": 7
+          },
+          {
+            "check": "terminal_run_has_terminal_steps",
+            "run_id": "93102c93-fba4-4a04-9cb4-f60a84147959",
+            "case_index": 9
+          },
+          {
+            "check": "terminal_run_has_terminal_steps",
+            "run_id": "979d8948-f6d6-4c3c-9d89-830a222a4de0",
+            "case_index": 6
+          }
+        ],
+        "denominator": 100
+      },
+      "retry_amplification": {
+        "steps": 80,
+        "attempts": 96,
+        "attempts_per_step": 1.2,
+        "extra_attempts_per_injection": 0.8
+      },
+      "recovery_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 14
+      }
+    }
+  ]
+}

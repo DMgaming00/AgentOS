@@ -1,8 +1,9 @@
 # Enabling real Claude (later, deliberately)
 
 Everything in AgentOS runs offline by default. **Do not follow this guide until you want to spend
-money.** Nothing here has been executed by the project's authors: no real provider call was ever made
-during development, and the live smoke tests have never been run against a live API.
+money.** Until 2026-10-28 no real provider call had ever been made. On that date the Anthropic adapter was run once
+against `claude-haiku-5-5` (97 calls, about $0.055; see the README's Real-model results). The OpenAI adapter has
+never been run live, and the Anthropic one has had very little live use.
 
 ## What protects you
 
@@ -84,9 +85,12 @@ The header banner shows `Offline: paid providers blocked` or `LIVE: paid provide
   `AGENTOS_MAX_REAL_API_SPEND_USD`. It stops a model call *before* it is made when recorded spend plus in-flight reservations
   would exceed it; it is a second, independent guard (the spend cap above is global, the budget is per workspace or agent and
   per day or month). Amounts remain estimates.
-* **Stays offline by design:** the Agent Arena refuses any contender that is not an offline provider (`offline_only`), Memory
-  Lab experiments and the Security Center's injection tests use scripted mock models, and the Chaos Lab injects faults around
-  mock/fixture calls. None of them will spend money even in live mode.
+* **Per-lab real modes (all opt-in, admin only, refused unless the four paid-mode settings are on, counted against the
+  spend cap):** Security Center "Run with real model" (`POST /security/runs?agent=live`, or `agent=live_naive` for a red-team prompt that tells the model to carry out the documents' instructions), Memory Lab "Run with real
+  reader" (`POST /memory/experiments?reader=live`), Agent Arena runs with real contenders (`allow_live: true`, scripted by
+  `scripts/real_haiku_arena.py`), and the Chaos Lab, which injects faults around whatever provider the workflow uses
+  (`scripts/real_haiku_chaos.py`). Defaults stay offline, results are labeled "real model", and the automated test suite
+  forces offline mode whatever your `.env` says, so a live `.env` cannot make a test spend money.
 * **Deterministic checks apply to Claude output too:** Claude-proposed Autopilot candidates go through the same policy
   validation, paired held-out experiments, promotion gates (including the Security Center evaluation), canary stages and
   rollback rules as rule-generated ones. A higher model-written score never promotes anything.

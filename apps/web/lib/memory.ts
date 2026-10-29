@@ -64,7 +64,8 @@ export function useMemoryMutations() {
         unwrap(await api.POST("/api/v1/memory/search", { body: { query: v.query, namespace: v.namespace || null, limit: 5 } })) as unknown as { items: MemoryHit[]; notice: string; method: string },
     }),
     startExperiment: useMutation({
-      mutationFn: async () => unwrap(await api.POST("/api/v1/memory/experiments", { params: { header: { "Idempotency-Key": idempotencyKey() } } })) as unknown as MemoryExperiment,
+      mutationFn: async (reader: "mock" | "live" = "mock") =>
+        unwrap(await api.POST("/api/v1/memory/experiments", { params: { header: { "Idempotency-Key": idempotencyKey() }, query: { reader } } })) as unknown as MemoryExperiment,
       onSuccess: done,
     }),
   };

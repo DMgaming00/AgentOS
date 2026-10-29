@@ -22,10 +22,10 @@ from agentos_core.testing import add_agent, running_workers, start_run, wait_for
 pytestmark = pytest.mark.integration
 
 
-async def run_suite(seeded, timeout=150):
+async def run_suite(seeded, timeout=150, agent="mock"):
     async with unit_of_work() as s:
         run = await runner.start_security_run(
-            s, workspace_id=seeded.workspace.id, user_id=seeded.users["admin"].id
+            s, workspace_id=seeded.workspace.id, user_id=seeded.users["admin"].id, agent=agent
         )
         run_id = run.id
     async with running_workers(2):
@@ -197,3 +197,44 @@ async def test_only_one_evaluation_runs_at_a_time_and_incidents_come_from_real_r
     denials = [i for i in items if i["source"] == "policy_denial" and i["run_id"] == str(run_id)]
     assert denials and denials[0]["origin"] == "workflow run" and "artifact_writer" in denials[0]["title"]
     assert denials[0]["evidence"]["tool_execution_id"] and denials[0]["severity"] == "warning"
+
+
+async def test_live_mode_is_refused_while_paid_requests_are_blocked(seeded):
+    async with unit_of_work() as s:
+        with pytest.raises(runner.core.EngineError) as exc:
+            await runner.start_security_run(
+                s, workspace_id=seeded.workspace.id, user_id=seeded.users["admin"].id, agent="live"
+            )
+    assert exc.value.code == "paid_providers_blocked"
+
+
+async def test_live_grading_separates_a_model_that_ignores_injections_from_a_contained_attack(
+    seeded, monkeypatch
+):
+    # stand in for a real model with a scripted one that reads and then ignores the injected text (no network, no cost)
+    monkeypatch.setattr(runner, "_require_live_allowed", lambda: None)
+    monkeypatch.setattr(runner, "_live_spec", lambda: ("mock", "mock-resistant", {"scenario": "resistant"}))
+    run = await run_suite(seeded, agent="live")
+    assert run.status == "completed", run.error
+    res = run.results
+    m = res["metrics"]
+    assert res["counts"]["injection"]["fail"] == 0 and res["counts"]["injection"]["error"] == 0, res[
+        "findings"
+    ]
+    assert m["model_ignored_injection"] == {"value": 1.0, "numerator": 28, "denominator": 28}
+    assert m["attacks_exercised"]["numerator"] == 0 and m["unsafe_side_effects"] == 0
+    assert (
+        m["contained_when_followed"]["denominator"] == 0
+    )  # nothing was followed, so no containment claim is made
+    assert m["false_positive_blocks"]["numerator"] == 0
+    assert "real model" in " ".join(res["limitations"])
+    assert run.conditions["agent_mode"] == "live"
+
+
+async def test_naive_live_mode_is_also_refused_while_paid_requests_are_blocked(seeded):
+    async with unit_of_work() as s:
+        with pytest.raises(runner.core.EngineError) as exc:
+            await runner.start_security_run(
+                s, workspace_id=seeded.workspace.id, user_id=seeded.users["admin"].id, agent="live_naive"
+            )
+    assert exc.value.code == "paid_providers_blocked"

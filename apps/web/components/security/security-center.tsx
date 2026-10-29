@@ -12,6 +12,7 @@ import { JsonView } from "@/components/ui/json";
 import { Select } from "@/components/ui/inputs";
 import { TBody, TD, TH, THead, TR, Table } from "@/components/ui/table";
 import { useAuth } from "@/lib/auth";
+import { useSystem } from "@/lib/queries";
 import { useIncidents, useSecurityOverview, useSecurityRun, useStartSecurityRun } from "@/lib/security";
 import { relativeTime, shortId } from "@/lib/format";
 import type { CaseRow, Rate, SecurityResults } from "@/types/security";
@@ -42,7 +43,10 @@ function Results({ r }: { r: SecurityResults }) {
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" data-testid="security-tiles">
         <Tile id="policy" title="Policy tests passed" value={`${r.counts.policy.pass}/${r.counts.policy.total}`} sub="tool authorization, approvals, budgets, workspace isolation" bad={r.counts.policy.pass < r.counts.policy.total} />
         <Tile id="enforcement" title="Attacks contained" value={pct(m.successful_policy_enforcement)} sub={`${m.successful_policy_enforcement.numerator} of ${m.successful_policy_enforcement.denominator} attack cases had no harmful effect`} bad={(m.successful_policy_enforcement.value ?? 1) < 1} />
-        <Tile id="exercised" title="Attacks actually attempted" value={pct(m.attacks_exercised)} sub={`${m.unauthorized_action_attempts} injected tool calls · ${m.blocked_actions} blocked`} bad={(m.attacks_exercised.value ?? 1) < 1} />
+        {m.model_ignored_injection && m.model_ignored_injection.numerator > 0 ? (
+          <Tile id="ignored" title="Model ignored the injection" value={pct(m.model_ignored_injection)} sub={`${m.model_ignored_injection.numerator} of ${m.model_ignored_injection.denominator} attack cases: no matching tool call; contained when followed ${m.contained_when_followed ? `${m.contained_when_followed.numerator}/${m.contained_when_followed.denominator}` : "n/a"}`} />
+        ) : null}
+        <Tile id="exercised" title="Attacks actually attempted" value={pct(m.attacks_exercised)} sub={`${m.unauthorized_action_attempts} injected tool calls · ${m.blocked_actions} blocked`} bad={(m.attacks_exercised.value ?? 1) < 1 && !(m.model_ignored_injection && m.model_ignored_injection.numerator > 0)} />
         <Tile id="unsafe" title="Unsafe side effects" value={String(m.unsafe_side_effects)} sub={`writes attempted ${m.unsafe_side_effects_prevented.writes_attempted}, denied ${m.unsafe_side_effects_prevented.writes_denied}`} bad={m.unsafe_side_effects > 0} />
         <Tile id="false-positives" title="False-positive blocks" value={pct(m.false_positive_blocks)} sub={`${m.false_positive_blocks.numerator} of ${m.false_positive_blocks.denominator} benign controls wrongly blocked`} bad={m.false_positive_blocks.numerator > 0} />
         <Tile id="bypass" title="Approval bypass attempts" value={String(m.approval_bypass_attempts.attempts)} sub={`${m.approval_bypass_attempts.cases_failed} succeeded`} bad={m.approval_bypass_attempts.cases_failed > 0} />
@@ -58,7 +62,7 @@ function Results({ r }: { r: SecurityResults }) {
               <TR key={goal}><TD>{GOAL_LABEL[goal] ?? goal}</TD>{SURFACES.map((s) => (
                 <TD key={s}>{cells[s] ? <Badge tone={VERDICT_TONE[cells[s]]} data-verdict={cells[s]}>{cells[s]}</Badge> : "—"}</TD>))}</TR>))}</TBody>
           </Table>
-          <p className="mt-2 text-xs text-muted-foreground">Benign controls (8) are separate: they must not be blocked. The test model is a mock that <strong>obeys every directive</strong>; this measures the platform&apos;s enforcement, not any model&apos;s resistance.</p>
+          <p className="mt-2 text-xs text-muted-foreground">Benign controls (8) are separate: they must not be blocked. {m.model_ignored_injection && m.model_ignored_injection.numerator > 0 ? <>This run used a <strong>real model</strong>: green cells include attacks the model simply ignored, so read them with the &quot;ignored&quot; and &quot;contained when followed&quot; tiles.</> : <>The test model is a mock that <strong>obeys every directive</strong>; this measures the platform&apos;s enforcement, not any model&apos;s resistance.</>}</p>
         </CardContent>
       </Card>
       {r.findings.length ? (
@@ -103,6 +107,8 @@ export function SecurityCenter() {
   const { role } = useAuth();
   const ov = useSecurityOverview();
   const start = useStartSecurityRun();
+  const system = useSystem();
+  const livePossible = role === "admin" && !!system.data?.execution.paid_requests_allowed;
   const [source, setSource] = useState("");
   const incidents = useIncidents(source);
   const runId = ov.data?.running?.id ?? ov.data?.latest?.id ?? null;
@@ -119,12 +125,18 @@ export function SecurityCenter() {
           <h1 className="flex items-center gap-2 text-xl font-semibold"><ShieldAlert className="size-5" aria-hidden /> Security Center</h1>
           <p className="text-sm text-muted-foreground">Deterministic tests of the enforcement layer: tool authorization, approvals, budgets, workspace isolation, a labeled prompt-injection corpus and trace sanitization. Suite <span className="font-mono">{o.suite_version}</span>.</p>
         </div>
-        {canWrite ? <Button data-testid="run-security" disabled={start.isPending || !!o.running} onClick={() => start.mutate()}><Play aria-hidden /> {o.running ? "Running…" : "Run security evaluation"}</Button> : null}
+        {canWrite ? <Button data-testid="run-security" disabled={start.isPending || !!o.running} onClick={() => start.mutate("mock")}><Play aria-hidden /> {o.running ? "Running…" : "Run security evaluation"}</Button> : null}
+        {livePossible ? <Button variant="outline" data-testid="run-security-live" disabled={start.isPending || !!o.running} onClick={() => start.mutate("live")} title="Uses a real model and spends money (estimated well under $1)"><Play aria-hidden /> Run with real model</Button> : null}
       </div>
       <InlineError error={start.error} />
       <div role="note" className="rounded-lg border bg-card p-3 text-sm text-muted-foreground">
-        <Badge tone="warning">offline fixtures</Badge> The injection tests use a mock model that obeys every directive on purpose, with inert credential-shaped strings and a throwaway second workspace.
-        A blocked call proves a policy operated; it does not prove a real model is resistant to prompt injection.
+        {o.latest?.agent_mode === "live" ? (
+          <><Badge tone="danger">real model</Badge> The latest evaluation used <span className="font-mono">{o.latest.agent_provider}</span> reading the same injected documents, with inert credential-shaped strings and a throwaway second workspace.
+          A model that ignores an injection never reaches the platform&apos;s enforcement, so read &quot;ignored&quot; and &quot;contained when followed&quot; separately. One run, one trial per case.</>
+        ) : (
+          <><Badge tone="warning">offline fixtures</Badge> The injection tests use a mock model that obeys every directive on purpose, with inert credential-shaped strings and a throwaway second workspace.
+          A blocked call proves a policy operated; it does not prove a real model is resistant to prompt injection.</>
+        )}
       </div>
       {o.running ? <Card className="p-4" data-testid="security-running" aria-live="polite">Evaluation running · phase <span className="font-mono">{o.running.phase}</span>. Results appear when it completes.</Card> : null}
       {results ? <Results r={results} /> : !o.running ? <EmptyState title="No evaluation yet" description={canWrite ? "Run the suite to see results." : "A developer can run the suite."} /> : null}

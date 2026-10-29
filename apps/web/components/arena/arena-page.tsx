@@ -46,7 +46,7 @@ function ScoreBar({ score, interval }: { score: number | null; interval: [number
   );
 }
 
-function Board({ split, board, onPick, picked }: { split: Split; board: Leaderboard; onPick: (r: LeaderRow) => void; picked: string | null }) {
+function Board({ split, board, onPick, picked, live }: { split: Split; board: Leaderboard; onPick: (r: LeaderRow) => void; picked: string | null; live: boolean }) {
   return (
     <div className="flex flex-col gap-3">
       <Table data-testid={`leaderboard-${split}`}>
@@ -57,7 +57,7 @@ function Board({ split, board, onPick, picked }: { split: Split; board: Leaderbo
             <TD><button className="font-medium text-primary hover:underline" onClick={() => onPick(r)}>{r.agent}</button><div className="font-mono text-[11px] text-muted-foreground">v{r.version} · {r.config_hash}</div></TD>
             <TD><ScoreBar score={r.overall.score} interval={r.overall.ci95} /></TD>
             {FAMILIES.map((f) => <TD key={f.id} className="text-xs">{pct(r.families[f.id]?.rate)} <span className="text-muted-foreground">({r.families[f.id]?.passed}/{r.families[f.id]?.n})</span></TD>)}
-            <TD className="text-xs">{r.cost_usd == null ? "n/a" : `$${r.cost_usd.toFixed(4)}`}<div className="text-[11px] text-muted-foreground">simulated</div></TD>
+            <TD className="text-xs">{r.cost_usd == null ? "n/a" : `$${r.cost_usd.toFixed(4)}`}<div className="text-[11px] text-muted-foreground">{live ? "price-table estimate" : "simulated"}</div></TD>
             <TD className="text-xs">{r.latency_ms.p50 == null ? "n/a" : `${Math.round(r.latency_ms.p50)} ms`}</TD>
             <TD className="text-xs">{Object.entries(r.failure_breakdown)[0]?.join(" × ") ?? "—"}</TD>
           </TR>))}</TBody>
@@ -112,6 +112,7 @@ function RunView({ id }: { id: string }) {
         {canWrite && a.stage === "selection_complete" ? <Button data-testid="final-test" disabled={final.isPending} onClick={() => final.mutate()}><Lock aria-hidden /> Score the test split (once)</Button> : null}
       </div>
       <InlineError error={final.error} />
+      {a.config.offline_only === false ? <p className="text-xs text-muted-foreground" data-testid="arena-live-note"><Badge tone="danger">real model</Badge> This run used real-provider contenders, one trial per case; real models are nondeterministic, so small gaps are noise and ties are expected. Costs are price-table estimates.</p> : null}
       {running ? <Card className="p-3 text-sm" aria-live="polite">Evaluations are running on the workers. Rankings appear when a split is complete.</Card> : null}
       {a.stage === "selection_complete" ? (
         <p className="text-xs text-muted-foreground" data-testid="test-locked"><Lock className="mr-1 inline size-3" aria-hidden />The test split has not been scored. Choose using development and validation; scoring test is a single, irreversible step for this arena run.</p>
@@ -123,7 +124,7 @@ function RunView({ id }: { id: string }) {
           </TabsList>
           {(["development", "validation", "test"] as Split[]).map((s) => a.leaderboards[s] ? (
             <TabsContent key={s} value={s}>
-              <Board split={s} board={a.leaderboards[s]!} picked={picked?.split === s ? picked.versionId : null} onPick={(r) => setPicked({ split: s, versionId: r.agent_version_id })} />
+              <Board live={a.config.offline_only === false} split={s} board={a.leaderboards[s]!} picked={picked?.split === s ? picked.versionId : null} onPick={(r) => setPicked({ split: s, versionId: r.agent_version_id })} />
               {picked?.split === s ? <div className="mt-3"><Failures arena={a} split={s} versionId={picked.versionId} role={role} /></div> : null}
             </TabsContent>) : null)}
         </Tabs>
@@ -168,7 +169,7 @@ export function ArenaPage() {
         <p className="text-sm text-muted-foreground">Compare agent configurations on {c.total_cases} labeled cases in three task families, with development / validation / test splits, pinned dataset hashes and rankings that account for statistical ties.</p>
       </div>
       <div role="note" className="rounded-lg border bg-card p-3 text-sm text-muted-foreground">
-        <Badge tone="warning">offline · scripted contenders</Badge> The contenders are deterministic scripted policies that differ only in prompt, tools and step limit. The Arena measures the evaluation machinery and the effect of configuration; <strong>it says nothing about how any real model would score</strong>. No paid model is called, and paid providers are refused.
+        <Badge tone="warning">offline · scripted contenders</Badge> The sample contenders are deterministic scripted policies that differ only in prompt, tools and step limit, and <strong>it says nothing about how any real model would score</strong>. Runs that include real-provider contenders (admin only, API, when paid requests are enabled) are labeled &quot;real model&quot; in the run view.
       </div>
       <Card>
         <CardHeader className="flex-row items-center justify-between">

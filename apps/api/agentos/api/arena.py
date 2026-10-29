@@ -44,6 +44,10 @@ class _Out(BaseModel):
 class CreateArena(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     agent_version_ids: list[uuid.UUID] = Field(min_length=2, max_length=12)
+    allow_live: bool = Field(
+        default=False,
+        description="admin only; permits real-provider contenders when paid requests are enabled",
+    )
 
 
 async def _arena(session: SessionDep, ctx: WorkspaceDep, arena_id: uuid.UUID) -> ArenaRun:
@@ -86,6 +90,7 @@ async def contenders(session: SessionDep, ctx: WorkspaceDep) -> dict[str, Any]:
                 "max_steps": a.max_steps,
                 "agent_version_id": str(a.active_version_id) if a.active_version_id else None,
                 "eligible": a.provider in OFFLINE_PROVIDERS and a.active_version_id is not None,
+                "live_eligible": a.provider not in OFFLINE_PROVIDERS and a.active_version_id is not None,
                 "arena_contender": a.name.startswith("Arena ·"),
             }
             for a in agents
@@ -117,6 +122,8 @@ async def create(
     body: CreateArena, session: SessionDep, ctx: WorkspaceDep, idempotency_key: IdemKey = None
 ) -> Any:
     ctx.require(Role.DEVELOPER)
+    if body.allow_live:
+        ctx.require(Role.ADMIN)  # live contenders spend money
 
     async def go() -> _Out:
         try:
@@ -126,6 +133,7 @@ async def create(
                 user_id=ctx.user.id,
                 name=body.name,
                 agent_version_ids=body.agent_version_ids,
+                allow_live=body.allow_live,
             )
         except EvaluationError as exc:
             raise api_error(exc.status, exc.code, str(exc)) from None

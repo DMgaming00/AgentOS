@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Header, Query
 from pydantic import BaseModel, Field
@@ -290,12 +290,32 @@ async def list_experiments(
 
 
 @router.post("/experiments", status_code=201, dependencies=[rate_limited("critical")])
-async def start_experiment(session: SessionDep, ctx: WorkspaceDep, idempotency_key: IdemKey = None) -> Any:
+async def start_experiment(
+    session: SessionDep,
+    ctx: WorkspaceDep,
+    idempotency_key: IdemKey = None,
+    reader: Annotated[
+        Literal["mock", "live"], Query(description="'live' uses a real model; admin only")
+    ] = "mock",
+    seed: Annotated[int, Query(ge=0, le=10_000)] = 7,
+    updated: Annotated[int, Query(ge=0, le=20)] = 8,
+    expired: Annotated[int, Query(ge=0, le=10)] = 3,
+) -> Any:
     ctx.require(Role.DEVELOPER)
+    if reader == "live":
+        ctx.require(Role.ADMIN)  # spends money
 
     async def go() -> _Out:
         try:
-            e = await mx.start_experiment(session, workspace_id=ctx.workspace_id, user_id=ctx.user.id)
+            e = await mx.start_experiment(
+                session,
+                workspace_id=ctx.workspace_id,
+                user_id=ctx.user.id,
+                seed=seed,
+                updated=updated,
+                expired=expired,
+                reader=reader,
+            )
         except mx.MemoryExperimentError as exc:
             raise api_error(exc.status, exc.code, str(exc)) from None
         except store.MemoryStoreError as exc:
@@ -303,7 +323,14 @@ async def start_experiment(session: SessionDep, ctx: WorkspaceDep, idempotency_k
         await session.flush()
         return _Out(_experiment(e, detail=False))
 
-    return await idempotent(session, ctx, scope="memory:experiment", key=idempotency_key, body={}, fn=go)
+    return await idempotent(
+        session,
+        ctx,
+        scope="memory:experiment",
+        key=idempotency_key,
+        body={"reader": reader, "seed": seed, "updated": updated, "expired": expired},
+        fn=go,
+    )
 
 
 @router.get("/experiments/{experiment_id}")

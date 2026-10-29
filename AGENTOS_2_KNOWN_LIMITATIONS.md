@@ -151,3 +151,32 @@ Updated each phase. Items are things that are not done, not verified, or weaker 
 * **Rollback rules** use alpha 0.05 one-sided tests; the stated false-rollback rates come from seeded synthetic arms, not real workloads.
 * **Demo timing varies**: demos B and E depend on fault timing, the clock and run ids; A, C and D are deterministic on the mock provider.
 * The platform has not been load-tested, security-reviewed by a third party or run against any real provider; it is not production-ready.
+
+## Real-model modes (added 2026-10-29)
+
+* The Security Center, Memory Lab and Arena gained opt-in real-model modes, and the Chaos Lab was run against real calls. Only
+  Claude Haiku 5.5 was used, once, at small n (see the README's Real-model results); no other model or provider was run.
+* In real-model security runs the model sees only its advertised tools, so attacks that need an unlisted tool cannot be
+  expressed. Haiku ignored all 28 injections, so the platform's containment of a *followed* real-model attack was not
+  exercised; that evidence remains the scripted gullible model's.
+* Real-model Arena and Memory Lab results are single runs (one trial per case) and nondeterministic; ties and gaps inside the
+  intervals are not evidence.
+* Real-model chaos approvals are decided by a simulated reviewer, and the crash-loop result depends on the configured retry
+  budget (3 attempts: 1/6; 5 attempts: 5/6).
+* Cost figures for real calls are price-table estimates, not invoices; the app's spend cap is an application-level guard.
+
+## Real-model round 2 (2026-10-29)
+
+* The `hard-ops` set is small (150 cases) and Haiku with a calculator scores about 93% on it unconstrained, so the repair
+  results are for a deliberately constrained baseline (a 3-step budget), not evidence that Autopilot improves a strong agent.
+* The held-out test result (47.5% -> 89.0%, paired CI [+0.29, +0.54]) was still marked not eligible by the strict per-case
+  regression gate (2 regressed cases); nothing was promoted, and the gate was not changed to make it pass.
+* Real-model security: with a naive prompt Haiku followed only 4 of 112 injections across 4 runs, so containment of a followed
+  real-model attack rests on 4 observations. Two grading rules were wrong for real models and were fixed (own tool mistakes are
+  not false positives; a flood the model did not carry out is not a failure); the earlier run's verdicts were produced by the old rules.
+* Chaos at n=20: the crash-loop arms were cancelled by the 10-minute experiment cap (0/20 both), a capacity and lease-timing limit
+  of 20 runs on 2 workers, not a retry-budget measurement. A first n=20 run silently used scripted agents (the spend ledger did
+  not move) and was discarded.
+* An optimizer candidate that switched the agent to Sonnet was evaluated by default and cost about $5; candidates that change the
+  model should be excluded from unattended real-model runs.
+* Costs are price-table estimates, and the FinOps total mixes simulated and real calls in a database used for demos.

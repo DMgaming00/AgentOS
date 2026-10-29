@@ -2825,6 +2825,12 @@ export interface components {
         CreateArena: {
             /** Agent Version Ids */
             agent_version_ids: string[];
+            /**
+             * Allow Live
+             * @description admin only; permits real-provider contenders when paid requests are enabled
+             * @default false
+             */
+            allow_live: boolean;
             /** Name */
             name: string;
         };
@@ -7387,7 +7393,13 @@ export interface operations {
     };
     start_experiment_api_v1_memory_experiments_post: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description 'live' uses a real model; admin only */
+                reader?: "mock" | "live";
+                seed?: number;
+                updated?: number;
+                expired?: number;
+            };
             header?: {
                 "Idempotency-Key"?: string | null;
                 "X-Workspace-Id"?: string | null;
@@ -9032,7 +9044,10 @@ export interface operations {
     };
     start_api_v1_security_runs_post: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description 'live' uses a real model; needs paid requests enabled */
+                agent?: "mock" | "live" | "live_naive";
+            };
             header?: {
                 "Idempotency-Key"?: string | null;
                 "X-Workspace-Id"?: string | null;

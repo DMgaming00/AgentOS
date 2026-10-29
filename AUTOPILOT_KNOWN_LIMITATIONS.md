@@ -5,13 +5,12 @@ lists what is not done, not verified, or weaker than it may look.
 
 ## Not verified
 
-* **No real model was called for Autopilot.** The Diagnosis Agent and Optimizer were run
-  only against the deterministic mock (`mock-diagnosis`, `mock-optimizer`), and so was every
-  evaluated agent (`mock-extractor`). The Anthropic and OpenAI paths reuse the existing
-  adapters, which are tested against the official SDKs with a mocked HTTP transport, not
-  against the live APIs. The opt-in smoke test `apps/worker/tests/test_live_autopilot.py`
-  was **not run against a real provider** (no credentials here). Its body was exercised once
-  with the mock provider substituted, which checks the test, not the provider.
+* **Autopilot ran on a real model only once, on a small scale.** On 2026-10-28 the Diagnosis Agent, the Optimizer
+  and an extraction agent ran on Claude Haiku 5.5 (1 trial, 9 to 16 cases; see the README's Real-model results and
+  `benchmarks/results/real_haiku/autopilot.json`). It produced a hypothesis and 3 candidates (2 rejected by policy)
+  and the one evaluated candidate was worse and refused. Every other Autopilot result, including all benchmarks, is
+  from the deterministic mock (`mock-diagnosis`, `mock-optimizer`, `mock-extractor`). OpenAI was never run, and the
+  opt-in `test_live_autopilot.py` has not been run (the Haiku run used `scripts/real_haiku_autopilot.py` instead).
 * **The demo results come from scripted agents.** The quality improvements in the demos and
   benchmarks are real measurements of real runs, but the agent's behavior is a scripted
   function of its config. They show that the pipeline measures, gates and rolls back

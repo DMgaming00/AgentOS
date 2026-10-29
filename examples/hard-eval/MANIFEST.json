@@ -1,0 +1,72 @@
+{
+  "name": "hard-ops",
+  "version": 2,
+  "seed": 20261029,
+  "cases": 150,
+  "datasets": {
+    "development": {
+      "cases": 41,
+      "sha256": "8cd2a0a0cfff4654db3a082264ad7a522a624ac04d47003ddd56274db522c818",
+      "kinds": {
+        "lookup": 2,
+        "compute_cost": 10,
+        "multi_hop": 6,
+        "conflict_latest": 4,
+        "ratio": 2,
+        "unanswerable": 3,
+        "buried": 2,
+        "aggregate_count": 2,
+        "aggregate_sum": 2,
+        "cheapest_blend": 8
+      }
+    },
+    "validation": {
+      "cases": 50,
+      "sha256": "f1c4baa69bac671dc78887cb1e3d5980fddbfa05ab85c65bbe937283505b0cb3",
+      "kinds": {
+        "lookup": 3,
+        "compute_cost": 12,
+        "multi_hop": 7,
+        "conflict_latest": 4,
+        "ratio": 3,
+        "unanswerable": 4,
+        "buried": 2,
+        "aggregate_count": 3,
+        "aggregate_sum": 2,
+        "cheapest_blend": 10
+      }
+    },
+    "test": {
+      "cases": 59,
+      "sha256": "52033388580c467b5ace4fd3671ca5bd8ac347305319fc4006d8cf4a3587cb45",
+      "kinds": {
+        "lookup": 3,
+        "compute_cost": 14,
+        "multi_hop": 9,
+        "conflict_latest": 6,
+        "ratio": 3,
+        "unanswerable": 5,
+        "buried": 2,
+        "aggregate_count": 3,
+        "aggregate_sum": 2,
+        "cheapest_blend": 12
+      }
+    }
+  },
+  "documents": {
+    "hard-aurora.md": "41e6e9ff8ada9f36136d9d0ce23e89539b835eee3de885464d5399935465bf3c",
+    "hard-brio.md": "e1932cc9eabfb2ea32e2308cbc1ef99b79547f661aa41b05747574c0dc91ff07",
+    "hard-cedar.md": "f1fcd0a4a025a1c24190832538e5289e3b562c069a323e368b719e0d9bbd5417",
+    "hard-dune.md": "f924f59de0d9787ba5c42942f308de08ec333919dac1b1cdc4e646296d62f534",
+    "hard-ember.md": "842f5b9a60d958a8c731964fdeaa95e30323210c409a6004356cd7ed8cab8c95",
+    "hard-fjord.md": "13e20c9bff1a0a6e22dfb109abc2d8834efe487b073d1652b7a31333575417a2",
+    "hard-granite.md": "30f7f7ea5579f8d045b790e54dc5d96d1a5e73fceec01d4895d6c161c50ee91d",
+    "hard-halcyon.md": "2a8b9cbe104e63f6df4d371ee17c87187855025ad3f616558890ee20ed0ea037",
+    "hard-iris.md": "d8a9f9a532b0a3ca898a186609e6f03f6ed62852edac0da040c29f05d2d550b7",
+    "hard-juniper.md": "9ec3ded404205b41ce1202d47a8705c731c641a6807fd4eb4efef1bcea8ddf21",
+    "hard-kestrel.md": "222ffdfab0dc94eda28e2b269465db4ec099b2d9a12427b95b90fd75b88f96da",
+    "hard-lumen.md": "5042314f03a8157ee931be6d975e87e29328ed0d5baad6b29608ef4af51cd9ca",
+    "hard-changelog.md": "6459ba49a116133ecc1b0a277a0ffd86ab602d7132b4410d556dddc3fbbba058",
+    "hard-handbook.md": "ce05f161fde79e0f59bbc4cb8533b797cc420d867b14103f85f9dbce45f95668"
+  }
+}

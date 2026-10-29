@@ -35,6 +35,21 @@ os.environ.update(
         "AGENTOS_CRITICAL_RATE_LIMIT_PER_MINUTE": "100000",
     }
 )
+if os.environ.get("AGENTOS_LIVE_TESTS") != "1":
+    # Never read the developer's local .env in tests: a test that removes an environment variable must fall back to the
+    # code default (offline), not to whatever a live-mode .env says.
+    from agentos_core.config import Settings
+
+    Settings.model_config["env_file"] = None
+    # The suite is offline whatever the developer's local .env says: a live-mode .env must never let a test spend money.
+    os.environ.update(
+        {
+            "AGENTOS_EXECUTION_MODE": "offline",
+            "AGENTOS_ALLOW_PAID_PROVIDERS": "false",
+            "AGENTOS_ENABLE_NETWORK_MODEL_REQUESTS": "false",
+            "AGENTOS_MAX_REAL_API_SPEND_USD": "0",
+        }
+    )
 os.environ.pop("ANTHROPIC_API_KEY", None) if os.environ.get("AGENTOS_LIVE_TESTS") != "1" else None
 os.environ.pop("OPENAI_API_KEY", None) if os.environ.get("AGENTOS_LIVE_TESTS") != "1" else None
 
@@ -175,6 +190,11 @@ def no_outbound_connections():  # type: ignore[no-untyped-def]
     fails the session. This is what lets CI run with no paid-provider credentials and proves that nothing in the product's
     tested paths contacts an external service."""
     import socket
+
+    if os.environ.get("AGENTOS_LIVE_TESTS") == "1":
+        # Explicit opt-in to the live provider tests: they exist to make real, spend-capped requests.
+        yield
+        return
 
     real_connect = socket.socket.connect
 

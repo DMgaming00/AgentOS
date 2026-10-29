@@ -1,4 +1,4 @@
-.PHONY: showcase showcase-a showcase-b showcase-c showcase-d showcase-e help install up down logs dev migrate seed test test-unit lint typecheck check web-check e2e demo demo-research demo-recovery demo-permissions autopilot-demo autopilot-demo-repair autopilot-demo-fake autopilot-demo-rollback autopilot-bench bench bench-quick bench-plot openapi screenshots
+.PHONY: real-eval-hard showcase showcase-a showcase-b showcase-c showcase-d showcase-e help install up down logs dev migrate seed test test-unit lint typecheck check web-check e2e demo demo-research demo-recovery demo-permissions autopilot-demo autopilot-demo-repair autopilot-demo-fake autopilot-demo-rollback autopilot-bench bench bench-quick bench-plot openapi screenshots
 
 help:            ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-18s %s\n", $$1, $$2}'
@@ -100,3 +100,7 @@ showcase-e:      ## demo E: canary and rollback
 screenshots:     ## capture UI screenshots from the running stack (run autopilot-demo first for Autopilot pages)
 	cd apps/web && node tests/capture-screenshots.mjs
 	cd apps/web && node tests/capture-autopilot.mjs
+
+real-eval-hard: ## REAL MODEL, SPENDS MONEY: hard-ops setup + baseline (needs live mode in .env, a key and a spend cap; CONFIRM=1)
+	@test "$(CONFIRM)" = "1" || (echo "This calls a paid model. Read docs/ENABLE_REAL_CLAUDE.md, set the four paid-mode flags and a cap in .env, then run: make real-eval-hard CONFIRM=1" && exit 1)
+	cd scripts && uv run python real_hard_eval.py setup && uv run python real_hard_eval.py agent tight && uv run python real_hard_eval.py eval tight development 1

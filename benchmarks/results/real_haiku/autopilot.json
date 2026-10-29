@@ -1,0 +1,64 @@
+{
+  "model": "claude-haiku-5-5",
+  "started": "2026-10-28T18:51:01-0700",
+  "agent_id": "77807033-5581-4f69-b71f-0882fb3da037",
+  "baseline_development": {
+    "passed": 5,
+    "cases": 9,
+    "value": 0.5555555555555556
+  },
+  "failure_categories": {
+    "TOOL_EXECUTION_FAILURE": 1,
+    "FACTUAL_GROUNDING_FAILURE": 4
+  },
+  "diagnosis": {
+    "status": "hypothesis",
+    "confidence": "medium",
+    "hypothesis": "The extraction agent is producing citations that point to document sections it did not actually retrieve during the run (e.g., 'platform-vectorforge.md#Vector Forge > Performance' and 'platform-helix.md#Helix Serve > Performance'), or omits citations entirely for some values. The values may still be correct, but the grounding of each value to a retrieved source is not verified. This suggests the agent is answering from memory or from partial retrieval and then attaching plausible-looking section references, rather than citing the sections it actually used. The system instruction requires citing the section used for every value, and the agent is failing that requirement. Infrastructure is not implicated: no tool errors, provider errors, or timeouts appear in the evidence.",
+    "evidence_refs": [
+      "evaluation_result:64bda8b5-1ab3-418f-b1b8-00455ee76510",
+      "evaluation_result:fc328c7c-22a1-4a7f-bdf3-2ef3fbef8f84",
+      "evaluation_result:ba4e044a-b89a-4043-9385-ae76c2776b3f",
+      "evaluation_result:65abf7b7-7b2f-45e3-84d0-121ccfb42c47"
+    ],
+    "category": null
+  },
+  "candidates": [
+    {
+      "title": "Strict retrieve-then-cite instructions with deterministic decoding",
+      "status": "rejected_policy",
+      "violations": [
+        "model_configuration: anthropic models used here reject sampling parameters"
+      ]
+    },
+    {
+      "title": "Retrieval-focused strategy with tool guidance and extra step budget",
+      "status": "proposed",
+      "violations": []
+    },
+    {
+      "title": "Conservative schema-enforcement with retry on validation failure",
+      "status": "rejected_policy",
+      "violations": [
+        "model_configuration: anthropic models used here reject sampling parameters"
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "candidate": "Retrieval-focused strategy with tool guidance and extra step budget",
+      "decision": "not_eligible",
+      "summary": "Not eligible: per_case_regressions; cost_per_successful_task",
+      "baseline_success": 0.9375,
+      "candidate_success": 0.75,
+      "diff_mean": -0.1875,
+      "ci95": [
+        -0.4375,
+        0.0625
+      ],
+      "n_matched": 16
+    }
+  ],
+  "finished": "2026-10-28T18:51:46-0700",
+  "rule_candidates": []
+}

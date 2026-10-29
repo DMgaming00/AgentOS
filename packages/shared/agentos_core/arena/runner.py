@@ -6,7 +6,9 @@ Anti-leakage rules enforced here, in code:
 * the *test* datasets are scheduled by ``start_final_test``, which requires every selection evaluation to be complete,
   can happen once per arena run (row lock + ``final_test_started_at``), and creates entries under a unique
   (arena, version, dataset) key, so a contender is never scored on test twice in one arena run;
-* contenders must be offline (mock/fixture/recorded) providers; the Arena never makes a paid model call.
+* contenders must be offline (mock/fixture/recorded) providers, unless an administrator explicitly creates the run with
+  ``allow_live`` while paid requests are enabled (execution policy + spend cap); such a run records the live contenders
+  in its configuration and is no longer labeled offline-only.
 """
 
 from __future__ import annotations
@@ -84,7 +86,7 @@ async def _schedule(
 
 
 async def _load_contenders(
-    session: AsyncSession, workspace_id: uuid.UUID, version_ids: list[uuid.UUID]
+    session: AsyncSession, workspace_id: uuid.UUID, version_ids: list[uuid.UUID], *, allow_live: bool = False
 ) -> list[tuple[AgentDefinition, AgentConfigVersion]]:
     if not 2 <= len(set(version_ids)) <= MAX_CONTENDERS or len(set(version_ids)) != len(version_ids):
         raise ArenaError(
@@ -99,7 +101,17 @@ async def _load_contenders(
         if version is None or agent is None or agent.workspace_id != workspace_id:
             raise ArenaError("agent version not found", code="not_found", status=404)
         provider = AgentConfig.model_validate(version.config_snapshot).provider
-        if provider not in OFFLINE_PROVIDERS:
+        if provider not in OFFLINE_PROVIDERS and allow_live:
+            from agentos_core.providers.execution import ExecutionPolicy
+
+            policy = ExecutionPolicy.current()
+            if not policy.paid_requests_allowed:
+                raise ArenaError(
+                    "live contenders need paid requests enabled: " + "; ".join(policy.blockers()),
+                    code="paid_providers_blocked",
+                    status=409,
+                )
+        elif provider not in OFFLINE_PROVIDERS:
             raise ArenaError(
                 f"{agent.name} uses provider {provider!r}; the Arena runs offline providers only "
                 f"({', '.join(sorted(OFFLINE_PROVIDERS))})",
@@ -119,8 +131,14 @@ async def create_arena(
     user_id: uuid.UUID | None,
     name: str,
     agent_version_ids: list[uuid.UUID],
+    allow_live: bool = False,
 ) -> ArenaRun:
-    contenders = await _load_contenders(session, workspace_id, agent_version_ids)
+    contenders = await _load_contenders(session, workspace_id, agent_version_ids, allow_live=allow_live)
+    live = [
+        a.name
+        for a, v in contenders
+        if AgentConfig.model_validate(v.config_snapshot).provider not in OFFLINE_PROVIDERS
+    ]
     datasets = await import_corpus(session, workspace_id, created_by=user_id)
     manifest = load_manifest()
     arena = ArenaRun(
@@ -146,7 +164,8 @@ async def create_arena(
             ],
             "trials": 1,
             "scoring": "unweighted mean of family pass rates; ties by paired bootstrap",
-            "offline_only": True,
+            "offline_only": not live,
+            "live_contenders": live,
         },
     )
     session.add(arena)

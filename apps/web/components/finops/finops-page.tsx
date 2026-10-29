@@ -139,7 +139,7 @@ export function FinopsPage() {
         <Select aria-label="Window" className="w-36" value={days} onChange={(e) => setDays(Number(e.target.value))}><option value={7}>Last 7 days</option><option value={30}>Last 30 days</option><option value={90}>Last 90 days</option></Select>
       </div>
       <div role="note" className="rounded-lg border bg-card p-3 text-sm" data-testid="estimate-label">
-        <Badge tone="warning">{s.label}</Badge> <span className="text-muted-foreground">Computed from reported token usage and the versioned price table {s.pricing.version} ({pct(t.simulated_share)} of calls simulated). Never an invoice.{t.calls_with_unknown_cost ? ` ${t.calls_with_unknown_cost} calls have unknown cost and are excluded, not counted as zero.` : ""}</span>
+        <Badge tone="warning" className="whitespace-normal break-words text-left">{s.label}</Badge> <span className="text-muted-foreground">Computed from reported token usage and the versioned price table {s.pricing.version} ({pct(t.simulated_share)} of calls simulated). Never an invoice.{t.calls_with_unknown_cost ? ` ${t.calls_with_unknown_cost} calls have unknown cost and are excluded, not counted as zero.` : ""}</span>
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" data-testid="finops-tiles">
         <Tile id="total" title="Estimated spend" value={usd(t.estimated_cost_usd)} sub={`${t.calls} model calls in ${s.window_days} days`} />

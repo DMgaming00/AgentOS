@@ -1,0 +1,1171 @@
+{
+  "model": "claude-haiku-5-5",
+  "arena": {
+    "id": "96ed86d1-f9ba-4a3f-ac16-6dfe228edf79",
+    "name": "Real Haiku arena 1028-1907",
+    "created_at": "2026-10-29T02:07:17.226438+00:00",
+    "stage": "completed",
+    "final_test_started_at": "2026-10-29T02:09:09.516680+00:00",
+    "progress": {
+      "development": {
+        "completed": 15
+      },
+      "test": {
+        "completed": 15
+      },
+      "validation": {
+        "completed": 15
+      }
+    },
+    "config": {
+      "corpus": "agent-arena",
+      "trials": 1,
+      "scoring": "unweighted mean of family pass rates; ties by paired bootstrap",
+      "contenders": [
+        {
+          "agent": "Arena \u00b7 Haiku \u00b7 Bare 1028-1907",
+          "version": 1,
+          "agent_id": "73a504af-c9ef-4510-a838-4740c04caab9",
+          "version_id": "84973584-4292-4f6e-866f-7b72f2df9b59",
+          "config_hash": "d7eaa1a694a964bf732269ae532274297de0d7a5caf06d442978a0ed3d10ccfa"
+        },
+        {
+          "agent": "Arena \u00b7 Haiku \u00b7 Formatter 1028-1907",
+          "version": 1,
+          "agent_id": "8f47d2df-b0f8-408e-966a-13c832d5a9b6",
+          "version_id": "952f6f34-646e-4b4f-94ff-f39f39190c67",
+          "config_hash": "482f6fd7820d8e962411ba5db81472e3f8f02538cbb082b6307740972cf97658"
+        },
+        {
+          "agent": "Arena \u00b7 Haiku \u00b7 Calculator 1028-1907",
+          "version": 1,
+          "agent_id": "1c1597b3-3b1a-4212-9748-9ee788db2d3e",
+          "version_id": "0a887a8d-6f6e-4c84-99e7-c95d050a174b",
+          "config_hash": "7158399c8ba95b99f167e25fe692f83e234eb666b391e4959167910c2b2accde"
+        },
+        {
+          "agent": "Arena \u00b7 Haiku \u00b7 Careful 1028-1907",
+          "version": 1,
+          "agent_id": "521c8974-cba3-4643-bad5-332fc22f0f4d",
+          "version_id": "80c65e0f-227d-4206-bc01-bb8e0a6aa7ca",
+          "config_hash": "11feb0d0e143239fa9a07a7b51492bdb8938f17771f1189c86c133bb0e60f75c"
+        },
+        {
+          "agent": "Arena \u00b7 Haiku \u00b7 Ungrounded 1028-1907",
+          "version": 1,
+          "agent_id": "a3f05bfc-5a21-4a1b-a57e-879fd846e996",
+          "version_id": "0fb5d942-aab6-4e66-818c-b0b1ec65a481",
+          "config_hash": "3e2dc68e7cb36d4ff5874454bbf5c3e0d44f7b58d229573766f05f9ea1c396f4"
+        }
+      ],
+      "split_salt": 1,
+      "offline_only": false,
+      "manifest_hash": "fd858a5087877d6ac28b1611530d7e7a5ed3124b09339b12f8ad8bca954426f3",
+      "corpus_version": 1,
+      "dataset_hashes": {
+        "extraction/test": "f8c0dc100183676002c173ef0758a0f05bb6bfdd637b7f1e58ef8af8c2d93727",
+        "calculation/test": "55a4399aa92298b5792e3cffcc65978971691fa62137386b560812cde93a2da2",
+        "grounded_qa/test": "b7ff83b2463475531422b8551c27e6f120e59fe2752d9ea0dfe83a043927b78e",
+        "extraction/validation": "db2ded429919a33b4b80e503b053980c37368459fe5a3eddb48bcdf53cfa7fd8",
+        "calculation/validation": "0c6957fce3a669b564bcf180570a0e898cb4fd0a1ee656c9cf25326c61c4a06b",
+        "extraction/development": "f8b14deedd328a7b99b1a062f8947e0a6157f31efa86e044734c82290c3df232",
+        "grounded_qa/validation": "8288fe829d09dee6e9903d28121a15db8b6a037d9cec5d4115db14e72878bfac",
+        "calculation/development": "fa38f5311cd56db5f5364e28f27819bc643435cbe4d2b7e0691ef565af39b410",
+        "grounded_qa/development": "986059b73212118cbae03f814c9f0dd0146849c4f2cd06799980d9c288123f53"
+      },
+      "live_contenders": [
+        "Arena \u00b7 Haiku \u00b7 Bare 1028-1907",
+        "Arena \u00b7 Haiku \u00b7 Formatter 1028-1907",
+        "Arena \u00b7 Haiku \u00b7 Calculator 1028-1907",
+        "Arena \u00b7 Haiku \u00b7 Careful 1028-1907",
+        "Arena \u00b7 Haiku \u00b7 Ungrounded 1028-1907"
+      ]
+    },
+    "leaderboards": {
+      "development": {
+        "rows": [
+          {
+            "agent_id": "521c8974-cba3-4643-bad5-332fc22f0f4d",
+            "agent": "Arena \u00b7 Haiku \u00b7 Careful 1028-1907",
+            "version": 1,
+            "agent_version_id": "80c65e0f-227d-4206-bc01-bb8e0a6aa7ca",
+            "config_hash": "11feb0d0e143",
+            "overall": {
+              "score": 0.9047619047619048,
+              "ci95": [
+                0.8095238095238094,
+                0.9761904761904763
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 7,
+                "passed": 7,
+                "rate": 1.0,
+                "ci95": [
+                  0.6456611570247934,
+                  1.0
+                ]
+              },
+              "extraction": {
+                "n": 9,
+                "passed": 9,
+                "rate": 1.0,
+                "ci95": [
+                  0.7008472464490407,
+                  1.0
+                ]
+              },
+              "grounded_qa": {
+                "n": 14,
+                "passed": 10,
+                "rate": 0.7142857142857143,
+                "ci95": [
+                  0.4535045882751561,
+                  0.882788120898909
+                ]
+              }
+            },
+            "cases": 30,
+            "passed": 26,
+            "cost_usd": 0.018761900000000005,
+            "cost_per_success_usd": 0.0007216115384615386,
+            "latency_ms": {
+              "p50": 24369.374,
+              "p95": 33757.969000000005,
+              "measured": 30
+            },
+            "tool_calls": 46,
+            "failure_breakdown": {
+              "FACTUAL_GROUNDING_FAILURE": 4
+            },
+            "incomplete_executions": 0,
+            "rank": 1
+          },
+          {
+            "agent_id": "8f47d2df-b0f8-408e-966a-13c832d5a9b6",
+            "agent": "Arena \u00b7 Haiku \u00b7 Formatter 1028-1907",
+            "version": 1,
+            "agent_version_id": "952f6f34-646e-4b4f-94ff-f39f39190c67",
+            "config_hash": "482f6fd7820d",
+            "overall": {
+              "score": 0.8915343915343915,
+              "ci95": [
+                0.7830687830687829,
+                0.9761904761904763
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 7,
+                "passed": 7,
+                "rate": 1.0,
+                "ci95": [
+                  0.6456611570247934,
+                  1.0
+                ]
+              },
+              "extraction": {
+                "n": 9,
+                "passed": 8,
+                "rate": 0.8888888888888888,
+                "ci95": [
+                  0.5649937852319399,
+                  0.9801096286728695
+                ]
+              },
+              "grounded_qa": {
+                "n": 14,
+                "passed": 11,
+                "rate": 0.7857142857142857,
+                "ci95": [
+                  0.5241027622679172,
+                  0.9242875166308363
+                ]
+              }
+            },
+            "cases": 30,
+            "passed": 26,
+            "cost_usd": 0.0155085,
+            "cost_per_success_usd": 0.0005964807692307692,
+            "latency_ms": {
+              "p50": 24880.040999999997,
+              "p95": 34564.587,
+              "measured": 30
+            },
+            "tool_calls": 40,
+            "failure_breakdown": {
+              "FACTUAL_GROUNDING_FAILURE": 4
+            },
+            "incomplete_executions": 0,
+            "rank": 1
+          },
+          {
+            "agent_id": "73a504af-c9ef-4510-a838-4740c04caab9",
+            "agent": "Arena \u00b7 Haiku \u00b7 Bare 1028-1907",
+            "version": 1,
+            "agent_version_id": "84973584-4292-4f6e-866f-7b72f2df9b59",
+            "config_hash": "d7eaa1a694a9",
+            "overall": {
+              "score": 0.8174603174603176,
+              "ci95": [
+                0.6851851851851851,
+                0.9391534391534391
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 7,
+                "passed": 7,
+                "rate": 1.0,
+                "ci95": [
+                  0.6456611570247934,
+                  1.0
+                ]
+              },
+              "extraction": {
+                "n": 9,
+                "passed": 6,
+                "rate": 0.6666666666666666,
+                "ci95": [
+                  0.35419734749908977,
+                  0.879418401317257
+                ]
+              },
+              "grounded_qa": {
+                "n": 14,
+                "passed": 11,
+                "rate": 0.7857142857142857,
+                "ci95": [
+                  0.5241027622679172,
+                  0.9242875166308363
+                ]
+              }
+            },
+            "cases": 30,
+            "passed": 24,
+            "cost_usd": 0.0166503,
+            "cost_per_success_usd": 0.0006937625,
+            "latency_ms": {
+              "p50": 27728.069000000003,
+              "p95": 34972.498999999996,
+              "measured": 30
+            },
+            "tool_calls": 45,
+            "failure_breakdown": {
+              "FACTUAL_GROUNDING_FAILURE": 6
+            },
+            "incomplete_executions": 0,
+            "rank": 1
+          },
+          {
+            "agent_id": "1c1597b3-3b1a-4212-9748-9ee788db2d3e",
+            "agent": "Arena \u00b7 Haiku \u00b7 Calculator 1028-1907",
+            "version": 1,
+            "agent_version_id": "0a887a8d-6f6e-4c84-99e7-c95d050a174b",
+            "config_hash": "7158399c8ba9",
+            "overall": {
+              "score": 0.806878306878307,
+              "ci95": [
+                0.6851851851851851,
+                0.9153439153439153
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 7,
+                "passed": 7,
+                "rate": 1.0,
+                "ci95": [
+                  0.6456611570247934,
+                  1.0
+                ]
+              },
+              "extraction": {
+                "n": 9,
+                "passed": 7,
+                "rate": 0.7777777777777778,
+                "ci95": [
+                  0.4525833436728054,
+                  0.9367762376877727
+                ]
+              },
+              "grounded_qa": {
+                "n": 14,
+                "passed": 9,
+                "rate": 0.6428571428571429,
+                "ci95": [
+                  0.3876400468214042,
+                  0.8365550926279727
+                ]
+              }
+            },
+            "cases": 30,
+            "passed": 23,
+            "cost_usd": 0.018222600000000002,
+            "cost_per_success_usd": 0.0007922869565217392,
+            "latency_ms": {
+              "p50": 21685.427,
+              "p95": 34112.419,
+              "measured": 30
+            },
+            "tool_calls": 44,
+            "failure_breakdown": {
+              "FACTUAL_GROUNDING_FAILURE": 7
+            },
+            "incomplete_executions": 0,
+            "rank": 1
+          },
+          {
+            "agent_id": "a3f05bfc-5a21-4a1b-a57e-879fd846e996",
+            "agent": "Arena \u00b7 Haiku \u00b7 Ungrounded 1028-1907",
+            "version": 1,
+            "agent_version_id": "0fb5d942-aab6-4e66-818c-b0b1ec65a481",
+            "config_hash": "3e2dc68e7cb3",
+            "overall": {
+              "score": 0.3333333333333333,
+              "ci95": [
+                0.3333333333333333,
+                0.3333333333333333
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 7,
+                "passed": 7,
+                "rate": 1.0,
+                "ci95": [
+                  0.6456611570247934,
+                  1.0
+                ]
+              },
+              "extraction": {
+                "n": 9,
+                "passed": 0,
+                "rate": 0.0,
+                "ci95": [
+                  0.0,
+                  0.2991527535509594
+                ]
+              },
+              "grounded_qa": {
+                "n": 14,
+                "passed": 0,
+                "rate": 0.0,
+                "ci95": [
+                  0.0,
+                  0.21531701192718142
+                ]
+              }
+            },
+            "cases": 30,
+            "passed": 7,
+            "cost_usd": 0.0111882,
+            "cost_per_success_usd": 0.0015983142857142858,
+            "latency_ms": {
+              "p50": 31090.582000000002,
+              "p95": 34782.091,
+              "measured": 30
+            },
+            "tool_calls": 7,
+            "failure_breakdown": {
+              "RETRIEVAL_FAILURE": 8,
+              "FACTUAL_GROUNDING_FAILURE": 8,
+              "OUTPUT_SCHEMA_INVALID": 7
+            },
+            "incomplete_executions": 0,
+            "rank": 5
+          }
+        ],
+        "adjacent_comparisons": [
+          {
+            "higher": "Arena \u00b7 Haiku \u00b7 Careful 1028-1907",
+            "lower": "Arena \u00b7 Haiku \u00b7 Formatter 1028-1907",
+            "difference": 0.013227513227513255,
+            "ci95": [
+              -0.05820105820105818,
+              0.11111111111111112
+            ],
+            "separated": false
+          },
+          {
+            "higher": "Arena \u00b7 Haiku \u00b7 Formatter 1028-1907",
+            "lower": "Arena \u00b7 Haiku \u00b7 Bare 1028-1907",
+            "difference": 0.07407407407407396,
+            "ci95": [
+              -0.047619047619047596,
+              0.20899470899470898
+            ],
+            "separated": false
+          },
+          {
+            "higher": "Arena \u00b7 Haiku \u00b7 Bare 1028-1907",
+            "lower": "Arena \u00b7 Haiku \u00b7 Calculator 1028-1907",
+            "difference": 0.010582010582010581,
+            "ci95": [
+              -0.14814814814814814,
+              0.18253968253968247
+            ],
+            "separated": false
+          },
+          {
+            "higher": "Arena \u00b7 Haiku \u00b7 Calculator 1028-1907",
+            "lower": "Arena \u00b7 Haiku \u00b7 Ungrounded 1028-1907",
+            "difference": 0.47354497354497366,
+            "ci95": [
+              0.35185185185185186,
+              0.582010582010582
+            ],
+            "separated": true
+          }
+        ],
+        "method": {
+          "family_score": "share of cases passing every deterministic evaluator",
+          "overall": "unweighted mean of family scores",
+          "intervals": "95%; Wilson per family, stratified bootstrap (2000 resamples, seed 20261026) for overall and differences",
+          "rank": "competition rank; ties when the paired bootstrap interval of the difference includes 0"
+        }
+      },
+      "validation": {
+        "rows": [
+          {
+            "agent_id": "8f47d2df-b0f8-408e-966a-13c832d5a9b6",
+            "agent": "Arena \u00b7 Haiku \u00b7 Formatter 1028-1907",
+            "version": 1,
+            "agent_version_id": "952f6f34-646e-4b4f-94ff-f39f39190c67",
+            "config_hash": "482f6fd7820d",
+            "overall": {
+              "score": 0.8422619047619048,
+              "ci95": [
+                0.7053571428571428,
+                0.9583333333333334
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 10,
+                "passed": 10,
+                "rate": 1.0,
+                "ci95": [
+                  0.7224598312333834,
+                  1.0
+                ]
+              },
+              "extraction": {
+                "n": 16,
+                "passed": 13,
+                "rate": 0.8125,
+                "ci95": [
+                  0.5699064013154177,
+                  0.9340852122641324
+                ]
+              },
+              "grounded_qa": {
+                "n": 7,
+                "passed": 5,
+                "rate": 0.7142857142857143,
+                "ci95": [
+                  0.35892909014821267,
+                  0.9177828342909844
+                ]
+              }
+            },
+            "cases": 33,
+            "passed": 28,
+            "cost_usd": 0.017900899999999994,
+            "cost_per_success_usd": 0.0006393178571428569,
+            "latency_ms": {
+              "p50": 25769.935,
+              "p95": 35221.048,
+              "measured": 33
+            },
+            "tool_calls": 44,
+            "failure_breakdown": {
+              "FACTUAL_GROUNDING_FAILURE": 5
+            },
+            "incomplete_executions": 0,
+            "rank": 1
+          },
+          {
+            "agent_id": "521c8974-cba3-4643-bad5-332fc22f0f4d",
+            "agent": "Arena \u00b7 Haiku \u00b7 Careful 1028-1907",
+            "version": 1,
+            "agent_version_id": "80c65e0f-227d-4206-bc01-bb8e0a6aa7ca",
+            "config_hash": "11feb0d0e143",
+            "overall": {
+              "score": 0.8363095238095237,
+              "ci95": [
+                0.7202380952380952,
+                0.9523809523809524
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 10,
+                "passed": 10,
+                "rate": 1.0,
+                "ci95": [
+                  0.7224598312333834,
+                  1.0
+                ]
+              },
+              "extraction": {
+                "n": 16,
+                "passed": 15,
+                "rate": 0.9375,
+                "ci95": [
+                  0.7167073163197013,
+                  0.9888809426916687
+                ]
+              },
+              "grounded_qa": {
+                "n": 7,
+                "passed": 4,
+                "rate": 0.5714285714285714,
+                "ci95": [
+                  0.2504542304090258,
+                  0.8417830777373732
+                ]
+              }
+            },
+            "cases": 33,
+            "passed": 29,
+            "cost_usd": 0.019810899999999996,
+            "cost_per_success_usd": 0.0006831344827586206,
+            "latency_ms": {
+              "p50": 24555.981,
+              "p95": 34289.685,
+              "measured": 33
+            },
+            "tool_calls": 47,
+            "failure_breakdown": {
+              "FACTUAL_GROUNDING_FAILURE": 4
+            },
+            "incomplete_executions": 0,
+            "rank": 1
+          },
+          {
+            "agent_id": "73a504af-c9ef-4510-a838-4740c04caab9",
+            "agent": "Arena \u00b7 Haiku \u00b7 Bare 1028-1907",
+            "version": 1,
+            "agent_version_id": "84973584-4292-4f6e-866f-7b72f2df9b59",
+            "config_hash": "d7eaa1a694a9",
+            "overall": {
+              "score": 0.8148809523809524,
+              "ci95": [
+                0.6738095238095237,
+                0.9375
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 10,
+                "passed": 9,
+                "rate": 0.9,
+                "ci95": [
+                  0.5958436145024278,
+                  0.9821242504842788
+                ]
+              },
+              "extraction": {
+                "n": 16,
+                "passed": 11,
+                "rate": 0.6875,
+                "ci95": [
+                  0.4440393186673406,
+                  0.8583556494803894
+                ]
+              },
+              "grounded_qa": {
+                "n": 7,
+                "passed": 6,
+                "rate": 0.8571428571428571,
+                "ci95": [
+                  0.48686549668097007,
+                  0.9743210440510253
+                ]
+              }
+            },
+            "cases": 33,
+            "passed": 26,
+            "cost_usd": 0.017231,
+            "cost_per_success_usd": 0.0006627307692307692,
+            "latency_ms": {
+              "p50": 28728.370000000003,
+              "p95": 36336.566,
+              "measured": 33
+            },
+            "tool_calls": 45,
+            "failure_breakdown": {
+              "FACTUAL_GROUNDING_FAILURE": 7
+            },
+            "incomplete_executions": 0,
+            "rank": 1
+          },
+          {
+            "agent_id": "1c1597b3-3b1a-4212-9748-9ee788db2d3e",
+            "agent": "Arena \u00b7 Haiku \u00b7 Calculator 1028-1907",
+            "version": 1,
+            "agent_version_id": "0a887a8d-6f6e-4c84-99e7-c95d050a174b",
+            "config_hash": "7158399c8ba9",
+            "overall": {
+              "score": 0.7886904761904762,
+              "ci95": [
+                0.6666666666666666,
+                0.9047619047619048
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 10,
+                "passed": 10,
+                "rate": 1.0,
+                "ci95": [
+                  0.7224598312333834,
+                  1.0
+                ]
+              },
+              "extraction": {
+                "n": 16,
+                "passed": 15,
+                "rate": 0.9375,
+                "ci95": [
+                  0.7167073163197013,
+                  0.9888809426916687
+                ]
+              },
+              "grounded_qa": {
+                "n": 7,
+                "passed": 3,
+                "rate": 0.42857142857142855,
+                "ci95": [
+                  0.15821692226262685,
+                  0.7495457695909742
+                ]
+              }
+            },
+            "cases": 33,
+            "passed": 28,
+            "cost_usd": 0.02088849999999999,
+            "cost_per_success_usd": 0.0007460178571428568,
+            "latency_ms": {
+              "p50": 22916.751,
+              "p95": 34054.623,
+              "measured": 33
+            },
+            "tool_calls": 50,
+            "failure_breakdown": {
+              "FACTUAL_GROUNDING_FAILURE": 5
+            },
+            "incomplete_executions": 0,
+            "rank": 1
+          },
+          {
+            "agent_id": "a3f05bfc-5a21-4a1b-a57e-879fd846e996",
+            "agent": "Arena \u00b7 Haiku \u00b7 Ungrounded 1028-1907",
+            "version": 1,
+            "agent_version_id": "0fb5d942-aab6-4e66-818c-b0b1ec65a481",
+            "config_hash": "3e2dc68e7cb3",
+            "overall": {
+              "score": 0.3333333333333333,
+              "ci95": [
+                0.3333333333333333,
+                0.3333333333333333
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 10,
+                "passed": 10,
+                "rate": 1.0,
+                "ci95": [
+                  0.7224598312333834,
+                  1.0
+                ]
+              },
+              "extraction": {
+                "n": 16,
+                "passed": 0,
+                "rate": 0.0,
+                "ci95": [
+                  0.0,
+                  0.19361341827271994
+                ]
+              },
+              "grounded_qa": {
+                "n": 7,
+                "passed": 0,
+                "rate": 0.0,
+                "ci95": [
+                  0.0,
+                  0.35433884297520657
+                ]
+              }
+            },
+            "cases": 33,
+            "passed": 10,
+            "cost_usd": 0.015541799999999995,
+            "cost_per_success_usd": 0.0015541799999999994,
+            "latency_ms": {
+              "p50": 31253.197,
+              "p95": 35528.533,
+              "measured": 33
+            },
+            "tool_calls": 11,
+            "failure_breakdown": {
+              "OUTPUT_SCHEMA_INVALID": 13,
+              "FACTUAL_GROUNDING_FAILURE": 6,
+              "RETRIEVAL_FAILURE": 4
+            },
+            "incomplete_executions": 0,
+            "rank": 5
+          }
+        ],
+        "adjacent_comparisons": [
+          {
+            "higher": "Arena \u00b7 Haiku \u00b7 Formatter 1028-1907",
+            "lower": "Arena \u00b7 Haiku \u00b7 Careful 1028-1907",
+            "difference": 0.005952380952381042,
+            "ci95": [
+              -0.20535714285714288,
+              0.2113095238095238
+            ],
+            "separated": false
+          },
+          {
+            "higher": "Arena \u00b7 Haiku \u00b7 Careful 1028-1907",
+            "lower": "Arena \u00b7 Haiku \u00b7 Bare 1028-1907",
+            "difference": 0.021428571428571352,
+            "ci95": [
+              -0.12202380952380953,
+              0.16666666666666666
+            ],
+            "separated": false
+          },
+          {
+            "higher": "Arena \u00b7 Haiku \u00b7 Bare 1028-1907",
+            "lower": "Arena \u00b7 Haiku \u00b7 Calculator 1028-1907",
+            "difference": 0.02619047619047621,
+            "ci95": [
+              -0.13392857142857142,
+              0.1898809523809524
+            ],
+            "separated": false
+          },
+          {
+            "higher": "Arena \u00b7 Haiku \u00b7 Calculator 1028-1907",
+            "lower": "Arena \u00b7 Haiku \u00b7 Ungrounded 1028-1907",
+            "difference": 0.45535714285714285,
+            "ci95": [
+              0.3333333333333333,
+              0.5714285714285715
+            ],
+            "separated": true
+          }
+        ],
+        "method": {
+          "family_score": "share of cases passing every deterministic evaluator",
+          "overall": "unweighted mean of family scores",
+          "intervals": "95%; Wilson per family, stratified bootstrap (2000 resamples, seed 20261026) for overall and differences",
+          "rank": "competition rank; ties when the paired bootstrap interval of the difference includes 0"
+        }
+      },
+      "test": {
+        "rows": [
+          {
+            "agent_id": "521c8974-cba3-4643-bad5-332fc22f0f4d",
+            "agent": "Arena \u00b7 Haiku \u00b7 Careful 1028-1907",
+            "version": 1,
+            "agent_version_id": "80c65e0f-227d-4206-bc01-bb8e0a6aa7ca",
+            "config_hash": "11feb0d0e143",
+            "overall": {
+              "score": 0.9388888888888888,
+              "ci95": [
+                0.8666666666666667,
+                1.0
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 13,
+                "passed": 13,
+                "rate": 1.0,
+                "ci95": [
+                  0.7718981569447083,
+                  1.0
+                ]
+              },
+              "extraction": {
+                "n": 20,
+                "passed": 19,
+                "rate": 0.95,
+                "ci95": [
+                  0.7638641064874331,
+                  0.9911187805671268
+                ]
+              },
+              "grounded_qa": {
+                "n": 15,
+                "passed": 13,
+                "rate": 0.8666666666666667,
+                "ci95": [
+                  0.6211750079348376,
+                  0.9626395301086407
+                ]
+              }
+            },
+            "cases": 48,
+            "passed": 45,
+            "cost_usd": 0.030358,
+            "cost_per_success_usd": 0.0006746222222222222,
+            "latency_ms": {
+              "p50": 16193.639999999998,
+              "p95": 17841.301000000003,
+              "measured": 48
+            },
+            "tool_calls": 72,
+            "failure_breakdown": {
+              "FACTUAL_GROUNDING_FAILURE": 3
+            },
+            "incomplete_executions": 0,
+            "rank": 1
+          },
+          {
+            "agent_id": "1c1597b3-3b1a-4212-9748-9ee788db2d3e",
+            "agent": "Arena \u00b7 Haiku \u00b7 Calculator 1028-1907",
+            "version": 1,
+            "agent_version_id": "0a887a8d-6f6e-4c84-99e7-c95d050a174b",
+            "config_hash": "7158399c8ba9",
+            "overall": {
+              "score": 0.8722222222222222,
+              "ci95": [
+                0.7833333333333333,
+                0.9555555555555556
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 13,
+                "passed": 13,
+                "rate": 1.0,
+                "ci95": [
+                  0.7718981569447083,
+                  1.0
+                ]
+              },
+              "extraction": {
+                "n": 20,
+                "passed": 19,
+                "rate": 0.95,
+                "ci95": [
+                  0.7638641064874331,
+                  0.9911187805671268
+                ]
+              },
+              "grounded_qa": {
+                "n": 15,
+                "passed": 10,
+                "rate": 0.6666666666666666,
+                "ci95": [
+                  0.41713125151212976,
+                  0.8482389930530876
+                ]
+              }
+            },
+            "cases": 48,
+            "passed": 42,
+            "cost_usd": 0.029203300000000005,
+            "cost_per_success_usd": 0.0006953166666666668,
+            "latency_ms": {
+              "p50": 15972.039,
+              "p95": 18136.751,
+              "measured": 48
+            },
+            "tool_calls": 69,
+            "failure_breakdown": {
+              "FACTUAL_GROUNDING_FAILURE": 6
+            },
+            "incomplete_executions": 0,
+            "rank": 1
+          },
+          {
+            "agent_id": "8f47d2df-b0f8-408e-966a-13c832d5a9b6",
+            "agent": "Arena \u00b7 Haiku \u00b7 Formatter 1028-1907",
+            "version": 1,
+            "agent_version_id": "952f6f34-646e-4b4f-94ff-f39f39190c67",
+            "config_hash": "482f6fd7820d",
+            "overall": {
+              "score": 0.8576923076923078,
+              "ci95": [
+                0.7542735042735043,
+                0.9444444444444443
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 13,
+                "passed": 12,
+                "rate": 0.9230769230769231,
+                "ci95": [
+                  0.6668546607175265,
+                  0.9862899336203037
+                ]
+              },
+              "extraction": {
+                "n": 20,
+                "passed": 17,
+                "rate": 0.85,
+                "ci95": [
+                  0.6395767041130426,
+                  0.9476322080405041
+                ]
+              },
+              "grounded_qa": {
+                "n": 15,
+                "passed": 12,
+                "rate": 0.8,
+                "ci95": [
+                  0.5481406466534955,
+                  0.9295257935638959
+                ]
+              }
+            },
+            "cases": 48,
+            "passed": 41,
+            "cost_usd": 0.024379200000000004,
+            "cost_per_success_usd": 0.0005946146341463416,
+            "latency_ms": {
+              "p50": 15227.130000000001,
+              "p95": 19536.869,
+              "measured": 48
+            },
+            "tool_calls": 59,
+            "failure_breakdown": {
+              "FACTUAL_GROUNDING_FAILURE": 7
+            },
+            "incomplete_executions": 0,
+            "rank": 1
+          },
+          {
+            "agent_id": "73a504af-c9ef-4510-a838-4740c04caab9",
+            "agent": "Arena \u00b7 Haiku \u00b7 Bare 1028-1907",
+            "version": 1,
+            "agent_version_id": "84973584-4292-4f6e-866f-7b72f2df9b59",
+            "config_hash": "d7eaa1a694a9",
+            "overall": {
+              "score": 0.7743589743589744,
+              "ci95": [
+                0.6632478632478632,
+                0.8799145299145299
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 13,
+                "passed": 12,
+                "rate": 0.9230769230769231,
+                "ci95": [
+                  0.6668546607175265,
+                  0.9862899336203037
+                ]
+              },
+              "extraction": {
+                "n": 20,
+                "passed": 16,
+                "rate": 0.8,
+                "ci95": [
+                  0.5839782779742401,
+                  0.9193436467288
+                ]
+              },
+              "grounded_qa": {
+                "n": 15,
+                "passed": 9,
+                "rate": 0.6,
+                "ci95": [
+                  0.357464427565077,
+                  0.8017577191740534
+                ]
+              }
+            },
+            "cases": 48,
+            "passed": 37,
+            "cost_usd": 0.024543800000000005,
+            "cost_per_success_usd": 0.0006633459459459461,
+            "latency_ms": {
+              "p50": 15449.652,
+              "p95": 18986.345,
+              "measured": 48
+            },
+            "tool_calls": 66,
+            "failure_breakdown": {
+              "FACTUAL_GROUNDING_FAILURE": 11
+            },
+            "incomplete_executions": 0,
+            "rank": 2
+          },
+          {
+            "agent_id": "a3f05bfc-5a21-4a1b-a57e-879fd846e996",
+            "agent": "Arena \u00b7 Haiku \u00b7 Ungrounded 1028-1907",
+            "version": 1,
+            "agent_version_id": "0fb5d942-aab6-4e66-818c-b0b1ec65a481",
+            "config_hash": "3e2dc68e7cb3",
+            "overall": {
+              "score": 0.3333333333333333,
+              "ci95": [
+                0.3333333333333333,
+                0.3333333333333333
+              ]
+            },
+            "families": {
+              "calculation": {
+                "n": 13,
+                "passed": 13,
+                "rate": 1.0,
+                "ci95": [
+                  0.7718981569447083,
+                  1.0
+                ]
+              },
+              "extraction": {
+                "n": 20,
+                "passed": 0,
+                "rate": 0.0,
+                "ci95": [
+                  0.0,
+                  0.16113012549493322
+                ]
+              },
+              "grounded_qa": {
+                "n": 15,
+                "passed": 0,
+                "rate": 0.0,
+                "ci95": [
+                  0.0,
+                  0.20388926630434784
+                ]
+              }
+            },
+            "cases": 48,
+            "passed": 13,
+            "cost_usd": 0.0183758,
+            "cost_per_success_usd": 0.001413523076923077,
+            "latency_ms": {
+              "p50": 16105.569,
+              "p95": 18254.234,
+              "measured": 48
+            },
+            "tool_calls": 13,
+            "failure_breakdown": {
+              "OUTPUT_SCHEMA_INVALID": 13,
+              "RETRIEVAL_FAILURE": 12,
+              "FACTUAL_GROUNDING_FAILURE": 10
+            },
+            "incomplete_executions": 0,
+            "rank": 5
+          }
+        ],
+        "adjacent_comparisons": [
+          {
+            "higher": "Arena \u00b7 Haiku \u00b7 Careful 1028-1907",
+            "lower": "Arena \u00b7 Haiku \u00b7 Calculator 1028-1907",
+            "difference": 0.06666666666666654,
+            "ci95": [
+              -0.02777777777777783,
+              0.17222222222222225
+            ],
+            "separated": false
+          },
+          {
+            "higher": "Arena \u00b7 Haiku \u00b7 Calculator 1028-1907",
+            "lower": "Arena \u00b7 Haiku \u00b7 Formatter 1028-1907",
+            "difference": 0.014529914529914478,
+            "ci95": [
+              -0.09658119658119661,
+              0.13119658119658117
+            ],
+            "separated": false
+          },
+          {
+            "higher": "Arena \u00b7 Haiku \u00b7 Formatter 1028-1907",
+            "lower": "Arena \u00b7 Haiku \u00b7 Bare 1028-1907",
+            "difference": 0.08333333333333337,
+            "ci95": [
+              -0.011111111111111108,
+              0.18888888888888888
+            ],
+            "separated": false
+          },
+          {
+            "higher": "Arena \u00b7 Haiku \u00b7 Bare 1028-1907",
+            "lower": "Arena \u00b7 Haiku \u00b7 Ungrounded 1028-1907",
+            "difference": 0.44102564102564107,
+            "ci95": [
+              0.3299145299145299,
+              0.5465811965811965
+            ],
+            "separated": true
+          }
+        ],
+        "method": {
+          "family_score": "share of cases passing every deterministic evaluator",
+          "overall": "unweighted mean of family scores",
+          "intervals": "95%; Wilson per family, stratified bootstrap (2000 resamples, seed 20261026) for overall and differences",
+          "rank": "competition rank; ties when the paired bootstrap interval of the difference includes 0"
+        }
+      }
+    },
+    "selection_vs_test": [
+      {
+        "agent": "Arena \u00b7 Haiku \u00b7 Formatter 1028-1907",
+        "agent_version_id": "952f6f34-646e-4b4f-94ff-f39f39190c67",
+        "validation_score": 0.8422619047619048,
+        "test_score": 0.8576923076923078,
+        "gap": -0.015430402930402987,
+        "validation_rank": 1,
+        "test_rank": 1,
+        "gap_flag": false
+      },
+      {
+        "agent": "Arena \u00b7 Haiku \u00b7 Careful 1028-1907",
+        "agent_version_id": "80c65e0f-227d-4206-bc01-bb8e0a6aa7ca",
+        "validation_score": 0.8363095238095237,
+        "test_score": 0.9388888888888888,
+        "gap": -0.10257936507936505,
+        "validation_rank": 1,
+        "test_rank": 1,
+        "gap_flag": false
+      },
+      {
+        "agent": "Arena \u00b7 Haiku \u00b7 Bare 1028-1907",
+        "agent_version_id": "84973584-4292-4f6e-866f-7b72f2df9b59",
+        "validation_score": 0.8148809523809524,
+        "test_score": 0.7743589743589744,
+        "gap": 0.04052197802197799,
+        "validation_rank": 1,
+        "test_rank": 2,
+        "gap_flag": false
+      },
+      {
+        "agent": "Arena \u00b7 Haiku \u00b7 Calculator 1028-1907",
+        "agent_version_id": "0a887a8d-6f6e-4c84-99e7-c95d050a174b",
+        "validation_score": 0.7886904761904762,
+        "test_score": 0.8722222222222222,
+        "gap": -0.08353174603174607,
+        "validation_rank": 1,
+        "test_rank": 1,
+        "gap_flag": false
+      },
+      {
+        "agent": "Arena \u00b7 Haiku \u00b7 Ungrounded 1028-1907",
+        "agent_version_id": "0fb5d942-aab6-4e66-818c-b0b1ec65a481",
+        "validation_score": 0.3333333333333333,
+        "test_score": 0.3333333333333333,
+        "gap": 0.0,
+        "validation_rank": 5,
+        "test_rank": 5,
+        "gap_flag": false
+      }
+    ]
+  }
+}

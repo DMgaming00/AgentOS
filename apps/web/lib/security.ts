@@ -26,7 +26,8 @@ export const useIncidents = (source?: string) =>
 export function useStartSecurityRun() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => unwrap(await api.POST("/api/v1/security/runs", { params: { header: { "Idempotency-Key": idempotencyKey() } } })),
+    mutationFn: async (agent: "mock" | "live" = "mock") =>
+      unwrap(await api.POST("/api/v1/security/runs", { params: { header: { "Idempotency-Key": idempotencyKey() }, query: { agent } } })),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["security"] }),
   });
 }
